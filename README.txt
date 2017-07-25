@@ -27,10 +27,18 @@
 !    operator is also available respectively. For more details
 !    see M. Francisquez, et. al., Multigrid treatment of implicit
 !    continuum diffusion, J. of Comp. Phys 2017)
+! 4. Simple Poisson equation
+!			L(u) = rho
+!    where u=psi the magnetic flux function and rho=current.
+!
+! Both simple multigrid (V or gamma cycles) solvers and
+! full multigrid (FMG) solvers are available for Poisson equations.
 !
 ! Though these are 2D solvers, we allow for a 3rd dimension so that
 ! PMGsolver effetively supports solving many xy planes of
 ! independent 2D problems.
+!
+! A program with sample usages is given in the repo.
 !
 ! Manaure Francisquez
 ! mana@dartmouth.edu
