@@ -37,9 +37,12 @@
 ! 2017
 !
 !********************************************************************
+<<<<<<< HEAD
 ! IMPORTANT NOTES
 !   i) Not all solvers support the same boundary conditions
 !  ii) Modified Helmholtz relaxation has damped relaxation commented out
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 ! ASSUMPTIONS
 !   a) Periodic along y and not periodic along x 
 !   b) The length of the simulation domain is defined as 2*pi times
@@ -1686,10 +1689,17 @@ endif
   real(DP), intent(in), optional :: ur(:,:)
   real(DP), allocatable, intent(in) :: lam(:,:,:),rhs(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:)
+<<<<<<< HEAD
   real(DP), allocatable :: Lsu(:),loc1D(:) !,Rsu(:,:)
   integer(I4B) :: i,j,k,il,nxfd2,nyfd2,Nrank,Srank,Erank,Wrank
   real(DP) :: fx,fy,fc
   real(DP) :: Lqu,Rqu,Lru,Rru
+=======
+  real(DP), allocatable :: lsu(:),loc1D(:) !,rsu(:,:)
+  integer(I4B) :: i,j,k,il,nxfd2,nyfd2,Nrank,Srank,Erank,Wrank
+  real(DP) :: fx,fy,fc
+  real(DP) :: lqu,rqu,lru,rru
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                            sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(8),stat(MPI_STATUS_SIZE,8),ierr
@@ -1697,7 +1707,10 @@ endif
   nxfd2=nxf/2
   nyfd2=nyf/2
 
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank=nborph(ng,1)
   Erank=nborph(ng,3)
   Srank=nborph(ng,5)
@@ -1706,11 +1719,16 @@ endif
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
+<<<<<<< HEAD
 !.  u(nxf+1) = Rq*u(nxf) + Rr*u(nxf-1) + Rs
+=======
+!.  u(nxf+1) = rq*u(nxf) + rr*u(nxf-1) + rs
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !.so that symmetry, extrapolation or Dirichlet conditions can be
 !.easily imposed.
 !......... BCs of u ................................!
 !.LHS BC of u
+<<<<<<< HEAD
   allocate(Lsu(nzL),loc1D(nzL))
   if (xBC(1)==0) then
 !...linear extrapolation w/o boundary value
@@ -1753,14 +1771,64 @@ endif
     Rqu = dble(xBC(2))
     Rru = 0.0_dp
 !    Rsu = 0.0_dp
+=======
+  allocate(lsu(nzL),loc1D(nzL))
+  if (xBC(1)==0) then
+!...linear extrapolation w/o boundary value
+    lqu=2.0_dp
+    lru=-1.0_dp
+    lsu=0.0_dp
+  elseif (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lqu=-1.0_dp
+    lru=0.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u(1,:,k))
+    call MPI_ALLreduce(loc1D,lsu,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMph(ng,1),ierr)
+    lsu=2.0_dp*lsu/dble(nyf*jprocsph(ng))
+  else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+    lqu=dble(xBC(1))
+    lru=0.0_dp
+    lsu=0.0_dp
+  endif
+!.RHS BC of u
+!  allocate(rsu(nyf,nzL))
+  if (xBC(2)==0) then
+!...linear extrapolation w/o boundary value
+    rqu=2.0_dp
+    rru=-1.0_dp
+!    rsu=0.0_dp
+!!...linear extrapolation w/ boundary value
+!    rqu=-1.0_dp
+!    rru=0.0_dp
+!    rsu=2.0_dp*ur
+!  elseif (xBC(2)==2) then
+!!...ky=0 component has even symmetry, ky.neq.0 component is odd
+!    rqu=-1.0_dp
+!    rru=0.0_dp
+!    forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
+!    call MPI_ALLreduce(loc1D,rsu,nzL,MPI_DOUBLE_PRECISION, &
+!                       MPI_SUM,COMMph(ng,1),ierr)
+!    rsu=2.0_dp*rsu/dble(nyf*jprocsph(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rqu=dble(xBC(2))
+    rru=0.0_dp
+!    rsu=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !......... BCs of lambda ................................!
 !.LHS BC of lambda assumed even
 !.RHS BC of lambda assumed even
 !........................................................!
+<<<<<<< HEAD
   fx = 0.5_dp*((dble(nxf*iprocsph(ng))/bLx)**2)
   fy = 0.5_dp*((dble(nyf*jprocsph(ng))/bLy)**2)
   fc = 2.0_dp*(fx+fy)
+=======
+  fx=0.5_dp*((dble(nxf*iprocsph(ng))/bLx)**2)
+  fy=0.5_dp*((dble(nyf*jprocsph(ng))/bLy)**2)
+  fc=2.0_dp*(fx+fy)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   if (nxf>2) then ! Used in one sided stencil at RHS Dirichlet boundary
     il=nxf-2
   else
@@ -1824,7 +1892,11 @@ endif
   enddo
 !.Right boundary, even j
     call MPI_WAITALL(2,(/req(6),req(8)/),(/stat(:,6),stat(:,8)/),ierr)
+<<<<<<< HEAD
   if (iIDph(ng) .eq. iprocsm1) then !.Right most process (along x)
+=======
+  if (iIDph(ng) .eq. iprocsm1) then
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do j=2,nyf-2,2
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+omeph*(fx*0.25_dp*(2.0_dp*lam(nxf,j,:)*(6.0_dp*ur(j,:)+u(il,j,:)) &
         +(-2.0_dp*lam(nxf,j,:)+4.0_dp*lam(nxf-1,j,:))*u(nxf-1,j,:)) &
@@ -1834,7 +1906,11 @@ endif
     u(nxf,nyf,:)=Oomeph*u(nxf,nyf,:)+omeph*(fx*0.25_dp*(2.0_dp*lam(nxf,nyf,:)*(6.0_dp*ur(nyf,:)+u(il,nyf,:)) &
       +(-2.0_dp*lam(nxf,nyf,:)+4.0_dp*lam(nxf-1,nyf,:))*u(nxf-1,nyf,:)) &
       +fy*((rbufS(nxfd2,:)+lam(nxf,nyf,:))*rbufN(nxfd2,:)+(lam(nxf,nyf,:)+lam(nxf,nyf-1,:))*u(nxf,nyf-1,:))-rhs(nxf,nyf,:)) &
+<<<<<<< HEAD
       /(fx*(lam(nxf,nyf,:)+lam(nxf-1,nyf,:))+fy*(rbufS(nxfd2,:)+lam(nxf,nyf-1,:))+fc*lam(nxf,nyf,:)) !.global NE corner
+=======
+      /(fx*(lam(nxf,nyf,:)+lam(nxf-1,nyf,:))+fy*(rbufS(nxfd2,:)+lam(nxf,nyf-1,:))+fc*lam(nxf,nyf,:)) ! NE corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     do j=2,nyf-2,2
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+omeph*(fx*((rbufW(j/2,:)+lam(nxf,j,:))*rbufE(j/2,:)+(lam(nxf,j,:)+lam(nxf-1,j,:))*u(nxf-1,j,:)) &
@@ -1844,11 +1920,19 @@ endif
     u(nxf,nyf,:)=Oomeph*u(nxf,nyf,:)+omeph*(fx*((rbufW(nyfd2,:)+lam(nxf,nyf,:))*rbufE(nyfd2,:) &
       +(lam(nxf,nyf,:)+lam(nxf-1,nyf,:))*u(nxf-1,nyf,:))+fy*((rbufS(nxfd2,:)+lam(nxf,nyf,:))*rbufN(nxfd2,:) &
       +(lam(nxf,nyf,:)+lam(nxf,nyf-1,:))*u(nxf,nyf-1,:))-rhs(nxf,nyf,:))/(fx*(rbufW(nyfd2,:)+lam(nxf-1,nyf,:)) &
+<<<<<<< HEAD
       +fy*(rbufS(nxfd2,:)+lam(nxf,nyf-1,:))+fc*lam(nxf,nyf,:)) !.local NE corner
   endif
 
   call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
   call MPI_WAITALL(2,(/req(5),req(7)/),(/stat(:,5),stat(:,7)/),ierr)
+=======
+      +fy*(rbufS(nxfd2,:)+lam(nxf,nyf-1,:))+fc*lam(nxf,nyf,:)) ! NE corner
+  endif
+
+    call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+    call MPI_WAITALL(2,(/req(5),req(7)/),(/stat(:,5),stat(:,7)/),ierr)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !.Send top row of array to North rank
   sbufN=u(1:nxf-1:2,nyf,:)
   call MPI_ISEND(sbufN,nxfd2*nzL,MPI_DOUBLE_PRECISION,Nrank, &
@@ -1893,6 +1977,7 @@ endif
   enddo
 !.Left boundary, odd j
   call MPI_WAITALL(2,(/req(6),req(8)/),(/stat(:,6),stat(:,8)/),ierr)
+<<<<<<< HEAD
   if (iIDph(ng)==0) then !.Left most process (along x)
     u(1,1,:)=Oomeph*u(1,1,:)+omeph*(fx*((lam(2,1,:)+(1.0_dp+2.0_dp*Lru)*lam(1,1,:))*u(2,1,:)+2.0_dp*lam(1,1,:)*Lsu) &
       +fy*((lam(1,2,:)+lam(1,1,:))*u(1,2,:)+(lam(1,1,:)+rbufN(1,:))*rbufS(1,:)) &
@@ -1901,11 +1986,25 @@ endif
       u(1,j,:)=Oomeph*u(1,j,:)+omeph*(fx*((lam(2,j,:)+(1.0_dp+2.0_dp*Lru)*lam(1,j,:))*u(2,j,:)+2.0_dp*lam(1,j,:)*Lsu) &
         +fy*((lam(1,j+1,:)+lam(1,j,:))*u(1,j+1,:)+(lam(1,j,:)+lam(1,j-1,:))*u(1,j-1,:)) &
         -rhs(1,j,:))/(fx*(lam(2,j,:)+(1.0_dp-2.0_dp*Lqu)*lam(1,j,:))+fy*(lam(1,j+1,:)+lam(1,j-1,:))+fc*lam(1,j,:))
+=======
+  if (iIDph(ng)==0) then
+    u(1,1,:)=Oomeph*u(1,1,:)+omeph*(fx*((lam(2,1,:)+(1.0_dp+2.0_dp*lru)*lam(1,1,:))*u(2,1,:)+2.0_dp*lam(1,1,:)*lsu) &
+      +fy*((lam(1,2,:)+lam(1,1,:))*u(1,2,:)+(lam(1,1,:)+rbufN(1,:))*rbufS(1,:)) &
+      -rhs(1,1,:))/(fx*(lam(2,1,:)+(1.0_dp-2.0_dp*lqu)*lam(1,1,:))+fy*(lam(1,2,:)+rbufN(1,:))+fc*lam(1,1,:)) ! SW corner
+    do j=3,nyf-1,2
+      u(1,j,:)=Oomeph*u(1,j,:)+omeph*(fx*((lam(2,j,:)+(1.0_dp+2.0_dp*lru)*lam(1,j,:))*u(2,j,:)+2.0_dp*lam(1,j,:)*lsu) &
+        +fy*((lam(1,j+1,:)+lam(1,j,:))*u(1,j+1,:)+(lam(1,j,:)+lam(1,j-1,:))*u(1,j-1,:)) &
+        -rhs(1,j,:))/(fx*(lam(2,j,:)+(1.0_dp-2.0_dp*lqu)*lam(1,j,:))+fy*(lam(1,j+1,:)+lam(1,j-1,:))+fc*lam(1,j,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     enddo
   else
     u(1,1,:)=Oomeph*u(1,1,:)+omeph*(fx*((lam(2,1,:)+lam(1,1,:))*u(2,1,:)+(lam(1,1,:)+rbufE(1,:))*rbufW(1,:)) &
       +fy*((lam(1,2,:)+lam(1,1,:))*u(1,2,:)+(lam(1,1,:)+rbufN(1,:))*rbufS(1,:)) &
+<<<<<<< HEAD
       -rhs(1,1,:))/(fx*(lam(2,1,:)+rbufE(1,:))+fy*(lam(1,2,:)+rbufN(1,:))+fc*lam(1,1,:)) !.local SW corner
+=======
+      -rhs(1,1,:))/(fx*(lam(2,1,:)+rbufE(1,:))+fy*(lam(1,2,:)+rbufN(1,:))+fc*lam(1,1,:)) ! SW corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do j=3,nyf-1,2
       u(1,j,:)=Oomeph*u(1,j,:)+omeph*(fx*((lam(2,j,:)+lam(1,j,:))*u(2,j,:)+(lam(1,j,:)+rbufE((j+1)/2,:))*rbufW((j+1)/2,:)) &
         +fy*((lam(1,j+1,:)+lam(1,j,:))*u(1,j+1,:)+(lam(1,j,:)+lam(1,j-1,:))*u(1,j-1,:)) &
@@ -1963,6 +2062,7 @@ endif
   enddo
 !.Left boundary, even j
   call MPI_WAITALL(2,(/req(6),req(8)/),(/stat(:,6),stat(:,8)/),ierr)
+<<<<<<< HEAD
   if (iIDph(ng)==0) then !.Left most process (along x)
     do j=2,nyf-2,2
       u(1,j,:)=Oomeph*u(1,j,:)+omeph*(fx*((lam(2,j,:)+(1.0_dp+2.0_dp*Lru)*lam(1,j,:))*u(2,j,:)+2.0_dp*lam(1,j,:)*Lsu) &
@@ -1972,6 +2072,17 @@ endif
     u(1,nyf,:)=Oomeph*u(1,nyf,:)+omeph*(fx*((lam(2,nyf,:)+(1.0_dp+2.0_dp*Lru)*lam(1,nyf,:))*u(2,nyf,:)+2.0_dp*lam(1,nyf,:)*Lsu) &
       +fy*((rbufS(1,:)+lam(1,nyf,:))*rbufN(1,:)+(lam(1,nyf,:)+lam(1,nyf-1,:))*u(1,nyf-1,:)) &
       -rhs(1,nyf,:))/(fx*(lam(2,nyf,:)+(1.0_dp-2.0_dp*Lqu)*lam(1,nyf,:))+fy*(rbufS(1,:)+lam(1,nyf-1,:))+fc*lam(1,nyf,:)) !.global NW corner
+=======
+  if (iIDph(ng)==0) then
+    do j=2,nyf-2,2
+      u(1,j,:)=Oomeph*u(1,j,:)+omeph*(fx*((lam(2,j,:)+(1.0_dp+2.0_dp*lru)*lam(1,j,:))*u(2,j,:)+2.0_dp*lam(1,j,:)*lsu) &
+        +fy*((lam(1,j+1,:)+lam(1,j,:))*u(1,j+1,:)+(lam(1,j,:)+lam(1,j-1,:))*u(1,j-1,:)) &
+        -rhs(1,j,:))/(fx*(lam(2,j,:)+(1.0_dp-2.0_dp*lqu)*lam(1,j,:))+fy*(lam(1,j+1,:)+lam(1,j-1,:))+fc*lam(1,j,:))
+    enddo
+    u(1,nyf,:)=Oomeph*u(1,nyf,:)+omeph*(fx*((lam(2,nyf,:)+(1.0_dp+2.0_dp*lru)*lam(1,nyf,:))*u(2,nyf,:)+2.0_dp*lam(1,nyf,:)*lsu) &
+      +fy*((rbufS(1,:)+lam(1,nyf,:))*rbufN(1,:)+(lam(1,nyf,:)+lam(1,nyf-1,:))*u(1,nyf-1,:)) &
+      -rhs(1,nyf,:))/(fx*(lam(2,nyf,:)+(1.0_dp-2.0_dp*lqu)*lam(1,nyf,:))+fy*(rbufS(1,:)+lam(1,nyf-1,:))+fc*lam(1,nyf,:)) ! NW corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     do j=2,nyf-2,2
       u(1,j,:)=Oomeph*u(1,j,:)+omeph*(fx*((lam(2,j,:)+lam(1,j,:))*u(2,j,:)+(lam(1,j,:)+rbufE(j/2,:))*rbufW(j/2,:)) &
@@ -1980,11 +2091,19 @@ endif
     enddo
     u(1,nyf,:)=Oomeph*u(1,nyf,:)+omeph*(fx*((lam(2,nyf,:)+lam(1,nyf,:))*u(2,nyf,:)+(lam(1,nyf,:)+rbufE(nyfd2,:))*rbufW(nyfd2,:)) &
       +fy*((rbufS(1,:)+lam(1,nyf,:))*rbufN(1,:)+(lam(1,nyf,:)+lam(1,nyf-1,:))*u(1,nyf-1,:)) &
+<<<<<<< HEAD
       -rhs(1,nyf,:))/(fx*(lam(2,nyf,:)+rbufE(nyfd2,:))+fy*(rbufS(1,:)+lam(1,nyf-1,:))+fc*lam(1,nyf,:)) !.local NW corner
   endif
 
   call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
   call MPI_WAITALL(2,(/req(5),req(7)/),(/stat(:,5),stat(:,7)/),ierr)
+=======
+      -rhs(1,nyf,:))/(fx*(lam(2,nyf,:)+rbufE(nyfd2,:))+fy*(rbufS(1,:)+lam(1,nyf-1,:))+fc*lam(1,nyf,:)) ! NW corner
+  endif
+
+    call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+    call MPI_WAITALL(2,(/req(5),req(7)/),(/stat(:,5),stat(:,7)/),ierr)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !.Send top row of array to North rank
   sbufN=u(2:nxf:2,nyf,:)
   call MPI_ISEND(sbufN,nxfd2*nzL,MPI_DOUBLE_PRECISION,Nrank, &
@@ -2029,11 +2148,19 @@ endif
   enddo
 !.Right boundary, odd j
     call MPI_WAITALL(2,(/req(6),req(8)/),(/stat(:,6),stat(:,8)/),ierr)
+<<<<<<< HEAD
   if (iIDph(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf,1,:)=Oomeph*u(nxf,1,:)+omeph*(fx*0.25_dp*(2.0_dp*lam(nxf,1,:)*(6.0_dp*ur(1,:)+u(il,1,:)) &
       +(-2.0_dp*lam(nxf,1,:)+4.0_dp*lam(nxf-1,1,:))*u(nxf-1,1,:)) &
       +fy*((lam(nxf,2,:)+lam(nxf,1,:))*u(nxf,2,:)+(lam(nxf,1,:)+rbufN(nxfd2,:))*rbufS(nxfd2,:))-rhs(nxf,1,:)) &
       /(fx*(lam(nxf,1,:)+lam(nxf-1,1,:))+fy*(lam(nxf,2,:)+rbufN(nxfd2,:))+fc*lam(nxf,1,:)) !.global SE corner
+=======
+  if (iIDph(ng)==iprocsm1) then
+    u(nxf,1,:)=Oomeph*u(nxf,1,:)+omeph*(fx*0.25_dp*(2.0_dp*lam(nxf,1,:)*(6.0_dp*ur(1,:)+u(il,1,:)) &
+      +(-2.0_dp*lam(nxf,1,:)+4.0_dp*lam(nxf-1,1,:))*u(nxf-1,1,:)) &
+      +fy*((lam(nxf,2,:)+lam(nxf,1,:))*u(nxf,2,:)+(lam(nxf,1,:)+rbufN(nxfd2,:))*rbufS(nxfd2,:))-rhs(nxf,1,:)) &
+      /(fx*(lam(nxf,1,:)+lam(nxf-1,1,:))+fy*(lam(nxf,2,:)+rbufN(nxfd2,:))+fc*lam(nxf,1,:)) ! SE corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do j=3,nyf-1,2
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+omeph*(fx*0.25_dp*(2.0_dp*lam(nxf,j,:)*(6.0_dp*ur(j,:)+u(il,j,:)) &
         +(-2.0_dp*lam(nxf,j,:)+4.0_dp*lam(nxf-1,j,:))*u(nxf-1,j,:)) &
@@ -2043,7 +2170,11 @@ endif
   else
     u(nxf,1,:)=Oomeph*u(nxf,1,:)+omeph*(fx*((rbufW(1,:)+lam(nxf,1,:))*rbufE(1,:)+(lam(nxf,1,:)+lam(nxf-1,1,:))*u(nxf-1,1,:)) &
       +fy*((lam(nxf,2,:)+lam(nxf,1,:))*u(nxf,2,:)+(lam(nxf,1,:)+rbufN(nxfd2,:))*rbufS(nxfd2,:)) &
+<<<<<<< HEAD
       -rhs(nxf,1,:))/(fx*(rbufW(1,:)+lam(nxf-1,1,:))+fy*(lam(nxf,2,:)+rbufN(nxfd2,:))+fc*lam(nxf,1,:)) !.local SE corner
+=======
+      -rhs(nxf,1,:))/(fx*(rbufW(1,:)+lam(nxf-1,1,:))+fy*(lam(nxf,2,:)+rbufN(nxfd2,:))+fc*lam(nxf,1,:)) ! SE corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do j=3,nyf-1,2
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+omeph*(fx*((rbufW((j+1)/2,:)+lam(nxf,j,:))*rbufE((j+1)/2,:) &
         +(lam(nxf,j,:)+lam(nxf-1,j,:))*u(nxf-1,j,:))+fy*((lam(nxf,j+1,:)+lam(nxf,j,:))*u(nxf,j+1,:) &
@@ -2052,6 +2183,7 @@ endif
     enddo
   endif
 
+<<<<<<< HEAD
   call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
   call MPI_WAITALL(2,(/req(5),req(7)/),(/stat(:,5),stat(:,7)/),ierr)
   end subroutine relaxphi
@@ -2070,15 +2202,31 @@ endif
 !. real(dp) dimension(:,:) ur: Dirichlet value for Right boundary
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) resphi: negated residual
+=======
+    call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+    call MPI_WAITALL(2,(/req(5),req(7)/),(/stat(:,5),stat(:,7)/),ierr)
+  end subroutine relaxphi
+!*********************************************************
+  function resphi(ng,u,lam,rhs,xBC,ur)
+! Returns minus the residual. Input quantities are u and rhs, while
+! the residual is returned in res. All three quantities are square
+! arrays with the same off dimension.
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), dimension(:,:,:), intent(in) :: u, lam, rhs
   real(DP), intent(in), optional :: ur(:,:)
   integer(I4B), intent(in) :: ng,xBC(:)
   real(DP), allocatable :: resphi(:,:,:)
+<<<<<<< HEAD
   real(DP), allocatable :: Lsu(:),loc1D(:) !Lsu(:,:),Rsu(:,:)
   integer(I4B) :: i,j,k,il,Nrank,Srank,Erank,Wrank
   real(DP) :: fx,fy,fc,Lqu,Lru,Rqu,Rru,Rsu
+=======
+  real(DP), allocatable :: lsu(:),loc1D(:) !lsu(:,:),rsu(:,:)
+  integer(I4B) :: i,j,k,il,Nrank,Srank,Erank,Wrank
+  real(DP) :: fx,fy,fc,lqu,lru,rqu,rru,rsu
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                            sbufN,rbufS,sbufS,rbufN
   real(DP), allocatable, dimension(:) :: SEu,SElam,NWu,NWlam
@@ -2088,14 +2236,18 @@ endif
 #IF (MGTIMER==1)
     call CPU_TIME(rest1)
 #ENDIF
+<<<<<<< HEAD
 
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank=nborph(ng,1)
   Erank=nborph(ng,3)
   Srank=nborph(ng,5)
   Wrank=nborph(ng,7)
 
   allocate(resphi(nxf,nyf,nzL))
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -2146,6 +2298,52 @@ endif
     il = nxf-2
   else
     il = nxf-1
+=======
+!.LHS BC of u
+!  allocate(lsu(nyf,nzL))
+  allocate(lsu(nzL),loc1D(nzL))
+  if (xBC(1)==0) then
+!...linear extrapolation w/o boundary value
+    lqu=2.0_dp
+    lru=-1.0_dp
+    lsu=0.0_dp
+  elseif (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lqu=-1.0_dp
+    lru=0.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u(1,:,k))
+    call MPI_ALLreduce(loc1D,lsu,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMph(ng,1),ierr)
+    lsu=2.0_dp*lsu/dble(nyf*jprocsph(ng))
+  else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+    lqu=dble(xBC(1))
+    lru=0.0_dp
+    lsu=0.0_dp
+  endif
+!.RHS BC of u
+!  allocate(rsu(nyf,nzL))
+  if (xBC(2)==0) then
+!...linear extrapolation w/o boundary value
+    rqu=2.0_dp
+    rru=-1.0_dp
+    rsu=0.0_dp
+!...linear extrapolation w/ boundary value
+!    rqu=-1.0_dp
+!    rru=0.0_dp
+!    rsu=2.0_dp*ur
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rqu=dble(xBC(2))
+    rru=0.0_dp
+    rsu=0.0_dp
+  endif
+  fx=0.5_dp*((dble(nxf*iprocsph(ng))/bLx)**2)         ! 1/(hx^2)
+  fy=0.5_dp*((dble(nyf*jprocsph(ng))/bLy)**2)         ! 1/(hy^2)
+  fc=2.0_dp*(fx+fy)
+  if (nxf>2) then ! Used in one-sided stencil at RHS Dirichlet boundary
+    il=nxf-2
+  else
+    il=nxf-1
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 
 !.When sending/receiving lam data, the names don't apply. Try to use
@@ -2194,7 +2392,11 @@ endif
 
 !.Boundary points
   call MPI_WAITALL(2,(/req(5),req(6)/),(/stat(:,5),stat(:,6)/),ierr)
+<<<<<<< HEAD
   do i=2,nxf-1 !.Bottom boundary
+=======
+  do i=2,nxf-1 ! Bottom boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     resphi(i,1,:)=-(fx*((lam(i+1,1,:)+lam(i,1,:))*u(i+1,1,:) &
       +(lam(i,1,:)+lam(i-1,1,:))*u(i-1,1,:))+fy*((lam(i,2,:)+lam(i,1,:))*u(i,2,:) &
       +(lam(i,1,:)+rbufN(i,:))*rbufS(i,:))-(fx*(lam(i+1,1,:)+lam(i-1,1,:)) &
@@ -2203,6 +2405,7 @@ endif
   SEu=rbufS(nxf,:)
   SElam=rbufN(nxf,:)
   call MPI_WAITALL(2,(/req(7),req(8)/),(/stat(:,7),stat(:,8)/),ierr)
+<<<<<<< HEAD
   if (iIDph(ng) == 0) then !.Left most process (along x)
     resphi(1,1,:)=-(fx*((lam(2,1,:)+lam(1,1,:))*u(2,1,:) &  !.global SW corner
       +2.0_dp*lam(1,1,:)*(Lqu*u(1,1,:)+Lru*u(2,1,:)+Lsu))+fy*((lam(1,2,:)+lam(1,1,:))*u(1,2,:) &
@@ -2211,15 +2414,33 @@ endif
     do j=2,nyf-1 !.global left boundary
       resphi(1,j,:)=-(fx*((lam(2,j,:)+lam(1,j,:))*u(2,j,:) &
         +2.0_dp*lam(1,j,:)*(Lqu*u(1,j,:)+Lru*u(2,j,:)+Lsu))+fy*((lam(1,j+1,:)+lam(1,j,:))*u(1,j+1,:) &
+=======
+  if (iIDph(ng) == 0) then
+    resphi(1,1,:)=-(fx*((lam(2,1,:)+lam(1,1,:))*u(2,1,:) &  ! SW corner
+      +2.0_dp*lam(1,1,:)*(lqu*u(1,1,:)+lru*u(2,1,:)+lsu))+fy*((lam(1,2,:)+lam(1,1,:))*u(1,2,:) &
+      +(lam(1,1,:)+rbufN(1,:))*rbufS(1,:))-(fx*(lam(2,1,:)+lam(1,1,:)) &
+      +fy*(lam(1,2,:)+rbufN(1,:))+fc*lam(1,1,:))*u(1,1,:))+rhs(1,1,:)
+    do j=2,nyf-1 ! Left boundary
+      resphi(1,j,:)=-(fx*((lam(2,j,:)+lam(1,j,:))*u(2,j,:) &
+        +2.0_dp*lam(1,j,:)*(lqu*u(1,j,:)+lru*u(2,j,:)+lsu))+fy*((lam(1,j+1,:)+lam(1,j,:))*u(1,j+1,:) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +(lam(1,j,:)+lam(1,j-1,:))*u(1,j-1,:))-(fx*(lam(2,j,:)+lam(1,j,:)) &
         +fy*(lam(1,j+1,:)+lam(1,j-1,:))+fc*lam(1,j,:))*u(1,j,:))+rhs(1,j,:)
     enddo
   else
+<<<<<<< HEAD
     resphi(1,1,:)=-(fx*((lam(2,1,:)+lam(1,1,:))*u(2,1,:) & !.local SW corner
       +(lam(1,1,:)+rbufE(1,:))*rbufW(1,:))+fy*((lam(1,2,:)+lam(1,1,:))*u(1,2,:) &
       +(lam(1,1,:)+rbufN(1,:))*rbufS(1,:))-(fx*(lam(2,1,:)+rbufE(1,:)) &
       +fy*(lam(1,2,:)+rbufN(1,:))+fc*lam(1,1,:))*u(1,1,:))+rhs(1,1,:)
     do j=2,nyf-1 !.local left boundary
+=======
+    resphi(1,1,:)=-(fx*((lam(2,1,:)+lam(1,1,:))*u(2,1,:) & ! SW corner
+      +(lam(1,1,:)+rbufE(1,:))*rbufW(1,:))+fy*((lam(1,2,:)+lam(1,1,:))*u(1,2,:) &
+      +(lam(1,1,:)+rbufN(1,:))*rbufS(1,:))-(fx*(lam(2,1,:)+rbufE(1,:)) &
+      +fy*(lam(1,2,:)+rbufN(1,:))+fc*lam(1,1,:))*u(1,1,:))+rhs(1,1,:)
+    do j=2,nyf-1 ! Left boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       resphi(1,j,:)=-(fx*((lam(2,j,:)+lam(1,j,:))*u(2,j,:) &
         +(lam(1,j,:)+rbufE(j,:))*rbufW(j,:))+fy*((lam(1,j+1,:)+lam(1,j,:))*u(1,j+1,:) &
         +(lam(1,j,:)+lam(1,j-1,:))*u(1,j-1,:))-(fx*(lam(2,j,:)+rbufE(j,:)) &
@@ -2229,8 +2450,13 @@ endif
     NWlam=rbufE(nyf,:)
   endif
 
+<<<<<<< HEAD
   call MPI_WAITALL(2,(/req(1),req(2)/),(/stat(:,1),stat(:,2)/),ierr)
   call MPI_WAITALL(2,(/req(3),req(4)/),(/stat(:,3),stat(:,4)/),ierr)
+=======
+    call MPI_WAITALL(2,(/req(1),req(2)/),(/stat(:,1),stat(:,2)/),ierr)
+    call MPI_WAITALL(2,(/req(3),req(4)/),(/stat(:,3),stat(:,4)/),ierr)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !.Send bottom row of u to South rank
   sbufS=u(:,1,:)
   call MPI_ISEND(sbufS,nxf*nzL,MPI_DOUBLE_PRECISION,Srank, &
@@ -2260,12 +2486,17 @@ endif
   call MPI_IRECV(rbufW,nyf*nzL,MPI_DOUBLE_PRECISION,Erank, &
                  0,COMMph(ng,2),req(8),ierr)
   call MPI_WAITALL(2,(/req(5),req(6)/),(/stat(:,5),stat(:,6)/),ierr)
+<<<<<<< HEAD
   do i=2,nxf-1 !.Top boundary
+=======
+  do i=2,nxf-1 ! Top boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     resphi(i,nyf,:)=-(fx*((lam(i+1,nyf,:)+lam(i,nyf,:))*u(i+1,nyf,:) &
       +(lam(i,nyf,:)+lam(i-1,nyf,:))*u(i-1,nyf,:))+fy*((rbufS(i,:)+lam(i,nyf,:))*rbufN(i,:) &
       +(lam(i,nyf,:)+lam(i,nyf-1,:))*u(i,nyf-1,:))-(fx*(lam(i+1,nyf,:)+lam(i-1,nyf,:)) &
       +fy*(rbufS(i,:)+lam(i,nyf-1,:))+fc*lam(i,nyf,:))*u(i,nyf,:))+rhs(i,nyf,:)
   enddo
+<<<<<<< HEAD
   if (iIDph(ng)==0) then !.Left most process (along x)
 !...global NW corner
     resphi(1,nyf,:)=-(fx*((lam(2,nyf,:)+lam(1,nyf,:))*u(2,nyf,:) &
@@ -2273,6 +2504,14 @@ endif
       +(lam(1,nyf,:)+lam(1,nyf-1,:))*u(1,nyf-1,:))-(fx*(lam(2,nyf,:)+lam(1,nyf,:)) &
       +fy*(rbufS(1,:)+lam(1,nyf-1,:))+fc*lam(1,nyf,:))*u(1,nyf,:))+rhs(1,nyf,:)
   else !.local NW corner
+=======
+  if (iIDph(ng)==0) then ! NW corner
+    resphi(1,nyf,:)=-(fx*((lam(2,nyf,:)+lam(1,nyf,:))*u(2,nyf,:) &
+      +2.0_dp*lam(1,nyf,:)*(lqu*u(1,nyf,:)+lru*u(2,nyf,:)+lsu))+fy*((rbufS(1,:)+lam(1,nyf,:))*rbufN(1,:) &
+      +(lam(1,nyf,:)+lam(1,nyf-1,:))*u(1,nyf-1,:))-(fx*(lam(2,nyf,:)+lam(1,nyf,:)) &
+      +fy*(rbufS(1,:)+lam(1,nyf-1,:))+fc*lam(1,nyf,:))*u(1,nyf,:))+rhs(1,nyf,:)
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     resphi(1,nyf,:)=-(fx*((lam(2,nyf,:)+lam(1,nyf,:))*u(2,nyf,:) &
       +(lam(1,nyf,:)+NWlam)*NWu)+fy*((rbufS(1,:)+lam(1,nyf,:))*rbufN(1,:) &
       +(lam(1,nyf,:)+lam(1,nyf-1,:))*u(1,nyf-1,:))-(fx*(lam(2,nyf,:)+NWlam) &
@@ -2280,13 +2519,22 @@ endif
   endif
 
   call MPI_WAITALL(2,(/req(7),req(8)/),(/stat(:,7),stat(:,8)/),ierr)
+<<<<<<< HEAD
   if (iIDph(ng) == iprocsm1) then !.Right most process (along x)
+=======
+  if (iIDph(ng) == iprocsm1) then
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     resphi(nxf,1,:)=-(fx*0.25_dp*(2.0_dp*lam(nxf,1,:)*(6.0_dp*ur(1,:)+u(il,1,:)) &
       +(-2.0_dp*lam(nxf,1,:)+4.0_dp*lam(nxf-1,1,:))*u(nxf-1,1,:)) &
       +fy*((lam(nxf,2,:)+lam(nxf,1,:))*u(nxf,2,:)+(lam(nxf,1,:)+SElam)*SEu) &
       -(fx*(lam(nxf,1,:)+lam(nxf-1,1,:))+fy*(lam(nxf,2,:)+SElam) &
+<<<<<<< HEAD
       +fc*lam(nxf,1,:))*u(nxf,1,:))+rhs(nxf,1,:) !.global SE corner
     do j=2,nyf-1 !.global right boundary
+=======
+      +fc*lam(nxf,1,:))*u(nxf,1,:))+rhs(nxf,1,:) ! SE corner
+    do j=2,nyf-1 ! Right boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       resphi(nxf,j,:)=-(fx*0.25_dp*(2.0_dp*lam(nxf,j,:)*(6.0_dp*ur(j,:)+u(il,j,:)) &
         +(-2.0_dp*lam(nxf,j,:)+4.0_dp*lam(nxf-1,j,:))*u(nxf-1,j,:)) &
         +fy*((lam(nxf,j+1,:)+lam(nxf,j,:))*u(nxf,j+1,:)+(lam(nxf,j,:)+lam(nxf,j-1,:))*u(nxf,j-1,:)) &
@@ -2297,6 +2545,7 @@ endif
       +(-2.0_dp*lam(nxf,nyf,:)+4.0_dp*lam(nxf-1,nyf,:))*u(nxf-1,nyf,:)) &
       +fy*((rbufS(nxf,:)+lam(nxf,nyf,:))*rbufN(nxf,:)+(lam(nxf,nyf,:)+lam(nxf,nyf-1,:))*u(nxf,nyf-1,:)) &
       -(fx*(lam(nxf,nyf,:)+lam(nxf-1,nyf,:))+fy*(rbufS(nxf,:)+lam(nxf,nyf-1,:)) &
+<<<<<<< HEAD
       +fc*lam(nxf,nyf,:))*u(nxf,nyf,:))+rhs(nxf,nyf,:) !.global NE corner
   else
     resphi(nxf,1,:)=-(fx*((rbufW(1,:)+lam(nxf,1,:))*rbufE(1,:) & !.local SE corner
@@ -2304,6 +2553,15 @@ endif
       +(lam(nxf,1,:)+SElam)*SEu)-(fx*(rbufW(1,:)+lam(nxf-1,1,:)) &
       +fy*(lam(nxf,2,:)+SElam)+fc*lam(nxf,1,:))*u(nxf,1,:))+rhs(nxf,1,:)
     do j=2,nyf-1 !.local right boundary
+=======
+      +fc*lam(nxf,nyf,:))*u(nxf,nyf,:))+rhs(nxf,nyf,:) ! NE corner
+  else
+    resphi(nxf,1,:)=-(fx*((rbufW(1,:)+lam(nxf,1,:))*rbufE(1,:) & ! SE corner
+      +(lam(nxf,1,:)+lam(nxf-1,1,:))*u(nxf-1,1,:))+fy*((lam(nxf,2,:)+lam(nxf,1,:))*u(nxf,2,:) &
+      +(lam(nxf,1,:)+SElam)*SEu)-(fx*(rbufW(1,:)+lam(nxf-1,1,:)) &
+      +fy*(lam(nxf,2,:)+SElam)+fc*lam(nxf,1,:))*u(nxf,1,:))+rhs(nxf,1,:)
+    do j=2,nyf-1 ! Right boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       resphi(nxf,j,:)=-(fx*((rbufW(j,:)+lam(nxf,j,:))*rbufE(j,:) &
         +(lam(nxf,j,:)+lam(nxf-1,j,:))*u(nxf-1,j,:))+fy*((lam(nxf,j+1,:)+lam(nxf,j,:))*u(nxf,j+1,:) &
         +(lam(nxf,j,:)+lam(nxf,j-1,:))*u(nxf,j-1,:))-(fx*(rbufW(j,:)+lam(nxf-1,j,:)) &
@@ -2312,10 +2570,17 @@ endif
     resphi(nxf,nyf,:)=-(fx*((rbufW(nyf,:)+lam(nxf,nyf,:))*rbufE(nyf,:) &
       +(lam(nxf,nyf,:)+lam(nxf-1,nyf,:))*u(nxf-1,nyf,:))+fy*((rbufS(nxf,:)+lam(nxf,nyf,:))*rbufN(nxf,:) &
       +(lam(nxf,nyf,:)+lam(nxf,nyf-1,:))*u(nxf,nyf-1,:))-(fx*(rbufW(nyf,:)+lam(nxf-1,nyf,:)) &
+<<<<<<< HEAD
       +fy*(rbufS(nxf,:)+lam(nxf,nyf-1,:))+fc*lam(nxf,nyf,:))*u(nxf,nyf,:))+rhs(nxf,nyf,:) !.global NE corner
   endif
   call MPI_WAITALL(2,(/req(1),req(2)/),(/stat(:,1),stat(:,2)/),ierr)
   call MPI_WAITALL(2,(/req(3),req(4)/),(/stat(:,3),stat(:,4)/),ierr)
+=======
+      +fy*(rbufS(nxf,:)+lam(nxf,nyf-1,:))+fc*lam(nxf,nyf,:))*u(nxf,nyf,:))+rhs(nxf,nyf,:) ! NE corner
+  endif
+    call MPI_WAITALL(2,(/req(1),req(2)/),(/stat(:,1),stat(:,2)/),ierr)
+    call MPI_WAITALL(2,(/req(3),req(4)/),(/stat(:,3),stat(:,4)/),ierr)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
 #IF (MGTIMER==1)
     call CPU_TIME(rest2)
@@ -2324,6 +2589,7 @@ endif
   end function resphi
 !*********************************************************
   recursive subroutine Gcycpsi(ng,u,rhs,xBC)
+<<<<<<< HEAD
 !.Gamma cycles to solve modified Helmholtz equation and obtain psi
 !                   u-ksq*L(u)=rho
 !.where u=psi, rho=rpsi and ksq=(electron skin depth)^2
@@ -2334,6 +2600,11 @@ endif
 !. integer(2) xBC: boundary conditions along x
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u: updated solution at grid ng
+=======
+! Recursive multigrid iteration. On input, ng is the current level, u is
+! the current value of the solution, and rhs is the right-hand side.
+! On output u contains the improved solution at the current level.
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   integer(I4B), intent(in) :: ng
   real(DP), intent(inout) :: u(:,:,:)
@@ -2391,7 +2662,11 @@ endif
     nxf=nxu
     nyf=nyu
 
+<<<<<<< HEAD
     v=0.0_dp !.Zero for initial guess in next relaxation
+=======
+    v=0.0_dp ! Zero for initial guess in next relaxation
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
     if (acups(ng-1,1)) then
 !.....Only active processes proceed to next coarser grid
@@ -2434,6 +2709,7 @@ endif
   end subroutine Gcycpsi
 !*********************************************************
   subroutine relaxpsi(ng,u,rhs,xBC)
+<<<<<<< HEAD
 !.Red-black Gauss-Seidel relaxation of
 !                   u-ksq*L(u)=rho
 !.using a 2nd order accurate finite difference stencil.
@@ -2444,14 +2720,24 @@ endif
 !. integer(2) xBC: boundary conditions along x
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u: updated solution at grid ng
+=======
+! Red-black Gauss-Seidel relaxation. The current value of the
+! solution u is updated, using the right-hand-side function rhs.
+! u and rhs are square arrays of the same dimension
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), intent(in) :: rhs(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:)
   integer(I4B) :: i,j,k,nxfd2,nyfd2,Nrank,Srank,Erank,Wrank
+<<<<<<< HEAD
   real(DP) :: fx,fy,fc,Lq,Rq,delta,deltaL,deltaR
   real(DP), allocatable :: Ls(:),Rs(:),loc1D(:)
+=======
+  real(DP) :: fx,fy,fc,lq,rq,delta,delta1,delta2
+  real(DP), allocatable :: ls(:),rs(:),loc1D(:)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                            sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(4),stat(MPI_STATUS_SIZE,4),ierr
@@ -2459,12 +2745,16 @@ endif
 
   nxfd2=nxf/2
   nyfd2=nyf/2
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank=nborps(ng,1)
   Erank=nborps(ng,3)
   Srank=nborps(ng,5)
   Wrank=nborps(ng,7)
 
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -2484,10 +2774,28 @@ endif
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then !.symmetry
     Lq = dble(xBC(1))
     ls = 0.0_dp
+=======
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+  allocate(ls(nzL),rs(nzL),loc1D(nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u(1,:,k))
+    call MPI_ALLreduce(loc1D,ls,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMps(ng,1),ierr)
+    ls=2.0_dp*ls/dble(nyf*jprocsps(ng))
+  else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq = -1.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
     call MPI_ALLreduce(loc1D,rs,nzL,MPI_DOUBLE_PRECISION, &
@@ -2511,6 +2819,31 @@ endif
 !.Send buffer names indicate direction data is sent to
 !.and receive buffers direction data is received from.
 !.CAREFUL!!!!
+=======
+    rq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMps(ng,1),ierr)
+    rs=2.0_dp*rs/dble(nyf*jprocsps(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs=0.0_dp
+  endif
+!........................................................!
+  fx=-ksq*(dble(nxf)*iprocsps(ng)/bLx)**2
+  fy=-ksq*(dble(nyf)*jprocsps(ng)/bLy)**2
+  fc=2.0_dp*(fx+fy)
+!  delta=omeps/(1.0_dp-fc)
+!  delta1=omeps/(1.0_dp-(fc-fx*lq))
+!  delta2=omeps/(1.0_dp-(fc-fx*rq))
+  delta=1.0_dp/(1.0_dp-fc)
+  delta1=1.0_dp/(1.0_dp-(fc-fx*lq))
+  delta2=1.0_dp/(1.0_dp-(fc-fx*rq))
+
+!.Send buffer names indicate direction data is sent to
+!.and receive buffers direction data is received from.
+! CAREFUL!!!!
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   allocate(sbufS(nxfd2,nzL),rbufN(nxfd2,nzL),sbufW(nyfd2,nzL),rbufE(nyfd2,nzL))
 !.First do the even-even and odd-odd squares of the grid,
 !.i.e., the red squares of the checker-board
@@ -2545,6 +2878,7 @@ endif
   enddo
 !.Right boundary, even j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDps(ng) .eq. iprocsm1) then !.Right most process (along x)
     do j=2,nyf-2,2
 !      u(nxf,j,:)=Oomeps*u(nxf,j,:)+(rhs(nxf,j,:)-fx*(rs+u(nxf-1,j,:)) &
@@ -2554,6 +2888,17 @@ endif
 !    u(nxf,nyf,:)=Oomeps*u(nxf,nyf,:)+(rhs(nxf,nyf,:)-fx*(rs+u(nxf-1,nyf,:)) &
     u(nxf,nyf,:)=(rhs(nxf,nyf,:)-fx*(rs+u(nxf-1,nyf,:)) &
       -fy*(rbufN(nxfd2,:)+u(nxf,nyf-1,:)))*deltaR !.global NE corner
+=======
+  if (iIDps(ng) .eq. iprocsm1) then
+    do j=2,nyf-2,2
+!      u(nxf,j,:)=Oomeps*u(nxf,j,:)+(rhs(nxf,j,:)-fx*(rs+u(nxf-1,j,:)) &
+      u(nxf,j,:)=(rhs(nxf,j,:)-fx*(rs+u(nxf-1,j,:)) &
+        -fy*(u(nxf,j+1,:)+u(nxf,j-1,:)))*delta2
+    enddo
+!    u(nxf,nyf,:)=Oomeps*u(nxf,nyf,:)+(rhs(nxf,nyf,:)-fx*(rs+u(nxf-1,nyf,:)) &
+    u(nxf,nyf,:)=(rhs(nxf,nyf,:)-fx*(rs+u(nxf-1,nyf,:)) &
+      -fy*(rbufN(nxfd2,:)+u(nxf,nyf-1,:)))*delta2 ! NE corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     do j=2,nyf-2,2
 !      u(nxf,j,:)=Oomeps*u(nxf,j,:)+(rhs(nxf,j,:)-fx*(rbufE(j/2,:)+u(nxf-1,j,:)) &
@@ -2561,10 +2906,18 @@ endif
         -fy*(u(nxf,j+1,:)+u(nxf,j-1,:)))*delta
     enddo
     u(nxf,nyf,:)=(rhs(nxf,nyf,:)-fx*(rbufE(nyfd2,:)+u(nxf-1,nyf,:)) &
+<<<<<<< HEAD
       -fy*(rbufN(nxfd2,:)+u(nxf,nyf-1,:)))*delta !.local NE corner
   endif
 
   call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+=======
+      -fy*(rbufN(nxfd2,:)+u(nxf,nyf-1,:)))*delta
+  endif
+
+  call MPI_WAITALL(2,(/req(1),req(3)/), &
+    (/stat(:,1),stat(:,3)/),ierr)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   allocate(sbufN(nxfd2,nzL),rbufS(nxfd2,nzL),sbufE(nyfd2,nzL),rbufW(nyfd2,nzL))
 !.Send top row of array to North rank
   sbufN=u(1:nxf-1:2,nyf,:)
@@ -2596,6 +2949,7 @@ endif
   enddo
 !.Left boundary, odd j
   call MPI_WAIT(req2(4),stat2(:,4),ierr)
+<<<<<<< HEAD
   if (iIDps(ng)==0) then !.Left most process (along x)
 !    u(1,1,:)=Oomeps*u(1,1,:)+(rhs(1,1,:)-fx*(u(2,1,:)+Ls) &
     u(1,1,:)=(rhs(1,1,:)-fx*(u(2,1,:)+Ls) &
@@ -2607,12 +2961,29 @@ endif
     enddo
   else
 !    u(1,1,:)=Oomeps*u(1,1,:)+(rhs(1,1,:)-fx*(u(2,1,:)+rbufW(1,:)) &
+=======
+  if (iIDps(ng)==0) then
+!    u(1,1,:)=Oomeps*u(1,1,:)+(rhs(1,1,:)-fx*(u(2,1,:)+ls) &
+    u(1,1,:)=(rhs(1,1,:)-fx*(u(2,1,:)+ls) &
+      -fy*(u(1,2,:)+rbufS(1,:)))*delta1 ! SW corner
+    do j=3,nyf-1,2
+!      u(1,j,:)=Oomeps*u(1,j,:)+(rhs(1,j,:)-fx*(u(2,j,:)+ls) &
+      u(1,j,:)=(rhs(1,j,:)-fx*(u(2,j,:)+ls) &
+        -fy*(u(1,j+1,:)+u(1,j-1,:)))*delta1
+    enddo
+  else
+!!    u(1,1,:)=Oomeps*u(1,1,:)+(rhs(1,1,:)-fx*(u(2,1,:)+rbufW(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(1,1,:)=(rhs(1,1,:)-fx*(u(2,1,:)+rbufW(1,:)) &
       -fy*(u(1,2,:)+rbufS(1,:)))*delta
     do j=3,nyf-1,2
 !      u(1,j,:)=Oomeps*u(1,j,:)+(rhs(1,j,:)-fx*(u(2,j,:)+rbufW((j+1)/2,:)) &
       u(1,j,:)=(rhs(1,j,:)-fx*(u(2,j,:)+rbufW((j+1)/2,:)) &
+<<<<<<< HEAD
         -fy*(u(1,j+1,:)+u(1,j-1,:)))*delta !.local SW corner
+=======
+        -fy*(u(1,j+1,:)+u(1,j-1,:)))*delta
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     enddo
   endif
 !  call MPI_WAITALL(4,(/req(1),req(3),req2(1),req2(3)/), &
@@ -2653,6 +3024,7 @@ endif
   enddo
 !.Left boundary, even j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDps(ng)==0) then !.Left most process (along x)
     do j=2,nyf-2,2
 !      u(1,j,:)=Oomeps*u(1,j,:)+(rhs(1,j,:)-fx*(u(2,j,:)+Ls) &
@@ -2662,6 +3034,17 @@ endif
 !    u(1,nyf,:)=Oomeps*u(1,nyf,:)+(rhs(1,nyf,:)-fx*(u(2,nyf,:)+Ls) &
     u(1,nyf,:)=(rhs(1,nyf,:)-fx*(u(2,nyf,:)+Ls) &
       -fy*(rbufN(1,:)+u(1,nyf-1,:)))*deltaL !.global NW corner
+=======
+  if (iIDps(ng)==0) then
+    do j=2,nyf-2,2
+!      u(1,j,:)=Oomeps*u(1,j,:)+(rhs(1,j,:)-fx*(u(2,j,:)+ls) &
+      u(1,j,:)=(rhs(1,j,:)-fx*(u(2,j,:)+ls) &
+        -fy*(u(1,j+1,:)+u(1,j-1,:)))*delta1
+    enddo
+!    u(1,nyf,:)=Oomeps*u(1,nyf,:)+(rhs(1,nyf,:)-fx*(u(2,nyf,:)+ls) &
+    u(1,nyf,:)=(rhs(1,nyf,:)-fx*(u(2,nyf,:)+ls) &
+      -fy*(rbufN(1,:)+u(1,nyf-1,:)))*delta1 ! NW corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     do j=2,nyf-2,2
 !      u(1,j,:)=Oomeps*u(1,j,:)+(rhs(1,j,:)-fx*(u(2,j,:)+rbufW(j/2,:)) &
@@ -2670,9 +3053,16 @@ endif
     enddo
 !    u(1,nyf,:)=Oomeps*u(1,nyf,:)+(rhs(1,nyf,:)-fx*(u(2,nyf,:)+rbufW(nyfd2,:)) &
     u(1,nyf,:)=(rhs(1,nyf,:)-fx*(u(2,nyf,:)+rbufW(nyfd2,:)) &
+<<<<<<< HEAD
       -fy*(rbufN(1,:)+u(1,nyf-1,:)))*delta !.local NW corner
   endif
 !  call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+=======
+      -fy*(rbufN(1,:)+u(1,nyf-1,:)))*delta
+  endif
+!  call MPI_WAITALL(2,(/req(1),req(3)/), &
+!    (/stat(:,1),stat(:,3)/),ierr)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
 !.Send top row of array to North rank
   sbufN=u(2:nxf:2,nyf,:)
@@ -2704,6 +3094,7 @@ endif
   enddo
 !.Right boundary, odd j
   call MPI_WAIT(req2(4),stat2(:,4),ierr)
+<<<<<<< HEAD
   if (iIDps(ng) .eq. iprocsm1) then !.Right most process (along x)
 !    u(nxf,1,:)=Oomeps*u(nxf,1,:)+(rhs(nxf,1,:)-fx*(rs+u(nxf-1,1,:)) &
     u(nxf,1,:)=(rhs(nxf,1,:)-fx*(rs+u(nxf-1,1,:)) &
@@ -2712,6 +3103,16 @@ endif
 !      u(nxf,j,:)=Oomeps*u(nxf,j,:)+(rhs(nxf,j,:)-fx*(rs+u(nxf-1,j,:)) &
       u(nxf,j,:)=(rhs(nxf,j,:)-fx*(rs+u(nxf-1,j,:)) &
         -fy*(u(nxf,j+1,:)+u(nxf,j-1,:)))*deltaR
+=======
+  if (iIDps(ng) .eq. iprocsm1) then
+!    u(nxf,1,:)=Oomeps*u(nxf,1,:)+(rhs(nxf,1,:)-fx*(rs+u(nxf-1,1,:)) &
+    u(nxf,1,:)=(rhs(nxf,1,:)-fx*(rs+u(nxf-1,1,:)) &
+      -fy*(u(nxf,2,:)+rbufS(nxfd2,:)))*delta2 ! SE corner
+    do j=3,nyf-1,2
+!      u(nxf,j,:)=Oomeps*u(nxf,j,:)+(rhs(nxf,j,:)-fx*(rs+u(nxf-1,j,:)) &
+      u(nxf,j,:)=(rhs(nxf,j,:)-fx*(rs+u(nxf-1,j,:)) &
+        -fy*(u(nxf,j+1,:)+u(nxf,j-1,:)))*delta2
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     enddo
   else
 !    u(nxf,1,:)=Oomeps*u(nxf,1,:)+(rhs(nxf,1,:)-fx*(rbufE(1,:)+u(nxf-1,1,:)) &
@@ -2720,7 +3121,11 @@ endif
     do j=3,nyf-1,2
 !      u(nxf,j,:)=Oomeps*u(nxf,j,:)+(rhs(nxf,j,:)-fx*(rbufE((j+1)/2,:)+u(nxf-1,j,:)) &
       u(nxf,j,:)=(rhs(nxf,j,:)-fx*(rbufE((j+1)/2,:)+u(nxf-1,j,:)) &
+<<<<<<< HEAD
         -fy*(u(nxf,j+1,:)+u(nxf,j-1,:)))*delta !.local SE corner
+=======
+        -fy*(u(nxf,j+1,:)+u(nxf,j-1,:)))*delta
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     enddo
   endif
   call MPI_WAITALL(4,(/req(1),req(3),req2(1),req2(3)/), &
@@ -2729,6 +3134,7 @@ endif
   end subroutine relaxpsi
 !*********************************************************
   function respsi(ng,u,rhs,xBC)
+<<<<<<< HEAD
 !.Returns minus the residual of the modified Helmholtz equation.
 !                   res = rho - (u-ksq*L(u))
 !.INPUTS
@@ -2738,14 +3144,23 @@ endif
 !. integer(2) xBC: boundary conditions along x
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u: updated solution at grid ng
+=======
+!.Returns minus the residual for each equation. Input quantities
+!.are u, rhs, while the residual is returned in respsi
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), allocatable :: respsi(:,:,:)
   real(DP), intent(in) :: u(:,:,:),rhs(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:)
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank
+<<<<<<< HEAD
   real(DP) :: fx,fy,fc,Lq,Rq
   real(DP), allocatable :: Ls(:),Rs(:),loc1D(:)
+=======
+  real(DP) :: fx,fy,fc,lq,rq
+  real(DP), allocatable :: ls(:),rs(:),loc1D(:)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                            sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(8),stat(MPI_STATUS_SIZE,8)
@@ -2754,13 +3169,17 @@ endif
 #IF (MGTIMER==1)
     call CPU_TIME(rest1)
 #ENDIF
+<<<<<<< HEAD
 
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank=nborps(ng,1)
   Erank=nborps(ng,3)
   Srank=nborps(ng,5)
   Wrank=nborps(ng,7)
 
+<<<<<<< HEAD
   allocate(respsi(nxf,nyf,nzL),Ls(nzL),Rs(nzL),loc1D(nzL))
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
@@ -2779,10 +3198,25 @@ endif
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then !.symmetry
     Lq = dble(xBC(1))
     ls = 0.0_dp
+=======
+  allocate(respsi(nxf,nyf,nzL),ls(nzL),rs(nzL),loc1D(nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u(1,:,k))
+    call MPI_ALLreduce(loc1D,ls,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMps(ng,1),ierr)
+    ls=2.0_dp*ls/dble(nyf*jprocsps(ng))
+  else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq = -1.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
     call MPI_ALLreduce(loc1D,rs,nzL,MPI_DOUBLE_PRECISION, &
@@ -2795,6 +3229,20 @@ endif
   fx = -ksq*(dble(nxf)*iprocsps(ng)/bLx)**2         !.1/(hx^2)
   fy = -ksq*(dble(nyf)*jprocsps(ng)/bLy)**2         !.1/(hy^2)
   fc =  2.0_dp*(fx+fy)
+=======
+    rq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMps(ng,1),ierr)
+    rs=2.0_dp*rs/dble(nyf*jprocsps(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs=0.0_dp
+  endif
+  fx=-ksq*(dble(nxf)*iprocsps(ng)/bLx)**2         ! 1/(hx^2)
+  fy=-ksq*(dble(nyf)*jprocsps(ng)/bLy)**2         ! 1/(hy^2)
+  fc=2.0_dp*(fx+fy)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
   allocate(sbufN(nxf,nzL),rbufS(nxf,nzL),sbufE(nyf,nzL),rbufW(nyf,nzL))
   allocate(sbufS(nxf,nzL),rbufN(nxf,nzL),sbufW(nyf,nzL),rbufE(nyf,nzL))
@@ -2836,17 +3284,26 @@ endif
 
 !.Boundary points
   call MPI_WAIT(req(5),stat(:,5),ierr)
+<<<<<<< HEAD
   do i=2,nxf-1 !.bottom boundary
+=======
+  do i=2,nxf-1 ! bottom boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     respsi(i,1,:)=rhs(i,1,:)-(fx*(u(i+1,1,:)+u(i-1,1,:)) &
       +fy*(u(i,2,:)+rbufS(i,:))+(1.0_dp-fc)*u(i,1,:))
   enddo
   call MPI_WAIT(req(6),stat(:,6),ierr)
+<<<<<<< HEAD
   do i=2,nxf-1 !.top boundary
+=======
+  do i=2,nxf-1 ! top boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     respsi(i,nyf,:)=rhs(i,nyf,:)-(fx*(u(i+1,nyf,:)+u(i-1,nyf,:)) &
       +fy*(rbufN(i,:)+u(i,nyf-1,:))+(1.0_dp-fc)*u(i,nyf,:))
   enddo
 !.Left boundary
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDps(ng) == 0) then !.Left most process (along x)
     respsi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+Lq*u(1,1,:)+Ls) &
       +fy*(u(1,2,:)+rbufS(1,:))+(1.0_dp-fc)*u(1,1,:)) !.global SW corner
@@ -2859,11 +3316,26 @@ endif
   else
     respsi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+rbufW(1,:)) &
       +fy*(u(1,2,:)+rbufS(1,:))+(1.0_dp-fc)*u(1,1,:)) !.local SW corner
+=======
+  if (iIDps(ng) == 0) then
+    respsi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+lq*u(1,1,:)+ls) &
+      +fy*(u(1,2,:)+rbufS(1,:))+(1.0_dp-fc)*u(1,1,:)) ! SW corner
+    do j=2,nyf-1
+      respsi(1,j,:)=rhs(1,j,:)-(fx*(u(2,j,:)+lq*u(1,j,:)+ls) &
+        +fy*(u(1,j+1,:)+u(1,j-1,:))+(1.0_dp-fc)*u(1,j,:))
+    enddo
+    respsi(1,nyf,:)=rhs(1,nyf,:)-(fx*(u(2,nyf,:)+lq*u(1,nyf,:)+ls) &
+      +fy*(rbufN(1,:)+u(1,nyf-1,:))+(1.0_dp-fc)*u(1,nyf,:)) ! NW corner
+  else
+    respsi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+rbufW(1,:)) &
+      +fy*(u(1,2,:)+rbufS(1,:))+(1.0_dp-fc)*u(1,1,:)) ! SW corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do j=2,nyf-1
       respsi(1,j,:)=rhs(1,j,:)-(fx*(u(2,j,:)+rbufW(j,:)) &
         +fy*(u(1,j+1,:)+u(1,j-1,:))+(1.0_dp-fc)*u(1,j,:))
     enddo
     respsi(1,nyf,:)=rhs(1,nyf,:)-(fx*(u(2,nyf,:)+rbufW(nyf,:)) &
+<<<<<<< HEAD
       +fy*(rbufN(1,:)+u(1,nyf-1,:))+(1.0_dp-fc)*u(1,nyf,:)) !.local NW corner
   endif
 !.Right boundary
@@ -2880,12 +3352,34 @@ endif
   else
     respsi(nxf,1,:)=rhs(nxf,1,:)-(fx*(rbufE(1,:)+u(nxf-1,1,:)) &
       +fy*(u(nxf,2,:)+rbufS(nxf,:))+(1.0_dp-fc)*u(nxf,1,:)) !.local SE corner
+=======
+      +fy*(rbufN(1,:)+u(1,nyf-1,:))+(1.0_dp-fc)*u(1,nyf,:)) ! NW corner
+  endif
+!.Right boundary
+  call MPI_WAIT(req(8),stat(:,8),ierr)
+  if (iIDps(ng) == iprocsm1) then
+    respsi(nxf,1,:)=rhs(nxf,1,:)-(fx*(rq*u(nxf,1,:)+rs+u(nxf-1,1,:)) &
+      +fy*(u(nxf,2,:)+rbufS(nxf,:))+(1.0_dp-fc)*u(nxf,1,:)) ! SE corner
+    do j=2,nyf-1
+      respsi(nxf,j,:)=rhs(nxf,j,:)-(fx*(rq*u(nxf,j,:)+rs+u(nxf-1,j,:)) &
+        +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))+(1.0_dp-fc)*u(nxf,j,:))
+    enddo
+    respsi(nxf,nyf,:)=rhs(nxf,nyf,:)-(fx*(rq*u(nxf,nyf,:)+rs+u(nxf-1,nyf,:)) &
+      +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))+(1.0_dp-fc)*u(nxf,nyf,:)) ! NE corner
+  else
+    respsi(nxf,1,:)=rhs(nxf,1,:)-(fx*(rbufE(1,:)+u(nxf-1,1,:)) &
+      +fy*(u(nxf,2,:)+rbufS(nxf,:))+(1.0_dp-fc)*u(nxf,1,:)) ! SE corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do j=2,nyf-1
       respsi(nxf,j,:)=rhs(nxf,j,:)-(fx*(rbufE(j,:)+u(nxf-1,j,:)) &
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))+(1.0_dp-fc)*u(nxf,j,:))
     enddo
     respsi(nxf,nyf,:)=rhs(nxf,nyf,:)-(fx*(rbufE(nyf,:)+u(nxf-1,nyf,:)) &
+<<<<<<< HEAD
       +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))+(1.0_dp-fc)*u(nxf,nyf,:)) !.local NE corner
+=======
+      +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))+(1.0_dp-fc)*u(nxf,nyf,:)) ! NE corner
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
   call MPI_WAITALL(4,(/req(1),req(2),req(3),req(4)/), &
     (/stat(:,1),stat(:,2),stat(:,3),stat(:,4)/),ierr)
@@ -2898,6 +3392,7 @@ endif
 !*********************************************************
 #IF (HDop==4)
   recursive subroutine Gcychd(ng,u1,u2,rhs1,rhs2,xBC,qn)
+<<<<<<< HEAD
 !.Gamma cycles to solve equation from implicit 4th order
 !.Laplacian-based hyperdiffusion equation
 !.                   u + Diff*(L^2)u=rho
@@ -2911,6 +3406,8 @@ endif
 !. integer qn: which quantity is being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u1, u2: updated solution at grid ng
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   integer(I4B), intent(in) :: ng, xBC(:), qn
   real(DP), intent(inout) :: u1(:,:,:),u2(:,:,:)
@@ -3022,6 +3519,7 @@ endif
   end subroutine Gcychd
 !*********************************************************
   subroutine relaxhd(ng,u1,u2,rhs1,rhs2,xBC,qn)
+<<<<<<< HEAD
 !.Red-black Gauss-Seidel relaxation system of 2 equations
 !.                  u2 + Diff*L u1 = rhs1 (= rho)
 !.                       L u2 - u1 = rhs2 (= 0)
@@ -3033,6 +3531,11 @@ endif
 !. integer qn: quantity being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u1, u2: updated solution at grid ng
+=======
+! Red-black Gauss-Seidel relaxation. The current value of the
+! solution u is updated, using the right-hand-side function rhs.
+! u and rhs are square arrays of the same odd dimension
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), intent(inout) :: u1(:,:,:),u2(:,:,:)
@@ -3040,20 +3543,31 @@ endif
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank,nxfd2,nyfd2
   integer(I4B) :: ierr,req(8),stat(MPI_STATUS_SIZE,8)
+<<<<<<< HEAD
   real(DP), allocatable :: Ls1(:),Rs1(:),Ls2(:),Rs2(:),loc1D(:),b1(:),b2(:)
   real(DP), allocatable, dimension(:,:,:) :: sbufN,sbufE,sbufS,sbufW, &
                                              rbufN,rbufE,rbufS,rbufW
   real(DP) :: fx,fy,fc,fxD,fyD,fcD,delta,Lq,Rq,deltaL,deltaR
+=======
+  real(DP), allocatable :: ls1(:),rs1(:),ls2(:),rs2(:),loc1D(:),b1(:),b2(:)
+  real(DP), allocatable, dimension(:,:,:) :: sbufN,sbufE,sbufS,sbufW, &
+                                             rbufN,rbufE,rbufS,rbufW
+  real(DP) :: fx,fy,fc,fxD,fyD,fcD,delta,lq,rq,deltaL,deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
   nxfd2=nxf/2
   nyfd2=nyf/2
 
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank = nborhd(qn)%a(ng,1)
   Erank = nborhd(qn)%a(ng,3)
   Srank = nborhd(qn)%a(ng,5)
   Wrank = nborhd(qn)%a(ng,7)
 
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -3079,10 +3593,34 @@ endif
     Lq  = dble(xBC(1))
     Ls1 = 0.0_dp
     Ls2 = 0.0_dp
+=======
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+  allocate(ls1(nzL),rs1(nzL),loc1D(nzL))
+  allocate(ls2(nzL),rs2(nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(1,:,k))
+    call MPI_ALLreduce(loc1D,ls1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls1=2.0_dp*ls1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(1,:,k))
+    call MPI_ALLreduce(loc1D,ls2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls2=2.0_dp*ls2/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls1=0.0_dp
+    ls2=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq  = -1.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
     call MPI_ALLreduce(loc1D,Rs1,nzL,MPI_DOUBLE_PRECISION, &
@@ -3096,6 +3634,21 @@ endif
     Rq  = dble(xBC(2))
     Rs1 = 0.0_dp
     Rs2 = 0.0_dp
+=======
+    rq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs1=2.0_dp*rs1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs2=2.0_dp*rs2/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs1=0.0_dp
+    rs2=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !........................................................!
 
@@ -3125,10 +3678,16 @@ endif
 !  fcD   = fc*Diff
   fcD   = 2.0_dp*(hDiff(1)*fx+hDiff(2)*fy)
   delta = omehd(qn)/(fcD*fc+1.0_dp)
+<<<<<<< HEAD
   deltaL= omehd(qn)/((fx*Lq-fc)*(fxD*Lq-fcD)+1.0_dp)
   deltaR= omehd(qn)/((fx*Rq-fc)*(fxD*Rq-fcD)+1.0_dp)
 
 !.Relax inner points with even i and even j
+=======
+  deltaL= omehd(qn)/((fx*lq-fc)*(fxD*lq-fcD)+1.0_dp)
+  deltaR= omehd(qn)/((fx*rq-fc)*(fxD*rq-fcD)+1.0_dp)
+
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=2,nyf-2,2
     do i=2,nxf-2,2
       b1=rhs1(i,j,:)-fxD*(u1(i+1,j,:)+u1(i-1,j,:))-fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -3137,7 +3696,11 @@ endif
       u2(i,j,:)=Oomehd(qn)*u2(i,j,:)+(-fcD*b2+b1)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Top boundary, even i
+=======
+!.Top, even i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(2),stat(:,2),ierr)
   do i=2,nxf-2,2
     b1=rhs1(i,nyf,:)-fxD*(u1(i+1,nyf,:)+u1(i-1,nyf,:))-fyD*(rbufN(i/2,:,1)+u1(i,nyf-1,:))
@@ -3147,6 +3710,7 @@ endif
   enddo
 !.Right boundary, even j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) .eq. iprocsm1) then !.Right most process (along x)
     do j=2,nyf-2,2
       b1=rhs1(nxf,j,:)-fxD*(Rs1+u1(nxf-1,j,:))-fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
@@ -3159,6 +3723,20 @@ endif
     b2=rhs2(nxf,nyf,:)-fx*(Rs2+u2(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,2)+u2(nxf,nyf-1,:))
     u1(nxf,nyf,:)=Oomehd(qn)*u1(nxf,nyf,:)+((fx*Rq-fc)*b1-b2)*deltaR
     u2(nxf,nyf,:)=Oomehd(qn)*u2(nxf,nyf,:)+((fxD*Rq-fcD)*b2+b1)*deltaR
+=======
+  if (iIDhd(qn)%a(ng) .eq. iprocsm1) then
+    do j=2,nyf-2,2
+      b1=rhs1(nxf,j,:)-fxD*(rs1+u1(nxf-1,j,:))-fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
+      b2=rhs2(nxf,j,:)-fx*(rs2+u2(nxf-1,j,:))-fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))
+      u1(nxf,j,:)=Oomehd(qn)*u1(nxf,j,:)+((fx*rq-fc)*b1-b2)*deltaR
+      u2(nxf,j,:)=Oomehd(qn)*u2(nxf,j,:)+((fxD*rq-fcD)*b2+b1)*deltaR
+    enddo
+!...NE corner
+    b1=rhs1(nxf,nyf,:)-fxD*(rs1+u1(nxf-1,nyf,:))-fyD*(rbufN(nxfd2,:,1)+u1(nxf,nyf-1,:))
+    b2=rhs2(nxf,nyf,:)-fx*(rs2+u2(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,2)+u2(nxf,nyf-1,:))
+    u1(nxf,nyf,:)=Oomehd(qn)*u1(nxf,nyf,:)+((fx*rq-fc)*b1-b2)*deltaR
+    u2(nxf,nyf,:)=Oomehd(qn)*u2(nxf,nyf,:)+((fxD*rq-fcD)*b2+b1)*deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     do j=2,nyf-2,2
       b1=rhs1(nxf,j,:)-fxD*(rbufE(j/2,:,1)+u1(nxf-1,j,:))-fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
@@ -3166,7 +3744,10 @@ endif
       u1(nxf,j,:)=Oomehd(qn)*u1(nxf,j,:)+(-fc*b1-b2)*delta
       u2(nxf,j,:)=Oomehd(qn)*u2(nxf,j,:)+(-fcD*b2+b1)*delta
     enddo
+<<<<<<< HEAD
 !...local NE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(nxf,nyf,:)-fxD*(rbufE(nyfd2,:,1)+u1(nxf-1,nyf,:))-fyD*(rbufN(nxfd2,:,1)+u1(nxf,nyf-1,:))
     b2=rhs2(nxf,nyf,:)-fx*(rbufE(nyfd2,:,2)+u2(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,2)+u2(nxf,nyf-1,:))
     u1(nxf,nyf,:)=Oomehd(qn)*u1(nxf,nyf,:)+(-fc*b1-b2)*delta
@@ -3190,7 +3771,10 @@ endif
   call MPI_IRECV(rbufW,nyfd2*nzL*HDopd2,MPI_DOUBLE_PRECISION,Wrank, &
                  0,COMMhd(qn)%a(ng,2),req(8),ierr)
 
+<<<<<<< HEAD
 !.Relax inner points with odd i and odd j
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=3,nyf-1,2
     do i=3,nxf-1,2
       b1=rhs1(i,j,:)-fxD*(u1(i+1,j,:)+u1(i-1,j,:))-fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -3199,7 +3783,11 @@ endif
       u2(i,j,:)=Oomehd(qn)*u2(i,j,:)+(-fcD*b2+b1)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Bottom boundary, odd i
+=======
+!.Bottom, odd i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(6),stat(:,6),ierr)
   do i=3,nxf-1,2
     b1=rhs1(i,1,:)-fxD*(u1(i+1,1,:)+u1(i-1,1,:))-fyD*(u1(i,2,:)+rbufS((i+1)/2,:,1))
@@ -3209,6 +3797,7 @@ endif
   enddo
 !.Left boundary, odd j
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
 !...global SW corner
     b1=rhs1(1,1,:)-fxD*(u1(2,1,:)+Ls1)-fyD*(u1(1,2,:)+rbufS(1,:,1))
@@ -3223,6 +3812,21 @@ endif
     enddo
   else
 !...local SW corner
+=======
+  if (iIDhd(qn)%a(ng)==0) then
+!...SW corner
+    b1=rhs1(1,1,:)-fxD*(u1(2,1,:)+ls1)-fyD*(u1(1,2,:)+rbufS(1,:,1))
+    b2=rhs2(1,1,:)-fx*(u2(2,1,:)+ls2)-fy*(u2(1,2,:)+rbufS(1,:,2))
+    u1(1,1,:)=Oomehd(qn)*u1(1,1,:)+((fx*lq-fc)*b1-b2)*deltaL
+    u2(1,1,:)=Oomehd(qn)*u2(1,1,:)+((fxD*lq-fcD)*b2+b1)*deltaL
+    do j=3,nyf-1,2
+      b1=rhs1(1,j,:)-fxD*(u1(2,j,:)+ls1)-fyD*(u1(1,j+1,:)+u1(1,j-1,:))
+      b2=rhs2(1,j,:)-fx*(u2(2,j,:)+ls2)-fy*(u2(1,j+1,:)+u2(1,j-1,:))
+      u1(1,j,:)=Oomehd(qn)*u1(1,j,:)+((fx*lq-fc)*b1-b2)*deltaL
+      u2(1,j,:)=Oomehd(qn)*u2(1,j,:)+((fxD*lq-fcD)*b2+b1)*deltaL
+    enddo
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(1,1,:)-fxD*(u1(2,1,:)+rbufW(1,:,1))-fyD*(u1(1,2,:)+rbufS(1,:,1))
     b2=rhs2(1,1,:)-fx*(u2(2,1,:)+rbufW(1,:,2))-fy*(u2(1,2,:)+rbufS(1,:,2))
     u1(1,1,:)=Oomehd(qn)*u1(1,1,:)+(-fc*b1-b2)*delta
@@ -3254,7 +3858,10 @@ endif
 !.Receive columns from West rank, for u(i-1,j)
   call MPI_IRECV(rbufW,nyfd2*nzL*HDopd2,MPI_DOUBLE_PRECISION,Wrank, &
                  0,COMMhd(qn)%a(ng,2),req(4),ierr)
+<<<<<<< HEAD
 !.Relax inner points with odd i and even j
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=2,nyf-2,2
     do i=3,nxf-1,2
       b1=rhs1(i,j,:)-fxD*(u1(i+1,j,:)+u1(i-1,j,:))-fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -3263,7 +3870,11 @@ endif
       u2(i,j,:)=Oomehd(qn)*u2(i,j,:)+(-fcD*b2+b1)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Top boundary, odd i
+=======
+!.Top, odd i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(2),stat(:,2),ierr)
   do i=3,nxf-1,2
     b1=rhs1(i,nyf,:)-fxD*(u1(i+1,nyf,:)+u1(i-1,nyf,:))-fyD*(rbufN((i+1)/2,:,1)+u1(i,nyf-1,:))
@@ -3273,6 +3884,7 @@ endif
   enddo
 !.Left boundary, even j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     do j=2,nyf-2,2
       b1=rhs1(1,j,:)-fxD*(u1(2,j,:)+Ls1)-fyD*(u1(1,j+1,:)+u1(1,j-1,:))
@@ -3285,6 +3897,20 @@ endif
     b2=rhs2(1,nyf,:)-fx*(u2(2,nyf,:)+Ls2)-fy*(rbufN(1,:,2)+u2(1,nyf-1,:))
     u1(1,nyf,:)=Oomehd(qn)*u1(1,nyf,:)+((fx*Lq-fc)*b1-b2)*deltaL
     u2(1,nyf,:)=Oomehd(qn)*u2(1,nyf,:)+((fxD*Lq-fcD)*b2+b1)*deltaL
+=======
+  if (iIDhd(qn)%a(ng)==0) then
+    do j=2,nyf-2,2
+      b1=rhs1(1,j,:)-fxD*(u1(2,j,:)+ls1)-fyD*(u1(1,j+1,:)+u1(1,j-1,:))
+      b2=rhs2(1,j,:)-fx*(u2(2,j,:)+ls2)-fy*(u2(1,j+1,:)+u2(1,j-1,:))
+      u1(1,j,:)=Oomehd(qn)*u1(1,j,:)+((fx*lq-fc)*b1-b2)*deltaL
+      u2(1,j,:)=Oomehd(qn)*u2(1,j,:)+((fxD*lq-fcD)*b2+b1)*deltaL
+    enddo
+!...NW corner
+    b1=rhs1(1,nyf,:)-fxD*(u1(2,nyf,:)+ls1)-fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))
+    b2=rhs2(1,nyf,:)-fx*(u2(2,nyf,:)+ls2)-fy*(rbufN(1,:,2)+u2(1,nyf-1,:))
+    u1(1,nyf,:)=Oomehd(qn)*u1(1,nyf,:)+((fx*lq-fc)*b1-b2)*deltaL
+    u2(1,nyf,:)=Oomehd(qn)*u2(1,nyf,:)+((fxD*lq-fcD)*b2+b1)*deltaL
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     do j=2,nyf-2,2
       b1=rhs1(1,j,:)-fxD*(u1(2,j,:)+rbufW(j/2,:,1))-fyD*(u1(1,j+1,:)+u1(1,j-1,:))
@@ -3292,7 +3918,10 @@ endif
       u1(1,j,:)=Oomehd(qn)*u1(1,j,:)+(-fc*b1-b2)*delta
       u2(1,j,:)=Oomehd(qn)*u2(1,j,:)+(-fcD*b2+b1)*delta
     enddo
+<<<<<<< HEAD
 !...local NW corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(1,nyf,:)-fxD*(u1(2,nyf,:)+rbufW(nyfd2,:,1))-fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))
     b2=rhs2(1,nyf,:)-fx*(u2(2,nyf,:)+rbufW(nyfd2,:,2))-fy*(rbufN(1,:,2)+u2(1,nyf-1,:))
     u1(1,nyf,:)=Oomehd(qn)*u1(1,nyf,:)+(-fc*b1-b2)*delta
@@ -3313,7 +3942,10 @@ endif
 !.Receive column from East rank, for u(i+1,j)
   call MPI_IRECV(rbufE,nyfd2*nzL*HDopd2,MPI_DOUBLE_PRECISION,Erank, &
                  0,COMMhd(qn)%a(ng,2),req(8),ierr)
+<<<<<<< HEAD
 !.Relax inner points with even i and odd j
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=3,nyf-1,2
     do i=2,nxf-2,2
       b1=rhs1(i,j,:)-fxD*(u1(i+1,j,:)+u1(i-1,j,:))-fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -3322,7 +3954,11 @@ endif
       u2(i,j,:)=Oomehd(qn)*u2(i,j,:)+(-fcD*b2+b1)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Bottom boundary, even i
+=======
+!.Bottom, even i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(6),stat(:,6),ierr)
   do i=2,nxf-2,2
     b1=rhs1(i,1,:)-fxD*(u1(i+1,1,:)+u1(i-1,1,:))-fyD*(u1(i,2,:)+rbufS(i/2,:,1))
@@ -3332,6 +3968,7 @@ endif
   enddo
 !.Right boundary, odd j
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
 !...global SE corner
     b1=rhs1(nxf,1,:)-fxD*(Rs1+u1(nxf-1,1,:))-fyD*(u1(nxf,2,:)+rbufS(nxfd2,:,1))
@@ -3346,6 +3983,21 @@ endif
     enddo
   else
 !...local SE corner
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+!...SE corner
+    b1=rhs1(nxf,1,:)-fxD*(rs1+u1(nxf-1,1,:))-fyD*(u1(nxf,2,:)+rbufS(nxfd2,:,1))
+    b2=rhs2(nxf,1,:)-fx*(rs2+u2(nxf-1,1,:))-fy*(u2(nxf,2,:)+rbufS(nxfd2,:,2))
+    u1(nxf,1,:)=Oomehd(qn)*u1(nxf,1,:)+((fx*rq-fc)*b1-b2)*deltaR
+    u2(nxf,1,:)=Oomehd(qn)*u2(nxf,1,:)+((fxD*rq-fcD)*b2+b1)*deltaR
+    do j=3,nyf-1,2
+      b1=rhs1(nxf,j,:)-fxD*(rs1+u1(nxf-1,j,:))-fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
+      b2=rhs2(nxf,j,:)-fx*(rs2+u2(nxf-1,j,:))-fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))
+      u1(nxf,j,:)=Oomehd(qn)*u1(nxf,j,:)+((fx*rq-fc)*b1-b2)*deltaR
+      u2(nxf,j,:)=Oomehd(qn)*u2(nxf,j,:)+((fxD*rq-fcD)*b2+b1)*deltaR
+    enddo
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(nxf,1,:)-fxD*(rbufE(1,:,1)+u1(nxf-1,1,:))-fyD*(u1(nxf,2,:)+rbufS(nxfd2,:,1))
     b2=rhs2(nxf,1,:)-fx*(rbufE(1,:,2)+u2(nxf-1,1,:))-fy*(u2(nxf,2,:)+rbufS(nxfd2,:,2))
     u1(nxf,1,:)=Oomehd(qn)*u1(nxf,1,:)+(-fc*b1-b2)*delta
@@ -3364,6 +4016,7 @@ endif
   end subroutine relaxhd
 !*********************************************************
   subroutine reshd(ng,res1,res2,u1,u2,rhs1,rhs2,xBC,qn)
+<<<<<<< HEAD
 !.Returns minus the residual of each equation in the split approach
 !.to solving the 4th order hyperdiffusion problem
 !.      res1 = rhs1 - (u2 + Diff*L u1)
@@ -3377,14 +4030,24 @@ endif
 !. integer qn: quantity being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) res1, res2: negated residual
+=======
+!.Returns minus the residual for each equation. Input quantities
+!.are u1, u2, rhs1, rhs2, while the residual is returned in res1
+!.and res2.
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), intent(out) :: res1(:,:,:),res2(:,:,:)
   real(DP), intent(in) :: u1(:,:,:),u2(:,:,:),rhs1(:,:,:),rhs2(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank
+<<<<<<< HEAD
   real(DP) :: fx,fy,fc,fxD,fyD,fcD,Lq,Rq
   real(DP), allocatable :: Ls1(:),Ls2(:),Rs1(:),Rs2(:),loc1D(:)
+=======
+  real(DP) :: fx,fy,fc,fxD,fyD,fcD,lq,rq
+  real(DP), allocatable :: ls1(:),ls2(:),rs1(:),rs2(:),loc1D(:)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                              sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(8),stat(MPI_STATUS_SIZE,8),ierr
@@ -3393,12 +4056,16 @@ endif
     call CPU_TIME(rest1)
 #ENDIF
 
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank =nborhd(qn)%a(ng,1)
   Erank =nborhd(qn)%a(ng,3)
   Srank =nborhd(qn)%a(ng,5)
   Wrank =nborhd(qn)%a(ng,7)
 
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -3424,10 +4091,34 @@ endif
     Lq  = dble(xBC(1))
     Ls1 = 0.0_dp
     Ls2 = 0.0_dp
+=======
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+  allocate(ls1(nzL),rs1(nzL),loc1D(nzL))
+  allocate(ls2(nzL),rs2(nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(1,:,k))
+    call MPI_ALLreduce(loc1D,ls1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls1=2.0_dp*ls1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(1,:,k))
+    call MPI_ALLreduce(loc1D,ls2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls2=2.0_dp*ls2/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls1=0.0_dp
+    ls2=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq  = -1.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
     call MPI_ALLreduce(loc1D,Rs1,nzL,MPI_DOUBLE_PRECISION, &
@@ -3441,6 +4132,21 @@ endif
     Rq  = dble(xBC(2))
     Rs1 = 0.0_dp
     Rs2 = 0.0_dp
+=======
+    rq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs1=2.0_dp*rs1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs2=2.0_dp*rs2/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs1=0.0_dp
+    rs2=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !........................................................!
 
@@ -3477,6 +4183,7 @@ endif
   call MPI_IRECV(rbufE,nyf*nzL*HDopd2,MPI_DOUBLE_PRECISION,Erank, &
                  0,COMMhd(qn)%a(ng,2),req(8),ierr)
 
+<<<<<<< HEAD
   fx  = (dble(nxf*iprocshd(qn)%a(ng))/bLx)**2         !.1/(hx^2)
   fy  = (dble(nyf*jprocshd(qn)%a(ng))/bLy)**2         !.1/(hy^2)
   fc  = 2.0_dp*(fx+fy)
@@ -3484,6 +4191,15 @@ endif
   fyD = hDiff(2)*fy
 !  fcD = Diff*fc
   fcD = 2.0_dp*(hDiff(1)*fx+hDiff(2)*fy)
+=======
+  fx=(dble(nxf*iprocshd(qn)%a(ng))/bLx)**2         ! 1/(hx^2)
+  fy=(dble(nyf*jprocshd(qn)%a(ng))/bLy)**2         ! 1/(hy^2)
+  fc=2.0_dp*(fx+fy)
+  fxD=hDiff(1)*fx
+  fyD=hDiff(2)*fy
+!  fcD=Diff*fc
+  fcD=2.0_dp*(hDiff(1)*fx+hDiff(2)*fy)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
 !.Interior points
   do j=2,nyf-1
@@ -3495,6 +4211,10 @@ endif
     enddo
   enddo
 
+<<<<<<< HEAD
+=======
+!.Boundary points
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !.Bottom boundary
   call MPI_WAIT(req(5),stat(:,5),ierr)
   do i=2,nxf-1
@@ -3505,6 +4225,7 @@ endif
   enddo
 !.Left boundary
   call MPI_WAIT(req(6),stat(:,6),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...global SW corner
     res1(1,1,:)=rhs1(1,1,:)-(u2(1,1,:)+fxD*(u1(2,1,:)+Lq*u1(1,1,:)+Ls1) &
@@ -3519,6 +4240,21 @@ endif
     enddo
   else
 !...local SW corner
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...SW corner
+    res1(1,1,:)=rhs1(1,1,:)-(u2(1,1,:)+fxD*(u1(2,1,:)+lq*u1(1,1,:)+ls1) &
+      +fyD*(u1(1,2,:)+rbufS(1,:,1))-fcD*u1(1,1,:))
+    res2(1,1,:)=rhs2(1,1,:)-(fx*(u2(2,1,:)+lq*u2(1,1,:)+ls2) &
+      +fy*(u2(1,2,:)+rbufS(1,:,2))-fc*u2(1,1,:)-u1(1,1,:))
+    do j=2,nyf-1
+      res1(1,j,:)=rhs1(1,j,:)-(u2(1,j,:)+fxD*(u1(2,j,:)+lq*u1(1,j,:)+ls1) &
+        +fyD*(u1(1,j+1,:)+u1(1,j-1,:))-fcD*u1(1,j,:))
+      res2(1,j,:)=rhs2(1,j,:)-(fx*(u2(2,j,:)+lq*u2(1,j,:)+ls2) &
+        +fy*(u2(1,j+1,:)+u2(1,j-1,:))-fc*u2(1,j,:)-u1(1,j,:))
+    enddo
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(1,1,:)=rhs1(1,1,:)-(u2(1,1,:)+fxD*(u1(2,1,:)+rbufW(1,:,1)) &
       +fyD*(u1(1,2,:)+rbufS(1,:,1))-fcD*u1(1,1,:))
     res2(1,1,:)=rhs2(1,1,:)-(fx*(u2(2,1,:)+rbufW(1,:,2)) &
@@ -3532,6 +4268,7 @@ endif
   endif
 
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...global NW corner
     res1(1,nyf,:)=rhs1(1,nyf,:)-(u2(1,nyf,:)+fxD*(u1(2,nyf,:)+Lq*u1(1,nyf,:)+Ls1) &
@@ -3540,6 +4277,15 @@ endif
       +fy*(rbufN(1,:,2)+u2(1,nyf-1,:))-fc*u2(1,nyf,:)-u1(1,nyf,:))
   else
 !...local NW corner
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...NW corner
+    res1(1,nyf,:)=rhs1(1,nyf,:)-(u2(1,nyf,:)+fxD*(u1(2,nyf,:)+lq*u1(1,nyf,:)+ls1) &
+      +fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))-fcD*u1(1,nyf,:))
+    res2(1,nyf,:)=rhs2(1,nyf,:)-(fx*(u2(2,nyf,:)+lq*u2(1,nyf,:)+ls2) &
+      +fy*(rbufN(1,:,2)+u2(1,nyf-1,:))-fc*u2(1,nyf,:)-u1(1,nyf,:))
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(1,nyf,:)=rhs1(1,nyf,:)-(u2(1,nyf,:)+fxD*(u1(2,nyf,:)+rbufW(nyf,:,1)) &
       +fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))-fcD*u1(1,nyf,:))
     res2(1,nyf,:)=rhs2(1,nyf,:)-(fx*(u2(2,nyf,:)+rbufW(nyf,:,2)) &
@@ -3555,6 +4301,7 @@ endif
 
 !.Right boundary
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == iprocsm1) then !.Right most process (along x)
 !...global NE corner
     res1(nxf,nyf,:)=rhs1(nxf,nyf,:)-(u2(nxf,nyf,:)+fxD*(Rq*u1(nxf,nyf,:)+Rs1 &
@@ -3574,11 +4321,34 @@ endif
     enddo
   else
 !...local NE corner
+=======
+  if (iIDhd(qn)%a(ng) == iprocsm1) then
+!...NE corner
+    res1(nxf,nyf,:)=rhs1(nxf,nyf,:)-(u2(nxf,nyf,:)+fxD*(rq*u1(nxf,nyf,:)+rs1 &
+      +u1(nxf-1,nyf,:))+fyD*(rbufN(nxf,:,1)+u1(nxf,nyf-1,:))-fcD*u1(nxf,nyf,:))
+    res2(nxf,nyf,:)=rhs2(nxf,nyf,:)-(fx*(rq*u2(nxf,nyf,:)+rs2+u2(nxf-1,nyf,:)) &
+      +fy*(rbufN(nxf,:,2)+u2(nxf,nyf-1,:))-fc*u2(nxf,nyf,:)-u1(nxf,nyf,:))
+!...SE corner
+    res1(nxf,1,:)=rhs1(nxf,1,:)-(u2(nxf,1,:)+fxD*(rq*u1(nxf,1,:)+rs1+u1(nxf-1,1,:)) &
+      +fyD*(u1(nxf,2,:)+rbufS(nxf,:,1))-fcD*u1(nxf,1,:))
+    res2(nxf,1,:)=rhs2(nxf,1,:)-(fx*(rq*u2(nxf,1,:)+rs2+u2(nxf-1,1,:)) &
+      +fy*(u2(nxf,2,:)+rbufS(nxf,:,2))-fc*u2(nxf,1,:)-u1(nxf,1,:))
+    do j=2,nyf-1
+      res1(nxf,j,:)=rhs1(nxf,j,:)-(u2(nxf,j,:)+fxD*(rq*u1(nxf,j,:)+rs1+u1(nxf-1,j,:)) &
+        +fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))-fcD*u1(nxf,j,:))
+      res2(nxf,j,:)=rhs2(nxf,j,:)-(fx*(rq*u2(nxf,j,:)+rs2+u2(nxf-1,j,:)) &
+        +fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))-fc*u2(nxf,j,:)-u1(nxf,j,:))
+    enddo
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(nxf,nyf,:)=rhs1(nxf,nyf,:)-(u2(nxf,nyf,:)+fxD*(rbufE(nyf,:,1)+u1(nxf-1,nyf,:)) &
       +fyD*(rbufN(nxf,:,1)+u1(nxf,nyf-1,:))-fcD*u1(nxf,nyf,:))
     res2(nxf,nyf,:)=rhs2(nxf,nyf,:)-(fx*(rbufE(nyf,:,2)+u2(nxf-1,nyf,:)) &
       +fy*(rbufN(nxf,:,2)+u2(nxf,nyf-1,:))-fc*u2(nxf,nyf,:)-u1(nxf,nyf,:))
+<<<<<<< HEAD
 !...local SE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(nxf,1,:)=rhs1(nxf,1,:)-(u2(nxf,1,:)+fxD*(rbufE(1,:,1)+u1(nxf-1,1,:)) &
       +fyD*(u1(nxf,2,:)+rbufS(nxf,:,1))-fcD*u1(nxf,1,:))
     res2(nxf,1,:)=rhs2(nxf,1,:)-(fx*(rbufE(1,:,2)+u2(nxf-1,1,:)) &
@@ -3601,6 +4371,7 @@ endif
 !*********************************************************
 #ELIF (HDop==6)
   recursive subroutine Gcychd(ng,u1,u2,u3,rhs1,rhs2,rhs3,xBC,qn)
+<<<<<<< HEAD
 !.Gamma cycles to solve equation from implicit 6th order
 !.Laplacian-based hyperdiffusion equation
 !.                   u + Diff*(L^3)u=rho
@@ -3614,6 +4385,8 @@ endif
 !. integer qn: which quantity is being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u1, u2, u3: updated solution at grid ng
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   integer(I4B), intent(in) :: ng, xBC(:), qn
   real(DP), intent(inout) :: u1(:,:,:),u2(:,:,:),u3(:,:,:)
@@ -3734,6 +4507,7 @@ endif
   end subroutine Gcychd
 !*********************************************************
   subroutine relaxhd(ng,u1,u2,u3,rhs1,rhs2,rhs3,xBC,qn)
+<<<<<<< HEAD
 !.Red-black Gauss-Seidel relaxation system of 3 equations
 !.                  u3 - Diff*L u1 = rhs1 (= rho)
 !.                       L u2 - u1 = rhs2 (= 0)
@@ -3746,6 +4520,11 @@ endif
 !. integer qn: quantity being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u1, u2: updated solution at grid ng
+=======
+! Red-black Gauss-Seidel relaxation. The current value of the
+! solution u is updated, using the right-hand-side function rhs.
+! u and rhs are square arrays of the same odd dimension
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), intent(inout) :: u1(:,:,:),u2(:,:,:),u3(:,:,:)
@@ -3753,22 +4532,35 @@ endif
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank,nxfd2,nyfd2
   integer(I4B) :: ierr,req(8),stat(MPI_STATUS_SIZE,8)
+<<<<<<< HEAD
   real(DP), allocatable :: Ls1(:),Rs1(:),Ls2(:),Rs2(:), &
                            Ls3(:),Rs3(:),loc1D(:),b1(:),b2(:),b3(:)
   real(DP), allocatable, dimension(:,:,:) :: sbufN,sbufE,sbufS,sbufW, &
                                              rbufN,rbufE,rbufS,rbufW
   real(DP) :: fx,fy,fc,fcsq,fr,frsq,fl,flsq,fxD,fyD,fcD, &
               ffcD,frD,flD,ffrD,fflD,Lq,Rq,delta,deltaL,deltaR
+=======
+  real(DP), allocatable :: ls1(:),rs1(:),ls2(:),rs2(:), &
+                           ls3(:),rs3(:),loc1D(:),b1(:),b2(:),b3(:)
+  real(DP), allocatable, dimension(:,:,:) :: sbufN,sbufE,sbufS,sbufW, &
+                                             rbufN,rbufE,rbufS,rbufW
+  real(DP) :: fx,fy,fc,fcsq,fr,frsq,fl,flsq,fxD,fyD,fcD, &
+              ffcD,frD,flD,ffrD,fflD,lq,rq,delta,deltaL,deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
   nxfd2=nxf/2
   nyfd2=nyf/2
 
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank = nborhd(qn)%a(ng,1)
   Erank = nborhd(qn)%a(ng,3)
   Srank = nborhd(qn)%a(ng,5)
   Wrank = nborhd(qn)%a(ng,7)
 
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -3799,10 +4591,39 @@ endif
     Ls1 = 0.0_dp
     Ls2 = 0.0_dp
     Ls3 = 0.0_dp
+=======
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+  allocate(ls1(nzL),rs1(nzL),loc1D(nzL))
+  allocate(ls2(nzL),rs2(nzL),ls3(nzL),rs3(nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(1,:,k))
+    call MPI_ALLreduce(loc1D,ls1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls1=2.0_dp*ls1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(1,:,k))
+    call MPI_ALLreduce(loc1D,ls2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls2=2.0_dp*ls2/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u3(1,:,k))
+    call MPI_ALLreduce(loc1D,ls3,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls3=2.0_dp*ls3/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls1=0.0_dp
+    ls2=0.0_dp
+    ls3=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq  = -1.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
     call MPI_ALLreduce(loc1D,Rs1,nzL,MPI_DOUBLE_PRECISION, &
@@ -3821,6 +4642,26 @@ endif
     Rs1 = 0.0_dp
     Rs2 = 0.0_dp
     Rs3 = 0.0_dp
+=======
+    rq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs1=2.0_dp*rs1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs2=2.0_dp*rs2/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u3(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs3,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs3=2.0_dp*rs3/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs1=0.0_dp
+    rs2=0.0_dp
+    rs3=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !........................................................!
 
@@ -3846,17 +4687,28 @@ endif
   fc     = 2.0_dp*(fx+fy)
   fc     = 2.0_dp*(fx+fy)
   fcsq   = fc*fc
+<<<<<<< HEAD
   fr     = fx*Rq-fc
   frsq   = fr*fr
   fl     = fx*Lq-fc
+=======
+  fr     = fx*rq-fc
+  frsq   = fr*fr
+  fl     = fx*lq-fc
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   flsq   = fl*fl
   fxD    = fx*hDiff(1)
   fyD    = fy*hDiff(2)
 !  fcD    = fc*Diff
   fcD    = 2.0_dp*(hDiff(1)*fx+hDiff(2)*fy)
   ffcD   = fc*fcD
+<<<<<<< HEAD
   frD    = fxD*Rq-fcD
   flD    = fxD*Lq-fcD
+=======
+  frD    = fxD*rq-fcD
+  flD    = fxD*lq-fcD
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   ffrD   = fr*frD
   fflD   = fl*flD
   delta  = omehd(qn)/(-fcD*fcsq-1.0_dp)
@@ -3865,7 +4717,10 @@ endif
 
 
   allocate(b1(nzL),b2(nzL),b3(nzL))
+<<<<<<< HEAD
 !.Inner points, even i and even j
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=2,nyf-2,2
     do i=2,nxf-2,2
       b1=rhs1(i,j,:)+fxD*(u1(i+1,j,:)+u1(i-1,j,:))+fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -3876,7 +4731,11 @@ endif
       u3(i,j,:)=Oomehd(qn)*u3(i,j,:)+(-b1-fcD*b2+ffcD*b3)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Top boundary, even i
+=======
+!.Top, even i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(2),stat(:,2),ierr)
   do i=2,nxf-2,2
     b1=rhs1(i,nyf,:)+fxD*(u1(i+1,nyf,:)+u1(i-1,nyf,:))+fyD*(rbufN(i/2,:,1)+u1(i,nyf-1,:))
@@ -3888,19 +4747,34 @@ endif
   enddo
 !.Right boundary, even j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) .eq. iprocsm1) then !.Right most process (along x)
     do j=2,nyf-2,2
       b1=rhs1(nxf,j,:)+fxD*(Rs1+u1(nxf-1,j,:))+fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
       b2=rhs2(nxf,j,:)-fx*(Rs2+u2(nxf-1,j,:))-fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))
       b3=rhs3(nxf,j,:)-fx*(Rs3+u3(nxf-1,j,:))-fy*(u3(nxf,j+1,:)+u3(nxf,j-1,:))
+=======
+  if (iIDhd(qn)%a(ng) .eq. iprocsm1) then
+    do j=2,nyf-2,2
+      b1=rhs1(nxf,j,:)+fxD*(rs1+u1(nxf-1,j,:))+fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
+      b2=rhs2(nxf,j,:)-fx*(rs2+u2(nxf-1,j,:))-fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))
+      b3=rhs3(nxf,j,:)-fx*(rs3+u3(nxf-1,j,:))-fy*(u3(nxf,j+1,:)+u3(nxf,j-1,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       u1(nxf,j,:)=Oomehd(qn)*u1(nxf,j,:)+(-frsq*b1+b2+fr*b3)*deltaR
       u2(nxf,j,:)=Oomehd(qn)*u2(nxf,j,:)+(-fr*b1+ffrD*b2+b3)*deltaR
       u3(nxf,j,:)=Oomehd(qn)*u3(nxf,j,:)+(-b1+frD*b2+ffrD*b3)*deltaR
     enddo
+<<<<<<< HEAD
 !...global NE corner
     b1=rhs1(nxf,nyf,:)+fxD*(Rs1+u1(nxf-1,nyf,:))+fyD*(rbufN(nxfd2,:,1)+u1(nxf,nyf-1,:))
     b2=rhs2(nxf,nyf,:)-fx*(Rs2+u2(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,2)+u2(nxf,nyf-1,:))
     b3=rhs3(nxf,nyf,:)-fx*(Rs3+u3(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,3)+u3(nxf,nyf-1,:))
+=======
+!...NE corner
+    b1=rhs1(nxf,nyf,:)+fxD*(rs1+u1(nxf-1,nyf,:))+fyD*(rbufN(nxfd2,:,1)+u1(nxf,nyf-1,:))
+    b2=rhs2(nxf,nyf,:)-fx*(rs2+u2(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,2)+u2(nxf,nyf-1,:))
+    b3=rhs3(nxf,nyf,:)-fx*(rs3+u3(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,3)+u3(nxf,nyf-1,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u1(nxf,nyf,:)=Oomehd(qn)*u1(nxf,nyf,:)+(-frsq*b1+b2+fr*b3)*deltaR
     u2(nxf,nyf,:)=Oomehd(qn)*u2(nxf,nyf,:)+(-fr*b1+ffrD*b2+b3)*deltaR
     u3(nxf,nyf,:)=Oomehd(qn)*u3(nxf,nyf,:)+(-b1+frD*b2+ffrD*b3)*deltaR
@@ -3913,7 +4787,10 @@ endif
       u2(nxf,j,:)=Oomehd(qn)*u2(nxf,j,:)+(fc*b1+ffcD*b2+b3)*delta
       u3(nxf,j,:)=Oomehd(qn)*u3(nxf,j,:)+(-b1-fcD*b2+ffcD*b3)*delta
     enddo
+<<<<<<< HEAD
 !...local NE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(nxf,nyf,:)+fxD*(rbufE(nyfd2,:,1)+u1(nxf-1,nyf,:))+fyD*(rbufN(nxfd2,:,1)+u1(nxf,nyf-1,:))
     b2=rhs2(nxf,nyf,:)-fx*(rbufE(nyfd2,:,2)+u2(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,2)+u2(nxf,nyf-1,:))
     b3=rhs3(nxf,nyf,:)-fx*(rbufE(nyfd2,:,3)+u3(nxf-1,nyf,:))-fy*(rbufN(nxfd2,:,3)+u3(nxf,nyf-1,:))
@@ -3939,7 +4816,10 @@ endif
   call MPI_IRECV(rbufW,nyfd2*nzL*HDopd2,MPI_DOUBLE_PRECISION,Wrank, &
                  0,COMMhd(qn)%a(ng,2),req(8),ierr)
 
+<<<<<<< HEAD
 !.Inner points, odd i and odd j
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=3,nyf-1,2
     do i=3,nxf-1,2
       b1=rhs1(i,j,:)+fxD*(u1(i+1,j,:)+u1(i-1,j,:))+fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -3950,7 +4830,11 @@ endif
       u3(i,j,:)=Oomehd(qn)*u3(i,j,:)+(-b1-fcD*b2+ffcD*b3)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Bottom boundary, odd i
+=======
+!.Bottom, odd i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(6),stat(:,6),ierr)
   do i=3,nxf-1,2
     b1=rhs1(i,1,:)+fxD*(u1(i+1,1,:)+u1(i-1,1,:))+fyD*(u1(i,2,:)+rbufS((i+1)/2,:,1))
@@ -3962,24 +4846,41 @@ endif
   enddo
 !.Left boundary, odd j
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
 !...global SW corner
     b1=rhs1(1,1,:)+fxD*(u1(2,1,:)+Ls1)+fyD*(u1(1,2,:)+rbufS(1,:,1))
     b2=rhs2(1,1,:)-fx*(u2(2,1,:)+Ls2)-fy*(u2(1,2,:)+rbufS(1,:,2))
     b3=rhs3(1,1,:)-fx*(u3(2,1,:)+Ls3)-fy*(u3(1,2,:)+rbufS(1,:,3))
+=======
+  if (iIDhd(qn)%a(ng)==0) then
+!...SW corner
+    b1=rhs1(1,1,:)+fxD*(u1(2,1,:)+ls1)+fyD*(u1(1,2,:)+rbufS(1,:,1))
+    b2=rhs2(1,1,:)-fx*(u2(2,1,:)+ls2)-fy*(u2(1,2,:)+rbufS(1,:,2))
+    b3=rhs3(1,1,:)-fx*(u3(2,1,:)+ls3)-fy*(u3(1,2,:)+rbufS(1,:,3))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u1(1,1,:)=Oomehd(qn)*u1(1,1,:)+(-flsq*b1+b2+fl*b3)*deltaL
     u2(1,1,:)=Oomehd(qn)*u2(1,1,:)+(-fl*b1+fflD*b2+b3)*deltaL
     u3(1,1,:)=Oomehd(qn)*u3(1,1,:)+(-b1+flD*b2+fflD*b3)*deltaL
     do j=3,nyf-1,2
+<<<<<<< HEAD
       b1=rhs1(1,j,:)+fxD*(u1(2,j,:)+Ls1)+fyD*(u1(1,j+1,:)+u1(1,j-1,:))
       b2=rhs2(1,j,:)-fx*(u2(2,j,:)+Ls2)-fy*(u2(1,j+1,:)+u2(1,j-1,:))
       b3=rhs3(1,j,:)-fx*(u3(2,j,:)+Ls3)-fy*(u3(1,j+1,:)+u3(1,j-1,:))
+=======
+      b1=rhs1(1,j,:)+fxD*(u1(2,j,:)+ls1)+fyD*(u1(1,j+1,:)+u1(1,j-1,:))
+      b2=rhs2(1,j,:)-fx*(u2(2,j,:)+ls2)-fy*(u2(1,j+1,:)+u2(1,j-1,:))
+      b3=rhs3(1,j,:)-fx*(u3(2,j,:)+ls3)-fy*(u3(1,j+1,:)+u3(1,j-1,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       u1(1,j,:)=Oomehd(qn)*u1(1,j,:)+(-flsq*b1+b2+fl*b3)*deltaL
       u2(1,j,:)=Oomehd(qn)*u2(1,j,:)+(-fl*b1+fflD*b2+b3)*deltaL
       u3(1,j,:)=Oomehd(qn)*u3(1,j,:)+(-b1+flD*b2+fflD*b3)*deltaL
     enddo
   else
+<<<<<<< HEAD
 !...local SW corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(1,1,:)+fxD*(u1(2,1,:)+rbufW(1,:,1))+fyD*(u1(1,2,:)+rbufS(1,:,1))
     b2=rhs2(1,1,:)-fx*(u2(2,1,:)+rbufW(1,:,2))-fy*(u2(1,2,:)+rbufS(1,:,2))
     b3=rhs3(1,1,:)-fx*(u3(2,1,:)+rbufW(1,:,3))-fy*(u3(1,2,:)+rbufS(1,:,3))
@@ -4015,7 +4916,10 @@ endif
 !.Receive columns from West rank, for u(i-1,j)
   call MPI_IRECV(rbufW,nyfd2*nzL*HDopd2,MPI_DOUBLE_PRECISION,Wrank, &
                  0,COMMhd(qn)%a(ng,2),req(4),ierr)
+<<<<<<< HEAD
 !.Inner points, odd i and even j
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=2,nyf-2,2
     do i=3,nxf-1,2
       b1=rhs1(i,j,:)+fxD*(u1(i+1,j,:)+u1(i-1,j,:))+fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -4026,7 +4930,11 @@ endif
       u3(i,j,:)=Oomehd(qn)*u3(i,j,:)+(-b1-fcD*b2+ffcD*b3)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Top boundary, odd i
+=======
+!.Top, odd i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(2),stat(:,2),ierr)
   do i=3,nxf-1,2
     b1=rhs1(i,nyf,:)+fxD*(u1(i+1,nyf,:)+u1(i-1,nyf,:))+fyD*(rbufN((i+1)/2,:,1)+u1(i,nyf-1,:))
@@ -4038,19 +4946,34 @@ endif
   enddo
 !.Left boundary, even j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     do j=2,nyf-2,2
       b1=rhs1(1,j,:)+fxD*(u1(2,j,:)+Ls1)+fyD*(u1(1,j+1,:)+u1(1,j-1,:))
       b2=rhs2(1,j,:)-fx*(u2(2,j,:)+Ls2)-fy*(u2(1,j+1,:)+u2(1,j-1,:))
       b3=rhs3(1,j,:)-fx*(u3(2,j,:)+Ls3)-fy*(u3(1,j+1,:)+u3(1,j-1,:))
+=======
+  if (iIDhd(qn)%a(ng)==0) then
+    do j=2,nyf-2,2
+      b1=rhs1(1,j,:)+fxD*(u1(2,j,:)+ls1)+fyD*(u1(1,j+1,:)+u1(1,j-1,:))
+      b2=rhs2(1,j,:)-fx*(u2(2,j,:)+ls2)-fy*(u2(1,j+1,:)+u2(1,j-1,:))
+      b3=rhs3(1,j,:)-fx*(u3(2,j,:)+ls3)-fy*(u3(1,j+1,:)+u3(1,j-1,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       u1(1,j,:)=Oomehd(qn)*u1(1,j,:)+(-flsq*b1+b2+fl*b3)*deltaL
       u2(1,j,:)=Oomehd(qn)*u2(1,j,:)+(-fl*b1+fflD*b2+b3)*deltaL
       u3(1,j,:)=Oomehd(qn)*u3(1,j,:)+(-b1+flD*b2+fflD*b3)*deltaL
     enddo
+<<<<<<< HEAD
 !...global NW corner
     b1=rhs1(1,nyf,:)+fxD*(u1(2,nyf,:)+Ls1)+fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))
     b2=rhs2(1,nyf,:)-fx*(u2(2,nyf,:)+Ls2)-fy*(rbufN(1,:,2)+u2(1,nyf-1,:))
     b3=rhs3(1,nyf,:)-fx*(u3(2,nyf,:)+Ls3)-fy*(rbufN(1,:,3)+u3(1,nyf-1,:))
+=======
+!...NW corner
+    b1=rhs1(1,nyf,:)+fxD*(u1(2,nyf,:)+ls1)+fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))
+    b2=rhs2(1,nyf,:)-fx*(u2(2,nyf,:)+ls2)-fy*(rbufN(1,:,2)+u2(1,nyf-1,:))
+    b3=rhs3(1,nyf,:)-fx*(u3(2,nyf,:)+ls3)-fy*(rbufN(1,:,3)+u3(1,nyf-1,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u1(1,nyf,:)=Oomehd(qn)*u1(1,nyf,:)+(-flsq*b1+b2+fl*b3)*deltaL
     u2(1,nyf,:)=Oomehd(qn)*u2(1,nyf,:)+(-fl*b1+fflD*b2+b3)*deltaL
     u3(1,nyf,:)=Oomehd(qn)*u3(1,nyf,:)+(-b1+flD*b2+fflD*b3)*deltaL
@@ -4063,7 +4986,10 @@ endif
       u2(1,j,:)=Oomehd(qn)*u2(1,j,:)+(fc*b1+ffcD*b2+b3)*delta
       u3(1,j,:)=Oomehd(qn)*u3(1,j,:)+(-b1-fcD*b2+ffcD*b3)*delta
     enddo
+<<<<<<< HEAD
 !...local NW corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(1,nyf,:)+fxD*(u1(2,nyf,:)+rbufW(nyf/2,:,1))+fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))
     b2=rhs2(1,nyf,:)-fx*(u2(2,nyf,:)+rbufW(nyf/2,:,2))-fy*(rbufN(1,:,2)+u2(1,nyf-1,:))
     b3=rhs3(1,nyf,:)-fx*(u3(2,nyf,:)+rbufW(nyf/2,:,3))-fy*(rbufN(1,:,3)+u3(1,nyf-1,:))
@@ -4086,7 +5012,10 @@ endif
 !.Receive column from East rank, for u(i+1,j)
   call MPI_IRECV(rbufE,nyfd2*nzL*HDopd2,MPI_DOUBLE_PRECISION,Erank, &
                  0,COMMhd(qn)%a(ng,2),req(8),ierr)
+<<<<<<< HEAD
 !.Inner points, even i and odd j
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   do j=3,nyf-1,2
     do i=2,nxf-2,2
       b1=rhs1(i,j,:)+fxD*(u1(i+1,j,:)+u1(i-1,j,:))+fyD*(u1(i,j+1,:)+u1(i,j-1,:))
@@ -4097,7 +5026,11 @@ endif
       u3(i,j,:)=Oomehd(qn)*u3(i,j,:)+(-b1-fcD*b2+ffcD*b3)*delta
     enddo
   enddo
+<<<<<<< HEAD
 !.Bottom boundary, even i
+=======
+!.Bottom, even i
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   call MPI_WAIT(req(6),stat(:,6),ierr)
   do i=2,nxf-2,2
     b1=rhs1(i,1,:)+fxD*(u1(i+1,1,:)+u1(i-1,1,:))+fyD*(u1(i,2,:)+rbufS(i/2,:,1))
@@ -4109,24 +5042,41 @@ endif
   enddo
 !.Right boundary, odd j
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
 !...global SE corner
     b1=rhs1(nxf,1,:)+fxD*(Rs1+u1(nxf-1,1,:))+fyD*(u1(nxf,2,:)+rbufS(nxfd2,:,1))
     b2=rhs2(nxf,1,:)-fx*(Rs2+u2(nxf-1,1,:))-fy*(u2(nxf,2,:)+rbufS(nxfd2,:,2))
     b3=rhs3(nxf,1,:)-fx*(Rs3+u3(nxf-1,1,:))-fy*(u3(nxf,2,:)+rbufS(nxfd2,:,3))
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+!...SE corner
+    b1=rhs1(nxf,1,:)+fxD*(rs1+u1(nxf-1,1,:))+fyD*(u1(nxf,2,:)+rbufS(nxfd2,:,1))
+    b2=rhs2(nxf,1,:)-fx*(rs2+u2(nxf-1,1,:))-fy*(u2(nxf,2,:)+rbufS(nxfd2,:,2))
+    b3=rhs3(nxf,1,:)-fx*(rs3+u3(nxf-1,1,:))-fy*(u3(nxf,2,:)+rbufS(nxfd2,:,3))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u1(nxf,1,:)=Oomehd(qn)*u1(nxf,1,:)+(-frsq*b1+b2+fr*b3)*deltaR
     u2(nxf,1,:)=Oomehd(qn)*u2(nxf,1,:)+(-fr*b1+ffrD*b2+b3)*deltaR
     u3(nxf,1,:)=Oomehd(qn)*u3(nxf,1,:)+(-b1+frD*b2+ffrD*b3)*deltaR
     do j=3,nyf-1,2
+<<<<<<< HEAD
       b1=rhs1(nxf,j,:)+fxD*(Rs1+u1(nxf-1,j,:))+fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
       b2=rhs2(nxf,j,:)-fx*(Rs2+u2(nxf-1,j,:))-fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))
       b3=rhs3(nxf,j,:)-fx*(Rs3+u3(nxf-1,j,:))-fy*(u3(nxf,j+1,:)+u3(nxf,j-1,:))
+=======
+      b1=rhs1(nxf,j,:)+fxD*(rs1+u1(nxf-1,j,:))+fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))
+      b2=rhs2(nxf,j,:)-fx*(rs2+u2(nxf-1,j,:))-fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))
+      b3=rhs3(nxf,j,:)-fx*(rs3+u3(nxf-1,j,:))-fy*(u3(nxf,j+1,:)+u3(nxf,j-1,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       u1(nxf,j,:)=Oomehd(qn)*u1(nxf,j,:)+(-frsq*b1+b2+fr*b3)*deltaR
       u2(nxf,j,:)=Oomehd(qn)*u2(nxf,j,:)+(-fr*b1+ffrD*b2+b3)*deltaR
       u3(nxf,j,:)=Oomehd(qn)*u3(nxf,j,:)+(-b1+frD*b2+ffrD*b3)*deltaR
     enddo
   else
+<<<<<<< HEAD
 !...local SE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     b1=rhs1(nxf,1,:)+fxD*(rbufE(1,:,1)+u1(nxf-1,1,:))+fyD*(u1(nxf,2,:)+rbufS(nxfd2,:,1))
     b2=rhs2(nxf,1,:)-fx*(rbufE(1,:,2)+u2(nxf-1,1,:))-fy*(u2(nxf,2,:)+rbufS(nxfd2,:,2))
     b3=rhs3(nxf,1,:)-fx*(rbufE(1,:,3)+u3(nxf-1,1,:))-fy*(u3(nxf,2,:)+rbufS(nxfd2,:,3))
@@ -4148,6 +5098,7 @@ endif
   end subroutine relaxhd
 !*********************************************************
   subroutine reshd(ng,res1,res2,res3,u1,u2,u3,rhs1,rhs2,rhs3,xBC,qn)
+<<<<<<< HEAD
 !.Returns minus the residual of each equation in the split approach
 !.to solving the 6th order hyperdiffusion problem
 !.      res1 = rhs1 - (u3 - Diff*L u1)
@@ -4162,6 +5113,11 @@ endif
 !. integer qn: quantity being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) res1, res2, res3: negated residual
+=======
+!.Returns minus the residual for each equation. Input quantities
+!.are u1, u2, u3, rhs1, rhs2, rhs3, while the residual is returned
+!.in res1, res2, and res3.
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), intent(out) :: res1(:,:,:),res2(:,:,:),res3(:,:,:)
@@ -4169,8 +5125,13 @@ endif
                           rhs1(:,:,:),rhs2(:,:,:),rhs3(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank
+<<<<<<< HEAD
   real(DP) :: fx,fy,fc,fxD,fyD,fcD,Lq,Rq
   real(DP), allocatable :: Ls1(:),Ls2(:),Ls3(:),Rs1(:),Rs2(:),Rs3(:),loc1D(:)
+=======
+  real(DP) :: fx,fy,fc,fxD,fyD,fcD,lq,rq
+  real(DP), allocatable :: ls1(:),ls2(:),ls3(:),rs1(:),rs2(:),rs3(:),loc1D(:)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                              sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(8),stat(MPI_STATUS_SIZE,8),ierr
@@ -4179,12 +5140,16 @@ endif
     call CPU_TIME(rest1)
 #ENDIF
 
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   Nrank =nborhd(qn)%a(ng,1)
   Erank =nborhd(qn)%a(ng,3)
   Srank =nborhd(qn)%a(ng,5)
   Wrank =nborhd(qn)%a(ng,7)
 
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -4215,10 +5180,39 @@ endif
     Ls1 = 0.0_dp
     Ls2 = 0.0_dp
     Ls3 = 0.0_dp
+=======
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+  allocate(ls1(nzL),rs1(nzL),loc1D(nzL))
+  allocate(ls2(nzL),rs2(nzL),ls3(nzL),rs3(nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(1,:,k))
+    call MPI_ALLreduce(loc1D,ls1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls1=2.0_dp*ls1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(1,:,k))
+    call MPI_ALLreduce(loc1D,ls2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls2=2.0_dp*ls2/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u3(1,:,k))
+    call MPI_ALLreduce(loc1D,ls3,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls3=2.0_dp*ls3/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls1=0.0_dp
+    ls2=0.0_dp
+    ls3=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq  = -1.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
     call MPI_ALLreduce(loc1D,Rs1,nzL,MPI_DOUBLE_PRECISION, &
@@ -4237,6 +5231,26 @@ endif
     Rs1 = 0.0_dp
     Rs2 = 0.0_dp
     Rs3 = 0.0_dp
+=======
+    rq=-1.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(u1(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs1,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs1=2.0_dp*rs1/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u2(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs2,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs2=2.0_dp*rs2/dble(nyf*jprocshd(qn)%a(ng))
+    forall(k=1:nzL) loc1D(k)=sum(u3(nxf,:,k))
+    call MPI_ALLreduce(loc1D,rs3,nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs3=2.0_dp*rs3/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs1=0.0_dp
+    rs2=0.0_dp
+    rs3=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !........................................................!
 
@@ -4273,6 +5287,7 @@ endif
   call MPI_IRECV(rbufE,nyf*nzL*HDopd2,MPI_DOUBLE_PRECISION,Erank, &
                  0,COMMhd(qn)%a(ng,2),req(8),ierr)
 
+<<<<<<< HEAD
   fx  = (dble(nxf*iprocshd(qn)%a(ng))/bLx)**2         !.1/(hx^2)
   fy  = (dble(nyf*jprocshd(qn)%a(ng))/bLy)**2         !.1/(hy^2)
   fc  = 2.0_dp*(fx+fy)
@@ -4280,6 +5295,15 @@ endif
   fyD = hDiff(2)*fy
 !  fcD = Diff*fc
   fcD = 2.0_dp*(hDiff(1)*fx+hDiff(2)*fy)
+=======
+  fx=(dble(nxf*iprocshd(qn)%a(ng))/bLx)**2         ! 1/(hx^2)
+  fy=(dble(nyf*jprocshd(qn)%a(ng))/bLy)**2         ! 1/(hy^2)
+  fc=2.0_dp*(fx+fy)
+  fxD=hDiff(1)*fx
+  fyD=hDiff(2)*fy
+!  fcD=Diff*fc
+  fcD=2.0_dp*(hDiff(1)*fx+hDiff(2)*fy)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
 !.Interior points
   do j=2,nyf-1
@@ -4293,6 +5317,10 @@ endif
     enddo
   enddo
 
+<<<<<<< HEAD
+=======
+!.Boundary points
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !.Bottom boundary
   call MPI_WAIT(req(5),stat(:,5),ierr)
   do i=2,nxf-1
@@ -4305,6 +5333,7 @@ endif
   enddo
 !.Left boundary
   call MPI_WAIT(req(6),stat(:,6),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...global SW corner
     res1(1,1,:)=rhs1(1,1,:)-(u3(1,1,:)-fxD*(u1(2,1,:)+Lq*u1(1,1,:)+Ls1) &
@@ -4323,6 +5352,25 @@ endif
     enddo
   else
 !...local SW corner
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...SW corner
+    res1(1,1,:)=rhs1(1,1,:)-(u3(1,1,:)-fxD*(u1(2,1,:)+lq*u1(1,1,:)+ls1) &
+      -fyD*(u1(1,2,:)+rbufS(1,:,1))+fcD*u1(1,1,:))
+    res2(1,1,:)=rhs2(1,1,:)-(fx*(u2(2,1,:)+lq*u2(1,1,:)+ls2) &
+      +fy*(u2(1,2,:)+rbufS(1,:,2))-fc*u2(1,1,:)-u1(1,1,:))
+    res3(1,1,:)=rhs3(1,1,:)-(fx*(u3(2,1,:)+lq*u3(1,1,:)+ls3) &
+      +fy*(u3(1,2,:)+rbufS(1,:,3))-fc*u3(1,1,:)-u2(1,1,:))
+    do j=2,nyf-1
+      res1(1,j,:)=rhs1(1,j,:)-(u3(1,j,:)-fxD*(u1(2,j,:)+lq*u1(1,j,:)+ls1) &
+        -fyD*(u1(1,j+1,:)+u1(1,j-1,:))+fcD*u1(1,j,:))
+      res2(1,j,:)=rhs2(1,j,:)-(fx*(u2(2,j,:)+lq*u2(1,j,:)+ls2) &
+        +fy*(u2(1,j+1,:)+u2(1,j-1,:))-fc*u2(1,j,:)-u1(1,j,:))
+      res3(1,j,:)=rhs3(1,j,:)-(fx*(u3(2,j,:)+lq*u3(1,j,:)+ls3) &
+        +fy*(u3(1,j+1,:)+u3(1,j-1,:))-fc*u3(1,j,:)-u2(1,j,:))
+    enddo
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(1,1,:)=rhs1(1,1,:)-(u3(1,1,:)-fxD*(u1(2,1,:)+rbufW(1,:,1)) &
       -fyD*(u1(1,2,:)+rbufS(1,:,1))+fcD*u1(1,1,:))
     res2(1,1,:)=rhs2(1,1,:)-(fx*(u2(2,1,:)+rbufW(1,:,2)) &
@@ -4340,6 +5388,7 @@ endif
   endif
 
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...global NW corner
     res1(1,nyf,:)=rhs1(1,nyf,:)-(u3(1,nyf,:)-fxD*(u1(2,nyf,:)+Lq*u1(1,nyf,:)+Ls1) &
@@ -4350,6 +5399,17 @@ endif
       +fy*(rbufN(1,:,3)+u3(1,nyf-1,:))-fc*u3(1,nyf,:)-u2(1,nyf,:))
   else
 !...local NW corner
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...NW corner
+    res1(1,nyf,:)=rhs1(1,nyf,:)-(u3(1,nyf,:)-fxD*(u1(2,nyf,:)+lq*u1(1,nyf,:)+ls1) &
+      -fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))+fcD*u1(1,nyf,:))
+    res2(1,nyf,:)=rhs2(1,nyf,:)-(fx*(u2(2,nyf,:)+lq*u2(1,nyf,:)+ls2) &
+      +fy*(rbufN(1,:,2)+u2(1,nyf-1,:))-fc*u2(1,nyf,:)-u1(1,nyf,:))
+    res3(1,nyf,:)=rhs3(1,nyf,:)-(fx*(u3(2,nyf,:)+lq*u3(1,nyf,:)+ls3) &
+      +fy*(rbufN(1,:,3)+u3(1,nyf-1,:))-fc*u3(1,nyf,:)-u2(1,nyf,:))
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(1,nyf,:)=rhs1(1,nyf,:)-(u3(1,nyf,:)-fxD*(u1(2,nyf,:)+rbufW(nyf,:,1)) &
       -fyD*(rbufN(1,:,1)+u1(1,nyf-1,:))+fcD*u1(1,nyf,:))
     res2(1,nyf,:)=rhs2(1,nyf,:)-(fx*(u2(2,nyf,:)+rbufW(nyf,:,2)) &
@@ -4369,6 +5429,7 @@ endif
 
 !.Right boundary
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == iprocsm1) then !.Right most process (along x)
 !...global NE corner
     res1(nxf,nyf,:)=rhs1(nxf,nyf,:)-(u3(nxf,nyf,:)-fxD*(Rq*u1(nxf,nyf,:)+Rs1 &
@@ -4394,13 +5455,42 @@ endif
     enddo
   else
 !...local NE corner
+=======
+  if (iIDhd(qn)%a(ng) == iprocsm1) then
+!...NE corner
+    res1(nxf,nyf,:)=rhs1(nxf,nyf,:)-(u3(nxf,nyf,:)-fxD*(rq*u1(nxf,nyf,:)+rs1 &
+      +u1(nxf-1,nyf,:))-fyD*(rbufN(nxf,:,1)+u1(nxf,nyf-1,:))+fcD*u1(nxf,nyf,:))
+    res2(nxf,nyf,:)=rhs2(nxf,nyf,:)-(fx*(rq*u2(nxf,nyf,:)+rs2+u2(nxf-1,nyf,:)) &
+      +fy*(rbufN(nxf,:,2)+u2(nxf,nyf-1,:))-fc*u2(nxf,nyf,:)-u1(nxf,nyf,:))
+    res3(nxf,nyf,:)=rhs3(nxf,nyf,:)-(fx*(rq*u3(nxf,nyf,:)+rs3+u3(nxf-1,nyf,:)) &
+      +fy*(rbufN(nxf,:,3)+u3(nxf,nyf-1,:))-fc*u3(nxf,nyf,:)-u2(nxf,nyf,:))
+!...SE corner
+    res1(nxf,1,:)=rhs1(nxf,1,:)-(u3(nxf,1,:)-fxD*(rq*u1(nxf,1,:)+rs1+u1(nxf-1,1,:)) &
+      -fyD*(u1(nxf,2,:)+rbufS(nxf,:,1))+fcD*u1(nxf,1,:))
+    res2(nxf,1,:)=rhs2(nxf,1,:)-(fx*(rq*u2(nxf,1,:)+rs2+u2(nxf-1,1,:)) &
+      +fy*(u2(nxf,2,:)+rbufS(nxf,:,2))-fc*u2(nxf,1,:)-u1(nxf,1,:))
+    res3(nxf,1,:)=rhs3(nxf,1,:)-(fx*(rq*u3(nxf,1,:)+rs3+u3(nxf-1,1,:)) &
+      +fy*(u3(nxf,2,:)+rbufS(nxf,:,3))-fc*u3(nxf,1,:)-u2(nxf,1,:))
+    do j=2,nyf-1
+      res1(nxf,j,:)=rhs1(nxf,j,:)-(u3(nxf,j,:)-fxD*(rq*u1(nxf,j,:)+rs1+u1(nxf-1,j,:)) &
+        -fyD*(u1(nxf,j+1,:)+u1(nxf,j-1,:))+fcD*u1(nxf,j,:))
+      res2(nxf,j,:)=rhs2(nxf,j,:)-(fx*(rq*u2(nxf,j,:)+rs2+u2(nxf-1,j,:)) &
+        +fy*(u2(nxf,j+1,:)+u2(nxf,j-1,:))-fc*u2(nxf,j,:)-u1(nxf,j,:))
+      res3(nxf,j,:)=rhs3(nxf,j,:)-(fx*(rq*u3(nxf,j,:)+rs3+u3(nxf-1,j,:)) &
+        +fy*(u3(nxf,j+1,:)+u3(nxf,j-1,:))-fc*u3(nxf,j,:)-u2(nxf,j,:))
+    enddo
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(nxf,nyf,:)=rhs1(nxf,nyf,:)-(u3(nxf,nyf,:)-fxD*(rbufE(nyf,:,1)+u1(nxf-1,nyf,:)) &
       -fyD*(rbufN(nxf,:,1)+u1(nxf,nyf-1,:))+fcD*u1(nxf,nyf,:))
     res2(nxf,nyf,:)=rhs2(nxf,nyf,:)-(fx*(rbufE(nyf,:,2)+u2(nxf-1,nyf,:)) &
       +fy*(rbufN(nxf,:,2)+u2(nxf,nyf-1,:))-fc*u2(nxf,nyf,:)-u1(nxf,nyf,:))
     res3(nxf,nyf,:)=rhs3(nxf,nyf,:)-(fx*(rbufE(nyf,:,3)+u3(nxf-1,nyf,:)) &
       +fy*(rbufN(nxf,:,3)+u3(nxf,nyf-1,:))-fc*u3(nxf,nyf,:)-u2(nxf,nyf,:))
+<<<<<<< HEAD
 !...local SE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     res1(nxf,1,:)=rhs1(nxf,1,:)-(u3(nxf,1,:)-fxD*(rbufE(1,:,1)+u1(nxf-1,1,:)) &
       -fyD*(u1(nxf,2,:)+rbufS(nxf,:,1))+fcD*u1(nxf,1,:))
     res2(nxf,1,:)=rhs2(nxf,1,:)-(fx*(rbufE(1,:,2)+u2(nxf-1,1,:)) &
@@ -4428,6 +5518,7 @@ endif
 #ELSE
 !.If (HDop==2 .OR. HDop==3 .OR. HDop==8 .OR. HDop==12)
   recursive subroutine Gcychd(ng,u,rhs,xBC,qn)
+<<<<<<< HEAD
 !.Gamma cycles to solve equation from implicit hyperdiffusion
 !.equation arising from Laplacian based 4th order diffusion
 !.(HDop==2)
@@ -4448,6 +5539,14 @@ endif
 !. integer qn: which quantity is being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u: updated solution at grid ng
+=======
+! Recursive multigrid iteration. On input, ng is the current level, u is
+! the current value of the solution, and rhs is the right-hand side.
+! On output u contains the improved solution at the current level.
+! Parameters: NPRE and NPOST are the number of relaxation sweeps before
+!             and after the coarse-grid correction is computed.
+  implicit none
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   integer(I4B), intent(in) :: ng, xBC(:), qn
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), intent(in) :: rhs(:,:,:)
@@ -4503,7 +5602,11 @@ endif
     nxf=nxu
     nyf=nyu
 
+<<<<<<< HEAD
     v=0.0_dp !.Zero for initial guess in next relaxation
+=======
+    v=0.0_dp ! Zero for initial guess in next relaxation
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     if (acuhd(qn)%a(ng-1,1)) then
 !.....Only active processes proceed to next coarser grid
       do i=1,GAMhd(qn)
@@ -4548,6 +5651,7 @@ endif
 #IF (HDop==2 .OR. HDop==3)
 !*********************************************************
   subroutine relaxhd(ng,u,rhs,xBC,qn)
+<<<<<<< HEAD
 !.Local damped Gauss-Seidel relaxation of Laplacian-based
 !.4th order hyperdiffusion equation (HDop==2)
 !.                   u + Diff*(L^2)u=rho,
@@ -4562,6 +5666,10 @@ endif
 !. integer qn: quantity being hyperdiffused (1 to nqhd)
 !.OUTPUTS
 !. real(dp) dimension(:,:,:) u: updated solution at grid ng
+=======
+!.Local Gauss-Seidel relaxation. The current value of the
+! solution u is updated, using the right-hand-side function rhs.
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   implicit none
   include 'mpif.h'
   real(DP), intent(inout) :: u(:,:,:)
@@ -4569,17 +5677,26 @@ endif
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank,NErank,SErank,SWrank,NWrank
   integer(I4B) :: ierr,req(16),stat(MPI_STATUS_SIZE,16)
+<<<<<<< HEAD
   real(DP), allocatable :: Ls(:,:),Rs(:,:),loc2D(:,:)
+=======
+  real(DP), allocatable :: ls(:,:),rs(:,:),loc2D(:,:)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:,:) :: sbufN,sbufE,sbufS,sbufW, &
                                              rbufN,rbufE,rbufS,rbufW
   real(DP), allocatable, dimension(:,:) :: sbufNE,sbufSE,sbufSW,sbufNW, &
                                            rbufNE,rbufSE,rbufSW,rbufNW
+<<<<<<< HEAD
   real(DP) :: rdx,rdy,fx,fxx,fy,fyy,fxy,fc,delta,Lq,Rq
+=======
+  real(DP) :: rdx,rdy,fx,fxx,fy,fyy,fxy,fc,delta,lq,rq
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 #IF (HDop==3)
   real(DP) :: fx6,fx4,fy6,fy4,fxxy,fxyy
 #ENDIF
   real(DP), allocatable :: deltaL(:),deltaR(:)
 
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
   Nrank  = nborhd(qn)%a(ng,1)
   NErank = nborhd(qn)%a(ng,2)
@@ -4609,10 +5726,37 @@ endif
   else ! if (xBC==1 .OR. xBC(1)==-1) then ! symmetry
     Lq = dble(xBC(1))
     Ls = 0.0_dp
+=======
+  Nrank =nborhd(qn)%a(ng,1)
+  NErank=nborhd(qn)%a(ng,2)
+  Erank =nborhd(qn)%a(ng,3)
+  SErank=nborhd(qn)%a(ng,4)
+  Srank =nborhd(qn)%a(ng,5)
+  SWrank=nborhd(qn)%a(ng,6)
+  Wrank =nborhd(qn)%a(ng,7)
+  NWrank=nborhd(qn)%a(ng,8)
+
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+  allocate(ls(HDop,nzL),rs(HDop,nzL),loc2D(HDop,nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(i=1:HDop,k=1:nzL) loc2D(i,k)=sum(u(i,:,k))
+    call MPI_ALLreduce(loc2D,ls,HDop*nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls=2.0_dp*ls/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq = -1.0_dp
     forall(i=1:HDop,k=1:nzL) loc2D(i,k)=sum(u(nxf-i+1,:,k))
     call MPI_ALLreduce(loc2D,rs,HDop*nzL,MPI_DOUBLE_PRECISION, &
@@ -4621,6 +5765,16 @@ endif
   else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
     Rq = dble(xBC(2))
     Rs = 0.0_dp
+=======
+    rq=-1.0_dp
+    forall(i=1:HDop,k=1:nzL) loc2D(i,k)=sum(u(nxf-i+1,:,k))
+    call MPI_ALLreduce(loc2D,rs,HDop*nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs=2.0_dp*rs/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !........................................................!
 
@@ -4696,6 +5850,7 @@ endif
   
   call MPI_WAITALL(3,(/req(5),req(6),req(13)/),(/stat(:,5),stat(:,6),stat(:,13)/),ierr)
 
+<<<<<<< HEAD
   rdx =  dble(nxf*iprocshd(qn)%a(ng))/bLx
   rdy =  dble(nyf*jprocshd(qn)%a(ng))/bLy
 #IF (HDop==2)
@@ -4726,6 +5881,36 @@ endif
       -fxy*(u(3,2,:)+rbufS(3,2,:)+rbufS(1,2,:)+u(1,2,:)))*delta
   else
 !...local SW corner
+=======
+  rdx = dble(nxf*iprocshd(qn)%a(ng))/bLx
+  rdy = dble(nyf*jprocshd(qn)%a(ng))/bLy
+#IF (HDop==2)
+  fxx = hDiff(1)*(rdx**4)
+  fyy = hDiff(2)*(rdy**4)
+  fxy = (hDiff(1)+hDiff(2))*((rdx*rdy)**2)
+  fx  =-4.0_dp*fxx-2.0_dp*fxy
+  fy  =-4.0_dp*fyy-2.0_dp*fxy
+  fc  = 1.0_dp+2.0_dp*(3.0_dp*(fxx+fyy)+2.0_dp*fxy)
+
+  delta=omehd(qn)/fc
+  allocate(deltaL(1),deltaR(1))
+  deltaL=omehd(qn)/(fc+fx*lq)
+  deltaR=omehd(qn)/(fc+fx*rq)
+
+!.First row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
+!    u(1,1,:)=(rhs(1,1,:) &
+      -fxx*(u(3,1,:)+lq*u(2,1,:)+ls(2,:))-fx*(u(2,1,:)+ls(1,:)) &
+      -fyy*(u(1,3,:)+rbufS(1,1,:))-fy*(u(1,2,:)+rbufS(1,2,:)) &
+      -fxy*(u(2,2,:)+rbufS(2,2,:)+lq*rbufS(1,2,:)+ls(1,:)+lq*u(1,2,:)+ls(1,:)))*deltaL
+    u(2,1,:)=Oomehd(qn)*u(2,1,:)+(rhs(2,1,:) &
+!    u(2,1,:)=(rhs(2,1,:) &
+      -fxx*(u(4,1,:)+lq*u(1,1,:)+ls(1,:))-fx*(u(3,1,:)+u(1,1,:)) &
+      -fyy*(u(2,3,:)+rbufS(2,1,:))-fy*(u(2,2,:)+rbufS(2,2,:)) &
+      -fxy*(u(3,2,:)+rbufS(3,2,:)+rbufS(1,2,:)+u(1,2,:)))*delta
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
 !    u(1,1,:)=(rhs(1,1,:) &
       -fxx*(u(3,1,:)+rbufW(1,1,:))-fx*(u(2,1,:)+rbufW(2,1,:)) &
@@ -4737,7 +5922,11 @@ endif
       -fyy*(u(2,3,:)+rbufS(2,1,:))-fy*(u(2,2,:)+rbufS(2,2,:)) &
       -fxy*(u(3,2,:)+rbufS(3,2,:)+rbufS(1,2,:)+u(1,2,:)))*delta
   endif
+<<<<<<< HEAD
   do i=3,nxf-2 !.away from x-boundaries
+=======
+  do i=3,nxf-2
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,1,:)=Oomehd(qn)*u(i,1,:)+(rhs(i,1,:) &
 !    u(i,1,:)=(rhs(i,1,:) &
       -fxx*(u(i+2,1,:)+u(i-2,1,:))-fx*(u(i+1,1,:)+u(i-1,1,:)) &
@@ -4745,6 +5934,7 @@ endif
       -fxy*(u(i+1,2,:)+rbufS(i+1,2,:)+rbufS(i-1,2,:)+u(i-1,2,:)))*delta
   enddo
   call MPI_WAITALL(2,(/req(7),req(14)/),(/stat(:,7),stat(:,14)/),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
 !    u(nxf-1,1,:)=(rhs(nxf-1,1,:) &
@@ -4757,19 +5947,36 @@ endif
       -fxx*(Rq*u(nxf-1,1,:)+Rs(2,:)+u(nxf-2,1,:))-fx*(rs(1,:)+u(nxf-1,1,:)) &
       -fyy*(u(nxf,3,:)+rbufS(nxf,1,:))-fy*(u(nxf,2,:)+rbufS(nxf,2,:)) &
       -fxy*(Rq*u(nxf,2,:)+Rs(1,:)+Rq*rbufS(nxf,2,:)+Rs(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,2,:)))*deltaR
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
+!    u(nxf-1,1,:)=(rhs(nxf-1,1,:) &
+      -fxx*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:))-fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
+      -fyy*(u(nxf-1,3,:)+rbufS(nxf-1,1,:))-fy*(u(nxf-1,2,:)+rbufS(nxf-1,2,:)) &
+      -fxy*(u(nxf,2,:)+rbufS(nxf,2,:)+rbufS(nxf-2,2,:)+u(nxf-2,2,:)))*delta
+    u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
+!    u(nxf,1,:)=(rhs(nxf,1,:) &
+      -fxx*(rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:))-fx*(rs(1,:)+u(nxf-1,1,:)) &
+      -fyy*(u(nxf,3,:)+rbufS(nxf,1,:))-fy*(u(nxf,2,:)+rbufS(nxf,2,:)) &
+      -fxy*(rq*u(nxf,2,:)+rs(1,:)+rq*rbufS(nxf,2,:)+rs(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,2,:)))*deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
 !    u(nxf-1,1,:)=(rhs(nxf-1,1,:) &
       -fxx*(rbufE(1,1,:)+u(nxf-3,1,:))-fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
       -fyy*(u(nxf-1,3,:)+rbufS(nxf-1,1,:))-fy*(u(nxf-1,2,:)+rbufS(nxf-1,2,:)) &
       -fxy*(u(nxf,2,:)+rbufS(nxf,2,:)+rbufS(nxf-2,2,:)+u(nxf-2,2,:)))*delta
+<<<<<<< HEAD
 !...local SE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
 !    u(nxf,1,:)=(rhs(nxf,1,:) &
       -fxx*(rbufE(2,1,:)+u(nxf-2,1,:))-fx*(rbufE(1,1,:)+u(nxf-1,1,:)) &
       -fyy*(u(nxf,3,:)+rbufS(nxf,1,:))-fy*(u(nxf,2,:)+rbufS(nxf,2,:)) &
       -fxy*(rbufE(1,2,:)+rbufSE(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,2,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... SECOND ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
@@ -4780,6 +5987,18 @@ endif
     u(2,2,:)=Oomehd(qn)*u(2,2,:)+(rhs(2,2,:) &
 !    u(2,2,:)=(rhs(2,2,:) &
       -fxx*(u(4,2,:)+Lq*u(1,2,:)+Ls(1,:))-fx*(u(3,2,:)+u(1,2,:)) &
+=======
+!.Second row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
+!    u(1,2,:)=(rhs(1,2,:) &
+      -fxx*(u(3,2,:)+lq*u(2,2,:)+ls(2,:))-fx*(u(2,2,:)+ls(1,:)) &
+      -fyy*(u(1,4,:)+rbufS(1,2,:))-fy*(u(1,3,:)+u(1,1,:)) &
+      -fxy*(u(2,3,:)+u(2,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:)))*deltaL
+    u(2,2,:)=Oomehd(qn)*u(2,2,:)+(rhs(2,2,:) &
+!    u(2,2,:)=(rhs(2,2,:) &
+      -fxx*(u(4,2,:)+lq*u(1,2,:)+ls(1,:))-fx*(u(3,2,:)+u(1,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fyy*(u(2,4,:)+rbufS(2,2,:))-fy*(u(2,3,:)+u(2,1,:)) &
       -fxy*(u(3,3,:)+u(3,1,:)+u(1,1,:)+u(1,3,:)))*delta
   else
@@ -4794,24 +6013,41 @@ endif
       -fyy*(u(2,4,:)+rbufS(2,2,:))-fy*(u(2,3,:)+u(2,1,:)) &
       -fxy*(u(3,3,:)+u(3,1,:)+u(1,1,:)+u(1,3,:)))*delta
   endif
+<<<<<<< HEAD
   do i=3,nxf-2 !.away from x-boundaries
+=======
+  do i=3,nxf-2
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,2,:)=Oomehd(qn)*u(i,2,:)+(rhs(i,2,:) &
 !    u(i,2,:)=(rhs(i,2,:) &
       -fxx*(u(i+2,2,:)+u(i-2,2,:))-fx*(u(i+1,2,:)+u(i-1,2,:)) &
       -fyy*(u(i,4,:)+rbufS(i,2,:))-fy*(u(i,3,:)+u(i,1,:)) &
       -fxy*(u(i+1,3,:)+u(i+1,1,:)+u(i-1,1,:)+u(i-1,3,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
 !    u(nxf-1,2,:)=(rhs(nxf-1,2,:) &
       -fxx*(Rq*u(nxf,2,:)+Rs(1,:)+u(nxf-3,2,:))-fx*(u(nxf,2,:)+u(nxf-2,2,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
+!    u(nxf-1,2,:)=(rhs(nxf-1,2,:) &
+      -fxx*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:))-fx*(u(nxf,2,:)+u(nxf-2,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fyy*(u(nxf-1,4,:)+rbufS(nxf-1,2,:))-fy*(u(nxf-1,3,:)+u(nxf-1,1,:)) &
       -fxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,3,:)))*delta
     u(nxf,2,:)=Oomehd(qn)*u(nxf,2,:)+(rhs(nxf,2,:) &
 !    u(nxf,2,:)=(rhs(nxf,2,:) &
+<<<<<<< HEAD
       -fxx*(Rq*u(nxf-1,2,:)+Rs(2,:)+u(nxf-2,2,:))-fx*(rs(1,:)+u(nxf-1,2,:)) &
       -fyy*(u(nxf,4,:)+rbufS(nxf,2,:))-fy*(u(nxf,3,:)+u(nxf,1,:)) &
       -fxy*(Rq*u(nxf,3,:)+Rs(1,:)+Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-1,1,:)+u(nxf-1,3,:)))*deltaR
+=======
+      -fxx*(rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:))-fx*(rs(1,:)+u(nxf-1,2,:)) &
+      -fyy*(u(nxf,4,:)+rbufS(nxf,2,:))-fy*(u(nxf,3,:)+u(nxf,1,:)) &
+      -fxy*(rq*u(nxf,3,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)+u(nxf-1,3,:)))*deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
 !    u(nxf-1,2,:)=(rhs(nxf-1,2,:) &
@@ -4824,6 +6060,7 @@ endif
       -fyy*(u(nxf,4,:)+rbufS(nxf,2,:))-fy*(u(nxf,3,:)+u(nxf,1,:)) &
       -fxy*(rbufE(1,3,:)+rbufE(1,1,:)+u(nxf-1,1,:)+u(nxf-1,3,:)))*delta
   endif
+<<<<<<< HEAD
 !................... AWAY FROM BOTTOM AND TOP BOUNDARIES ...................!
   do j=3,nyf-2
 !...Left boundary
@@ -4836,6 +6073,19 @@ endif
       u(2,j,:)=Oomehd(qn)*u(2,j,:)+(rhs(2,j,:) &
 !      u(2,j,:)=(rhs(2,j,:) &
         -fxx*(u(4,j,:)+Lq*u(1,j,:)+Ls(1,:))-fx*(u(3,j,:)+u(1,j,:)) &
+=======
+!.Away from bottom and top boundaries
+  do j=3,nyf-2
+    if (iIDhd(qn)%a(ng)==0) then  ! Left boundary
+      u(1,j,:)=Oomehd(qn)*u(1,j,:)+(rhs(1,j,:) &
+!      u(1,j,:)=(rhs(1,j,:) &
+        -fxx*(u(3,j,:)+lq*u(2,j,:)+ls(2,:))-fx*(u(2,j,:)+ls(1,:)) &
+        -fyy*(u(1,j+2,:)+u(1,j-2,:))-fy*(u(1,j+1,:)+u(1,j-1,:)) &
+        -fxy*(u(2,j+1,:)+u(2,j-1,:)+lq*u(1,j-1,:)+ls(1,:)+lq*u(1,j+1,:)+ls(1,:)))*deltaL
+      u(2,j,:)=Oomehd(qn)*u(2,j,:)+(rhs(2,j,:) &
+!      u(2,j,:)=(rhs(2,j,:) &
+        -fxx*(u(4,j,:)+lq*u(1,j,:)+ls(1,:))-fx*(u(3,j,:)+u(1,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fyy*(u(2,j+2,:)+u(2,j-2,:))-fy*(u(2,j+1,:)+u(2,j-1,:)) &
         -fxy*(u(3,j+1,:)+u(3,j-1,:)+u(1,j-1,:)+u(1,j+1,:)))*delta
     else
@@ -4850,7 +6100,10 @@ endif
         -fyy*(u(2,j+2,:)+u(2,j-2,:))-fy*(u(2,j+1,:)+u(2,j-1,:)) &
         -fxy*(u(3,j+1,:)+u(3,j-1,:)+u(1,j-1,:)+u(1,j+1,:)))*delta
     endif
+<<<<<<< HEAD
 !...Inner points
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do i=3,nxf-2
       u(i,j,:)=Oomehd(qn)*u(i,j,:)+(rhs(i,j,:) &
 !      u(i,j,:)=(rhs(i,j,:) &
@@ -4858,18 +6111,31 @@ endif
         -fyy*(u(i,j+2,:)+u(i,j-2,:))-fy*(u(i,j+1,:)+u(i,j-1,:)) &
         -fxy*(u(i+1,j+1,:)+u(i+1,j-1,:)+u(i-1,j-1,:)+u(i-1,j+1,:)))*delta
     enddo
+<<<<<<< HEAD
 !...Right boundary
     if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
       u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
 !      u(nxf-1,j,:)=(rhs(nxf-1,j,:) &
         -fxx*(Rq*u(nxf,j,:)+Rs(1,:)+u(nxf-3,j,:))-fx*(u(nxf,j,:)+u(nxf-2,j,:)) &
+=======
+    if (iIDhd(qn)%a(ng)==iprocsm1) then ! Right boundary
+      u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
+!      u(nxf-1,j,:)=(rhs(nxf-1,j,:) &
+        -fxx*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-3,j,:))-fx*(u(nxf,j,:)+u(nxf-2,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))-fy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)) &
         -fxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)))*delta
       u(nxf,j,:)=Oomehd(qn)*u(nxf,j,:)+(rhs(nxf,j,:) &
 !      u(nxf,j,:)=(rhs(nxf,j,:) &
+<<<<<<< HEAD
         -fxx*(Rq*u(nxf-1,j,:)+Rs(2,:)+u(nxf-2,j,:))-fx*(rs(1,:)+u(nxf-1,j,:)) &
         -fyy*(u(nxf,j+2,:)+u(nxf,j-2,:))-fy*(u(nxf,j+1,:)+u(nxf,j-1,:)) &
         -fxy*(Rq*u(nxf,j+1,:)+Rs(1,:)+Rq*u(nxf,j-1,:)+Rs(1,:)+u(nxf-1,j-1,:)+u(nxf-1,j+1,:)))*deltaR
+=======
+        -fxx*(rq*u(nxf-1,j,:)+rs(2,:)+u(nxf-2,j,:))-fx*(rs(1,:)+u(nxf-1,j,:)) &
+        -fyy*(u(nxf,j+2,:)+u(nxf,j-2,:))-fy*(u(nxf,j+1,:)+u(nxf,j-1,:)) &
+        -fxy*(rq*u(nxf,j+1,:)+rs(1,:)+rq*u(nxf,j-1,:)+rs(1,:)+u(nxf-1,j-1,:)+u(nxf-1,j+1,:)))*deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     else
       u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
 !      u(nxf-1,j,:)=(rhs(nxf-1,j,:) &
@@ -4884,6 +6150,7 @@ endif
     endif
   enddo
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
 !........................... SECOND TO TOP ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
@@ -4894,6 +6161,18 @@ endif
     u(2,nyf-1,:)=Oomehd(qn)*u(2,nyf-1,:)+(rhs(2,nyf-1,:) &
 !    u(2,nyf-1,:)=(rhs(2,nyf-1,:) &
       -fxx*(u(4,nyf-1,:)+Lq*u(1,nyf-1,:)+Ls(1,:))-fx*(u(3,nyf-1,:)+u(1,nyf-1,:)) &
+=======
+!.Second to top row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
+!    u(1,nyf-1,:)=(rhs(1,nyf-1,:) &
+      -fxx*(u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:))-fx*(u(2,nyf-1,:)+ls(1,:)) &
+      -fyy*(rbufN(1,1,:)+u(1,nyf-3,:))-fy*(u(1,nyf,:)+u(1,nyf-2,:)) &
+      -fxy*(u(2,nyf,:)+u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:)))*deltaL
+    u(2,nyf-1,:)=Oomehd(qn)*u(2,nyf-1,:)+(rhs(2,nyf-1,:) &
+!    u(2,nyf-1,:)=(rhs(2,nyf-1,:) &
+      -fxx*(u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))-fx*(u(3,nyf-1,:)+u(1,nyf-1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fyy*(rbufN(2,1,:)+u(2,nyf-3,:))-fy*(u(2,nyf,:)+u(2,nyf-2,:)) &
       -fxy*(u(3,nyf,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:)))*delta
   else
@@ -4908,24 +6187,41 @@ endif
       -fyy*(rbufN(2,1,:)+u(2,nyf-3,:))-fy*(u(2,nyf,:)+u(2,nyf-2,:)) &
       -fxy*(u(3,nyf,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:)))*delta
   endif
+<<<<<<< HEAD
   do i=3,nxf-2 !.away from x-boundaries
+=======
+  do i=3,nxf-2
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,nyf-1,:)=Oomehd(qn)*u(i,nyf-1,:)+(rhs(i,nyf-1,:) &
 !    u(i,nyf-1,:)=(rhs(i,nyf-1,:) &
       -fxx*(u(i+2,nyf-1,:)+u(i-2,nyf-1,:))-fx*(u(i+1,nyf-1,:)+u(i-1,nyf-1,:)) &
       -fyy*(rbufN(i,1,:)+u(i,nyf-3,:))-fy*(u(i,nyf,:)+u(i,nyf-2,:)) &
       -fxy*(u(i+1,nyf,:)+u(i+1,nyf-2,:)+u(i-1,nyf-2,:)+u(i-1,nyf,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
 !    u(nxf-1,nyf-1,:)=(rhs(nxf-1,nyf-1,:) &
       -fxx*(Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-3,nyf-1,:))-fx*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
+!    u(nxf-1,nyf-1,:)=(rhs(nxf-1,nyf-1,:) &
+      -fxx*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:))-fx*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))-fy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)) &
       -fxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)))*delta
     u(nxf,nyf-1,:)=Oomehd(qn)*u(nxf,nyf-1,:)+(rhs(nxf,nyf-1,:) &
 !    u(nxf,nyf-1,:)=(rhs(nxf,nyf-1,:) &
+<<<<<<< HEAD
       -fxx*(Rq*u(nxf-1,nyf-1,:)+Rs(2,:)+u(nxf-2,nyf-1,:))-fx*(rs(1,:)+u(nxf-1,nyf-1,:)) &
       -fyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))-fy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)) &
       -fxy*(Rq*u(nxf,nyf,:)+Rs(1,:)+Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-1,nyf-2,:)+u(nxf-1,nyf,:)))*deltaR
+=======
+      -fxx*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:))-fx*(rs(1,:)+u(nxf-1,nyf-1,:)) &
+      -fyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))-fy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)) &
+      -fxy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:)+u(nxf-1,nyf,:)))*deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
 !    u(nxf-1,nyf-1,:)=(rhs(nxf-1,nyf-1,:) &
@@ -4938,6 +6234,7 @@ endif
       -fyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))-fy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)) &
       -fxy*(rbufE(1,nyf,:)+rbufE(1,nyf-2,:)+u(nxf-1,nyf-2,:)+u(nxf-1,nyf,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... TOP ROW ...........................!
   call MPI_WAIT(req(15),stat(:,15),ierr) !.NW corner grid point, u(i-1,j+1)
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
@@ -4954,6 +6251,22 @@ endif
       -fxy*(rbufN(3,1,:)+u(3,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)))*delta
   else
 !...local NW corner
+=======
+!.Top row
+  call MPI_WAIT(req(15),stat(:,15),ierr) !.NW corner grid point, u(i-1,j+1)
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
+!    u(1,nyf,:)=(rhs(1,nyf,:) &
+      -fxx*(u(3,nyf,:)+lq*u(2,nyf,:)+ls(2,:))-fx*(u(2,nyf,:)+ls(1,:)) &
+      -fyy*(rbufN(1,2,:)+u(1,nyf-2,:))-fy*(rbufN(1,1,:)+u(1,nyf-1,:)) &
+      -fxy*(rbufN(2,1,:)+u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:)))*deltaL
+    u(2,nyf,:)=Oomehd(qn)*u(2,nyf,:)+(rhs(2,nyf,:) &
+!    u(2,nyf,:)=(rhs(2,nyf,:) &
+      -fxx*(u(4,nyf,:)+lq*u(1,nyf,:)+ls(1,:))-fx*(u(3,nyf,:)+u(1,nyf,:)) &
+      -fyy*(rbufN(2,2,:)+u(2,nyf-2,:))-fy*(rbufN(2,1,:)+u(2,nyf-1,:)) &
+      -fxy*(rbufN(3,1,:)+u(3,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)))*delta
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
 !    u(1,nyf,:)=(rhs(1,nyf,:) &
       -fxx*(u(3,nyf,:)+rbufW(1,nyf,:))-fx*(u(2,nyf,:)+rbufW(2,nyf,:)) &
@@ -4965,7 +6278,11 @@ endif
       -fyy*(rbufN(2,2,:)+u(2,nyf-2,:))-fy*(rbufN(2,1,:)+u(2,nyf-1,:)) &
       -fxy*(rbufN(3,1,:)+u(3,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)))*delta
   endif
+<<<<<<< HEAD
   do i=3,nxf-2 !.away from x-boundaries
+=======
+  do i=3,nxf-2
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,nyf,:)=Oomehd(qn)*u(i,nyf,:)+(rhs(i,nyf,:) &
 !    u(i,nyf,:)=(rhs(i,nyf,:) &
       -fxx*(u(i+2,nyf,:)+u(i-2,nyf,:))-fx*(u(i+1,nyf,:)+u(i-1,nyf,:)) &
@@ -4973,6 +6290,7 @@ endif
       -fxy*(rbufN(i+1,1,:)+u(i+1,nyf-1,:)+u(i-1,nyf-1,:)+rbufN(i-1,1,:)))*delta
   enddo
   call MPI_WAIT(req(16),stat(:,16),ierr) !.NE corner grid point, u(i+1,j+1)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
       -fxx*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-3,nyf,:))-fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
@@ -4984,13 +6302,28 @@ endif
       -fxx*(Rq*u(nxf-1,nyf,:)+Rs(2,:)+u(nxf-2,nyf,:))-fx*(rs(1,:)+u(nxf-1,nyf,:)) &
       -fyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))-fy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)) &
       -fxy*(Rq*rbufN(nxf,1,:)+Rs(1,:)+Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:)))*deltaR
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
+      -fxx*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-3,nyf,:))-fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
+      -fyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))-fy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)) &
+      -fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)))*delta
+    u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
+!    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
+      -fxx*(rq*u(nxf-1,nyf,:)+rs(2,:)+u(nxf-2,nyf,:))-fx*(rs(1,:)+u(nxf-1,nyf,:)) &
+      -fyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))-fy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)) &
+      -fxy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:)))*deltaR
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
 !    u(nxf-1,nyf,:)=(rhs(nxf-1,nyf,:) &
       -fxx*(rbufE(1,nyf,:)+u(nxf-3,nyf,:))-fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
       -fyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))-fy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)) &
       -fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)))*delta
+<<<<<<< HEAD
 !...local NE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
 !    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
       -fxx*(rbufE(2,nyf,:)+u(nxf-2,nyf,:))-fx*(rbufE(1,nyf,:)+u(nxf-1,nyf,:)) &
@@ -5000,6 +6333,7 @@ endif
 
 #ELSE
 !IF (HDop==3)
+<<<<<<< HEAD
   fx6  =  hDiff(1)*(rdx**6)
   fy6  =  hDiff(2)*(rdy**6)
   fx4  =  hDiff(1)*(rdx**4)*(rdy**2)
@@ -5038,12 +6372,54 @@ endif
     u(3,1,:)=Oomehd(qn)*u(3,1,:)+(rhs(3,1,:) &
 !    u(3,1,:)=(rhs(3,1,:) &
       +fx6*(u(6,1,:)+Lq*u(1,1,:)+Ls(1,:))+fxx*(u(5,1,:)+u(1,1,:))+fx*(u(4,1,:)+u(2,1,:)) &
+=======
+  fx6 = hDiff(1)*(rdx**6)
+  fy6 = hDiff(2)*(rdy**6)
+  fx4 = hDiff(1)*(rdx**4)*(rdy**2)
+  fy4 = hDiff(2)*(rdx**2)*(rdy**4)
+  fc  = 1.0_dp+4.0_dp*(5.0_dp*(fx6+fy6)+9.0_dp*(fx4+fy4))
+  fx  = 15.0_dp*fx6+18.0_dp*fy4+24.0_dp*fx4
+  fxx =-6.0_dp*(fx6+fx4)
+  fy  = 15.0_dp*fy6+18.0_dp*fx4+24.0_dp*fy4
+  fyy =-6.0_dp*(fy6+fy4)
+  fxy =-12.0_dp*(fx4+fy4)
+  fxxy= 3.0_dp*fx4
+  fxyy= 3.0_dp*fy4
+
+  delta=omehd(qn)/fc
+  allocate(deltaL(2),deltaR(2))
+  deltaL=(/omehd(qn)/(fc-fx*lq),omehd(qn)/(fc-fx6*lq)/)
+  deltaR=(/omehd(qn)/(fc-fx*rq),omehd(qn)/(fc-fx6*rq)/)
+
+!.FIRST ROW
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
+!    u(1,1,:)=(rhs(1,1,:) &
+      +fx6*(u(4,1,:)+lq*u(3,1,:)+ls(3,:))+fxx*(u(3,1,:)+lq*u(2,1,:)+ls(2,:))+fx*(u(2,1,:)+ls(1,:)) &
+      +fy6*(u(1,4,:)+rbufS(1,1,:))+fyy*(u(1,3,:)+rbufS(1,2,:))+fy*(u(1,2,:)+rbufS(1,3,:)) &
+      +fxy*(u(2,2,:)+rbufS(2,3,:)+lq*rbufS(1,3,:)+ls(1,:)+lq*u(1,2,:)+ls(1,:)) &
+      +fxxy*(u(3,2,:)+rbufS(3,3,:)+lq*rbufS(2,3,:)+ls(2,:)+lq*u(2,2,:)+ls(2,:)) &
+      +fxyy*(u(2,3,:)+rbufS(2,2,:)+lq*rbufS(1,2,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:)))*deltaL(1)
+    u(2,1,:)=Oomehd(qn)*u(2,1,:)+(rhs(2,1,:) &
+!    u(2,1,:)=(rhs(2,1,:) &
+      +fx6*(u(5,1,:)+ls(2,:))+fxx*(u(4,1,:)+lq*u(1,1,:)+ls(1,:))+fx*(u(3,1,:)+u(1,1,:)) &
+      +fy6*(u(2,4,:)+rbufS(2,1,:))+fyy*(u(2,3,:)+rbufS(2,2,:))+fy*(u(2,2,:)+rbufS(2,3,:)) &
+      +fxy*(u(3,2,:)+rbufS(3,3,:)+rbufS(1,3,:)+u(1,2,:)) &
+      +fxxy*(u(4,2,:)+rbufS(4,3,:)+lq*rbufS(1,3,:)+ls(1,:)+lq*u(1,2,:)+ls(1,:)) &
+      +fxyy*(u(3,3,:)+rbufS(3,2,:)+rbufS(1,2,:)+u(1,3,:)))*deltaL(2)
+    u(3,1,:)=Oomehd(qn)*u(3,1,:)+(rhs(3,1,:) &
+!    u(3,1,:)=(rhs(3,1,:) &
+      +fx6*(u(6,1,:)+lq*u(1,1,:)+ls(1,:))+fxx*(u(5,1,:)+u(1,1,:))+fx*(u(4,1,:)+u(2,1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(u(3,4,:)+rbufS(3,1,:))+fyy*(u(3,3,:)+rbufS(3,2,:))+fy*(u(3,2,:)+rbufS(3,3,:)) &
       +fxy*(u(4,2,:)+rbufS(4,3,:)+rbufS(2,3,:)+u(2,2,:)) &
       +fxxy*(u(5,2,:)+rbufS(5,3,:)+rbufS(1,3,:)+u(1,2,:)) &
       +fxyy*(u(4,3,:)+rbufS(4,2,:)+rbufS(2,2,:)+u(2,3,:)))*delta
   else
+<<<<<<< HEAD
 !...local SW corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
 !    u(1,1,:)=(rhs(1,1,:) &
       +fx6*(u(4,1,:)+rbufW(1,1,:))+fxx*(u(3,1,:)+rbufW(2,1,:))+fx*(u(2,1,:)+rbufW(3,1,:)) &
@@ -5066,7 +6442,11 @@ endif
       +fxxy*(u(5,2,:)+rbufS(5,3,:)+rbufS(1,3,:)+u(1,2,:)) &
       +fxyy*(u(4,3,:)+rbufS(4,2,:)+rbufS(2,2,:)+u(2,3,:)))*delta
   endif
+<<<<<<< HEAD
   do i=4,nxf-3 !.away from x-boundaries
+=======
+  do i=4,nxf-3
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,1,:)=Oomehd(qn)*u(i,1,:)+(rhs(i,1,:) &
 !    u(i,1,:)=(rhs(i,1,:) &
       +fx6*(u(i+3,1,:)+u(i-3,1,:))+fxx*(u(i+2,1,:)+u(i-2,1,:))+fx*(u(i+1,1,:)+u(i-1,1,:)) &
@@ -5076,16 +6456,24 @@ endif
       +fxyy*(u(i+1,3,:)+rbufS(i+1,2,:)+rbufS(i-1,2,:)+u(i-1,3,:)))*delta
   enddo
   call MPI_WAITALL(2,(/req(7),req(14)/),(/stat(:,7),stat(:,14)/),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,1,:)=Oomehd(qn)*u(nxf-2,1,:)+(rhs(nxf-2,1,:) &
 !    u(nxf-2,1,:)=(rhs(nxf-2,1,:) &
       +fx6*(Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-5,1,:))+fxx*(u(nxf,1,:)+u(nxf-4,1,:))+fx*(u(nxf-1,1,:)+u(nxf-3,1,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,1,:)=Oomehd(qn)*u(nxf-2,1,:)+(rhs(nxf-2,1,:) &
+!    u(nxf-2,1,:)=(rhs(nxf-2,1,:) &
+      +fx6*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-5,1,:))+fxx*(u(nxf,1,:)+u(nxf-4,1,:))+fx*(u(nxf-1,1,:)+u(nxf-3,1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(u(nxf-2,4,:)+rbufS(nxf-2,1,:))+fyy*(u(nxf-2,3,:)+rbufS(nxf-2,2,:))+fy*(u(nxf-2,2,:)+rbufS(nxf-2,3,:)) &
       +fxy*(u(nxf-1,2,:)+rbufS(nxf-1,3,:)+rbufS(nxf-3,3,:)+u(nxf-3,2,:)) &
       +fxxy*(u(nxf,2,:)+rbufS(nxf,3,:)+rbufS(nxf-4,3,:)+u(nxf-4,2,:)) &
       +fxyy*(u(nxf-1,3,:)+rbufS(nxf-1,2,:)+rbufS(nxf-3,2,:)+u(nxf-3,3,:)))*delta
     u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
 !    u(nxf-1,1,:)=(rhs(nxf-1,1,:) &
+<<<<<<< HEAD
       +fx6*(rs(2,:)+u(nxf-4,1,:))+fxx*(Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-3,1,:))+fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
       +fy6*(u(nxf-1,4,:)+rbufS(nxf-1,1,:))+fyy*(u(nxf-1,3,:)+rbufS(nxf-1,2,:))+fy*(u(nxf-1,2,:)+rbufS(nxf-1,3,:)) &
       +fxy*(u(nxf,2,:)+rbufS(nxf,3,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
@@ -5099,6 +6487,20 @@ endif
       +fxy*(Rq*u(nxf,2,:)+Rs(1,:)+Rq*rbufS(nxf,3,:)+Rs(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,2,:)) &
       +fxxy*(Rq*u(nxf-1,2,:)+Rs(2,:)+Rq*rbufS(nxf-1,3,:)+Rs(2,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
       +fxyy*(Rq*u(nxf,3,:)+Rs(1,:)+Rq*rbufS(nxf,2,:)+Rs(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,3,:)))*deltaR(1)
+=======
+      +fx6*(rs(2,:)+u(nxf-4,1,:))+fxx*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:))+fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
+      +fy6*(u(nxf-1,4,:)+rbufS(nxf-1,1,:))+fyy*(u(nxf-1,3,:)+rbufS(nxf-1,2,:))+fy*(u(nxf-1,2,:)+rbufS(nxf-1,3,:)) &
+      +fxy*(u(nxf,2,:)+rbufS(nxf,3,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
+      +fxxy*(rq*u(nxf,2,:)+rs(1,:)+rq*rbufS(nxf,3,:)+rs(1,:)+rbufS(nxf-3,3,:)+u(nxf-3,2,:)) &
+      +fxyy*(u(nxf,3,:)+rbufS(nxf,2,:)+rbufS(nxf-2,2,:)+u(nxf-2,3,:)))*deltaR(2)
+    u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
+!    u(nxf,1,:)=(rhs(nxf,1,:) &
+      +fx6*(rq*u(nxf-2,1,:)+rs(3,:)+u(nxf-3,1,:))+fxx*(rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:))+fx*(rs(1,:)+u(nxf-1,1,:)) &
+      +fy6*(u(nxf,4,:)+rbufS(nxf,1,:))+fyy*(u(nxf,3,:)+rbufS(nxf,2,:))+fy*(u(nxf,2,:)+rbufS(nxf,3,:)) &
+      +fxy*(rq*u(nxf,2,:)+rs(1,:)+rq*rbufS(nxf,3,:)+rs(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,2,:)) &
+      +fxxy*(rq*u(nxf-1,2,:)+rs(2,:)+rq*rbufS(nxf-1,3,:)+rs(2,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
+      +fxyy*(rq*u(nxf,3,:)+rs(1,:)+rq*rbufS(nxf,2,:)+rs(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,3,:)))*deltaR(1)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-2,1,:)=Oomehd(qn)*u(nxf-2,1,:)+(rhs(nxf-2,1,:) &
 !    u(nxf-2,1,:)=(rhs(nxf-2,1,:) &
@@ -5114,7 +6516,10 @@ endif
       +fxy*(u(nxf,2,:)+rbufS(nxf,3,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
       +fxxy*(rbufE(1,2,:)+rbufSE(1,:)+rbufS(nxf-3,3,:)+u(nxf-3,2,:)) &
       +fxyy*(u(nxf,3,:)+rbufS(nxf,2,:)+rbufS(nxf-2,2,:)+u(nxf-2,3,:)))*delta
+<<<<<<< HEAD
 !...local SE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
 !    u(nxf,1,:)=(rhs(nxf,1,:) &
       +fx6*(rbufE(3,1,:)+u(nxf-3,1,:))+fxx*(rbufE(2,1,:)+u(nxf-2,1,:))+fx*(rbufE(1,1,:)+u(nxf-1,1,:)) &
@@ -5123,6 +6528,7 @@ endif
       +fxxy*(rbufE(2,2,:)+rbufSE(2,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
       +fxyy*(rbufE(1,3,:)+rbufSE(3,:)+rbufS(nxf-1,2,:)+u(nxf-1,3,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... SECOND ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
@@ -5142,6 +6548,27 @@ endif
     u(3,2,:)=Oomehd(qn)*u(3,2,:)+(rhs(3,2,:) &
 !    u(3,2,:)=(rhs(3,2,:) &
       +fx6*(u(6,2,:)+Lq*u(1,2,:)+Ls(1,:))+fxx*(u(5,2,:)+u(1,2,:))+fx*(u(4,2,:)+u(2,2,:)) &
+=======
+!.SECOND ROW
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
+!    u(1,2,:)=(rhs(1,2,:) &
+      +fx6*(u(4,2,:)+lq*u(3,2,:)+ls(3,:))+fxx*(u(3,2,:)+lq*u(2,2,:)+ls(2,:))+fx*(u(2,2,:)+ls(1,:)) &
+      +fy6*(u(1,5,:)+rbufS(1,2,:))+fyy*(u(1,4,:)+rbufS(1,3,:))+fy*(u(1,3,:)+u(1,1,:)) &
+      +fxy*(u(2,3,:)+u(2,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:)) &
+      +fxxy*(u(3,3,:)+u(3,1,:)+lq*u(2,1,:)+ls(2,:)+lq*u(2,3,:)+ls(2,:)) &
+      +fxyy*(u(2,4,:)+rbufS(2,3,:)+lq*rbufS(1,3,:)+ls(1,:)+lq*u(1,4,:)+ls(1,:)))*deltaL(1)
+    u(2,2,:)=Oomehd(qn)*u(2,2,:)+(rhs(2,2,:) &
+!    u(2,2,:)=(rhs(2,2,:) &
+      +fx6*(u(5,2,:)+ls(2,:))+fxx*(u(4,2,:)+lq*u(1,2,:)+ls(1,:))+fx*(u(3,2,:)+u(1,2,:)) &
+      +fy6*(u(2,5,:)+rbufS(2,2,:))+fyy*(u(2,4,:)+rbufS(2,3,:))+fy*(u(2,3,:)+u(2,1,:)) &
+      +fxy*(u(3,3,:)+u(3,1,:)+u(1,1,:)+u(1,3,:)) &
+      +fxxy*(u(4,3,:)+u(4,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:)) &
+      +fxyy*(u(3,4,:)+rbufS(3,3,:)+rbufS(1,3,:)+u(1,4,:)))*deltaL(2)
+    u(3,2,:)=Oomehd(qn)*u(3,2,:)+(rhs(3,2,:) &
+!    u(3,2,:)=(rhs(3,2,:) &
+      +fx6*(u(6,2,:)+lq*u(1,2,:)+ls(1,:))+fxx*(u(5,2,:)+u(1,2,:))+fx*(u(4,2,:)+u(2,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(u(3,5,:)+rbufS(3,2,:))+fyy*(u(3,4,:)+rbufS(3,3,:))+fy*(u(3,3,:)+u(3,1,:)) &
       +fxy*(u(4,3,:)+u(4,1,:)+u(2,1,:)+u(2,3,:)) &
       +fxxy*(u(5,3,:)+u(5,1,:)+u(1,1,:)+u(1,3,:)) &
@@ -5169,7 +6596,11 @@ endif
       +fxxy*(u(5,3,:)+u(5,1,:)+u(1,1,:)+u(1,3,:)) &
       +fxyy*(u(4,4,:)+rbufS(4,3,:)+rbufS(2,3,:)+u(2,4,:)))*delta
   endif
+<<<<<<< HEAD
   do i=4,nxf-3 !.away from x-boundaries
+=======
+  do i=4,nxf-3
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,2,:)=Oomehd(qn)*u(i,2,:)+(rhs(i,2,:) &
 !    u(i,2,:)=(rhs(i,2,:) &
       +fx6*(u(i+3,2,:)+u(i-3,2,:))+fxx*(u(i+2,2,:)+u(i-2,2,:))+fx*(u(i+1,2,:)+u(i-1,2,:)) &
@@ -5178,16 +6609,24 @@ endif
       +fxxy*(u(i+2,3,:)+u(i+2,1,:)+u(i-2,1,:)+u(i-2,3,:)) &
       +fxyy*(u(i+1,4,:)+rbufS(i+1,3,:)+rbufS(i-1,3,:)+u(i-1,4,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,2,:)=Oomehd(qn)*u(nxf-2,2,:)+(rhs(nxf-2,2,:) &
 !    u(nxf-2,2,:)=(rhs(nxf-2,2,:) &
       +fx6*(Rq*u(nxf,2,:)+Rs(1,:)+u(nxf-5,2,:))+fxx*(u(nxf,2,:)+u(nxf-4,2,:))+fx*(u(nxf-1,2,:)+u(nxf-3,2,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,2,:)=Oomehd(qn)*u(nxf-2,2,:)+(rhs(nxf-2,2,:) &
+!    u(nxf-2,2,:)=(rhs(nxf-2,2,:) &
+      +fx6*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-5,2,:))+fxx*(u(nxf,2,:)+u(nxf-4,2,:))+fx*(u(nxf-1,2,:)+u(nxf-3,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(u(nxf-2,5,:)+rbufS(nxf-2,2,:))+fyy*(u(nxf-2,4,:)+rbufS(nxf-2,3,:))+fy*(u(nxf-2,3,:)+u(nxf-2,1,:)) &
       +fxy*(u(nxf-1,3,:)+u(nxf-1,1,:)+u(nxf-3,1,:)+u(nxf-3,3,:)) &
       +fxxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-4,1,:)+u(nxf-4,3,:)) &
       +fxyy*(u(nxf-1,4,:)+rbufS(nxf-1,3,:)+rbufS(nxf-3,3,:)+u(nxf-3,4,:)))*delta
     u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
 !    u(nxf-1,2,:)=(rhs(nxf-1,2,:) &
+<<<<<<< HEAD
       +fx6*(rs(2,:)+u(nxf-4,2,:))+fxx*(Rq*u(nxf,2,:)+Rs(1,:)+u(nxf-3,2,:))+fx*(u(nxf,2,:)+u(nxf-2,2,:)) &
       +fy6*(u(nxf-1,5,:)+rbufS(nxf-1,2,:))+fyy*(u(nxf-1,4,:)+rbufS(nxf-1,3,:))+fy*(u(nxf-1,3,:)+u(nxf-1,1,:)) &
       +fxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
@@ -5200,6 +6639,20 @@ endif
       +fxy*(Rq*u(nxf,3,:)+Rs(1,:)+Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-1,1,:)+u(nxf-1,3,:)) &
       +fxxy*(Rq*u(nxf-1,3,:)+Rs(2,:)+Rq*u(nxf-1,1,:)+Rs(2,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
       +fxyy*(Rq*u(nxf,4,:)+Rs(1,:)+Rq*rbufS(nxf,3,:)+Rs(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,4,:)))*deltaR(1)
+=======
+      +fx6*(rs(2,:)+u(nxf-4,2,:))+fxx*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:))+fx*(u(nxf,2,:)+u(nxf-2,2,:)) &
+      +fy6*(u(nxf-1,5,:)+rbufS(nxf-1,2,:))+fyy*(u(nxf-1,4,:)+rbufS(nxf-1,3,:))+fy*(u(nxf-1,3,:)+u(nxf-1,1,:)) &
+      +fxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
+      +fxxy*(rq*u(nxf,3,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:)+u(nxf-3,3,:)) &
+      +fxyy*(u(nxf,4,:)+rbufS(nxf,3,:)+rbufS(nxf-2,3,:)+u(nxf-2,4,:)))*deltaR(2)
+    u(nxf,2,:)=Oomehd(qn)*u(nxf,2,:)+(rhs(nxf,2,:) &
+!    u(nxf,2,:)=(rhs(nxf,2,:) &
+      +fx6*(rq*u(nxf-2,2,:)+rs(3,:)+u(nxf-3,2,:))+fxx*(rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:))+fx*(rs(1,:)+u(nxf-1,2,:)) &
+      +fy6*(u(nxf,5,:)+rbufS(nxf,2,:))+fyy*(u(nxf,4,:)+rbufS(nxf,3,:))+fy*(u(nxf,3,:)+u(nxf,1,:)) &
+      +fxy*(rq*u(nxf,3,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)+u(nxf-1,3,:)) &
+      +fxxy*(rq*u(nxf-1,3,:)+rs(2,:)+rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
+      +fxyy*(rq*u(nxf,4,:)+rs(1,:)+rq*rbufS(nxf,3,:)+rs(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,4,:)))*deltaR(1)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-2,2,:)=Oomehd(qn)*u(nxf-2,2,:)+(rhs(nxf-2,2,:) &
 !    u(nxf-2,2,:)=(rhs(nxf-2,2,:) &
@@ -5223,6 +6676,7 @@ endif
       +fxxy*(rbufE(2,3,:)+rbufE(2,1,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
       +fxyy*(rbufE(1,4,:)+rbufSE(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,4,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... THIRD ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,3,:)=Oomehd(qn)*u(1,3,:)+(rhs(1,3,:) &
@@ -5242,6 +6696,27 @@ endif
     u(3,3,:)=Oomehd(qn)*u(3,3,:)+(rhs(3,3,:) &
 !    u(3,3,:)=(rhs(3,3,:) &
       +fx6*(u(6,3,:)+Lq*u(1,3,:)+Ls(1,:))+fxx*(u(5,3,:)+u(1,3,:))+fx*(u(4,3,:)+u(2,3,:)) &
+=======
+!.THIRD ROW
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,3,:)=Oomehd(qn)*u(1,3,:)+(rhs(1,3,:) &
+!    u(1,3,:)=(rhs(1,3,:) &
+      +fx6*(u(4,3,:)+lq*u(3,3,:)+ls(3,:))+fxx*(u(3,3,:)+lq*u(2,3,:)+ls(2,:))+fx*(u(2,3,:)+ls(1,:)) &
+      +fy6*(u(1,6,:)+rbufS(1,3,:))+fyy*(u(1,5,:)+u(1,1,:))+fy*(u(1,4,:)+u(1,2,:)) &
+      +fxy*(u(2,4,:)+u(2,2,:)+lq*u(1,2,:)+ls(1,:)+lq*u(1,4,:)+ls(1,:)) &
+      +fxxy*(u(3,4,:)+u(3,2,:)+lq*u(2,2,:)+ls(2,:)+lq*u(2,4,:)+ls(2,:)) &
+      +fxyy*(u(2,5,:)+u(2,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,5,:)+ls(1,:)))*deltaL(1)
+    u(2,3,:)=Oomehd(qn)*u(2,3,:)+(rhs(2,3,:) &
+!    u(2,3,:)=(rhs(2,3,:) &
+      +fx6*(u(5,3,:)+ls(2,:))+fxx*(u(4,3,:)+lq*u(1,3,:)+ls(1,:))+fx*(u(3,3,:)+u(1,3,:)) &
+      +fy6*(u(2,6,:)+rbufS(2,3,:))+fyy*(u(2,5,:)+u(2,1,:))+fy*(u(2,4,:)+u(2,2,:)) &
+      +fxy*(u(3,4,:)+u(3,2,:)+u(1,2,:)+u(1,4,:)) &
+      +fxxy*(u(4,4,:)+u(4,2,:)+lq*u(1,2,:)+ls(1,:)+lq*u(1,4,:)+ls(1,:)) &
+      +fxyy*(u(3,5,:)+u(3,1,:)+u(1,1,:)+u(1,5,:)))*deltaL(2)
+    u(3,3,:)=Oomehd(qn)*u(3,3,:)+(rhs(3,3,:) &
+!    u(3,3,:)=(rhs(3,3,:) &
+      +fx6*(u(6,3,:)+lq*u(1,3,:)+ls(1,:))+fxx*(u(5,3,:)+u(1,3,:))+fx*(u(4,3,:)+u(2,3,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(u(3,6,:)+rbufS(3,3,:))+fyy*(u(3,5,:)+u(3,1,:))+fy*(u(3,4,:)+u(3,2,:)) &
       +fxy*(u(4,4,:)+u(4,2,:)+u(2,2,:)+u(2,4,:)) &
       +fxxy*(u(5,4,:)+u(5,2,:)+u(1,2,:)+u(1,4,:)) &
@@ -5269,7 +6744,11 @@ endif
       +fxxy*(u(5,4,:)+u(5,2,:)+u(1,2,:)+u(1,4,:)) &
       +fxyy*(u(4,5,:)+u(4,1,:)+u(2,1,:)+u(2,5,:)))*delta
   endif
+<<<<<<< HEAD
   do i=4,nxf-3 !.away from x-boundaries
+=======
+  do i=4,nxf-3
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,3,:)=Oomehd(qn)*u(i,3,:)+(rhs(i,3,:) &
 !    u(i,3,:)=(rhs(i,3,:) &
       +fx6*(u(i+3,3,:)+u(i-3,3,:))+fxx*(u(i+2,3,:)+u(i-2,3,:))+fx*(u(i+1,3,:)+u(i-1,3,:)) &
@@ -5278,16 +6757,24 @@ endif
       +fxxy*(u(i+2,4,:)+u(i+2,2,:)+u(i-2,2,:)+u(i-2,4,:)) &
       +fxyy*(u(i+1,5,:)+u(i+1,1,:)+u(i-1,1,:)+u(i-1,5,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,3,:)=Oomehd(qn)*u(nxf-2,3,:)+(rhs(nxf-2,3,:) &
 !    u(nxf-2,3,:)=(rhs(nxf-2,3,:) &
       +fx6*(Rq*u(nxf,3,:)+Rs(1,:)+u(nxf-5,3,:))+fxx*(u(nxf,3,:)+u(nxf-4,3,:))+fx*(u(nxf-1,3,:)+u(nxf-3,3,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,3,:)=Oomehd(qn)*u(nxf-2,3,:)+(rhs(nxf-2,3,:) &
+!    u(nxf-2,3,:)=(rhs(nxf-2,3,:) &
+      +fx6*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-5,3,:))+fxx*(u(nxf,3,:)+u(nxf-4,3,:))+fx*(u(nxf-1,3,:)+u(nxf-3,3,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(u(nxf-2,6,:)+rbufS(nxf-2,3,:))+fyy*(u(nxf-2,5,:)+u(nxf-2,1,:))+fy*(u(nxf-2,4,:)+u(nxf-2,2,:)) &
       +fxy*(u(nxf-1,4,:)+u(nxf-1,2,:)+u(nxf-3,2,:)+u(nxf-3,4,:)) &
       +fxxy*(u(nxf,4,:)+u(nxf,2,:)+u(nxf-4,2,:)+u(nxf-4,4,:)) &
       +fxyy*(u(nxf-1,5,:)+u(nxf-1,1,:)+u(nxf-3,1,:)+u(nxf-3,5,:)))*delta
     u(nxf-1,3,:)=Oomehd(qn)*u(nxf-1,3,:)+(rhs(nxf-1,3,:) &
 !    u(nxf-1,3,:)=(rhs(nxf-1,3,:) &
+<<<<<<< HEAD
       +fx6*(rs(2,:)+u(nxf-4,3,:))+fxx*(Rq*u(nxf,3,:)+Rs(1,:)+u(nxf-3,3,:))+fx*(u(nxf,3,:)+u(nxf-2,3,:)) &
       +fy6*(u(nxf-1,6,:)+rbufS(nxf-1,3,:))+fyy*(u(nxf-1,5,:)+u(nxf-1,1,:))+fy*(u(nxf-1,4,:)+u(nxf-1,2,:)) &
       +fxy*(u(nxf,4,:)+u(nxf,2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
@@ -5300,6 +6787,20 @@ endif
       +fxy*(Rq*u(nxf,4,:)+Rs(1,:)+Rq*u(nxf,2,:)+Rs(1,:)+u(nxf-1,2,:)+u(nxf-1,4,:)) &
       +fxxy*(Rq*u(nxf-1,4,:)+Rs(2,:)+Rq*u(nxf-1,2,:)+Rs(2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
       +fxyy*(Rq*u(nxf,5,:)+Rs(1,:)+Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-1,1,:)+u(nxf-1,5,:)))*deltaR(1)
+=======
+      +fx6*(rs(2,:)+u(nxf-4,3,:))+fxx*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-3,3,:))+fx*(u(nxf,3,:)+u(nxf-2,3,:)) &
+      +fy6*(u(nxf-1,6,:)+rbufS(nxf-1,3,:))+fyy*(u(nxf-1,5,:)+u(nxf-1,1,:))+fy*(u(nxf-1,4,:)+u(nxf-1,2,:)) &
+      +fxy*(u(nxf,4,:)+u(nxf,2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
+      +fxxy*(rq*u(nxf,4,:)+rs(1,:)+rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:)+u(nxf-3,4,:)) &
+      +fxyy*(u(nxf,5,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,5,:)))*deltaR(2)
+    u(nxf,3,:)=Oomehd(qn)*u(nxf,3,:)+(rhs(nxf,3,:) &
+!    u(nxf,3,:)=(rhs(nxf,3,:) &
+      +fx6*(rq*u(nxf-2,3,:)+rs(3,:)+u(nxf-3,3,:))+fxx*(rq*u(nxf-1,3,:)+rs(2,:)+u(nxf-2,3,:))+fx*(rs(1,:)+u(nxf-1,3,:)) &
+      +fy6*(u(nxf,6,:)+rbufS(nxf,3,:))+fyy*(u(nxf,5,:)+u(nxf,1,:))+fy*(u(nxf,4,:)+u(nxf,2,:)) &
+      +fxy*(rq*u(nxf,4,:)+rs(1,:)+rq*u(nxf,2,:)+rs(1,:)+u(nxf-1,2,:)+u(nxf-1,4,:)) &
+      +fxxy*(rq*u(nxf-1,4,:)+rs(2,:)+rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
+      +fxyy*(rq*u(nxf,5,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)+u(nxf-1,5,:)))*deltaR(1)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-2,3,:)=Oomehd(qn)*u(nxf-2,3,:)+(rhs(nxf-2,3,:) &
 !    u(nxf-2,3,:)=(rhs(nxf-2,3,:) &
@@ -5323,6 +6824,7 @@ endif
       +fxxy*(rbufE(2,4,:)+rbufE(2,2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
       +fxyy*(rbufE(1,5,:)+rbufE(1,1,:)+u(nxf-1,1,:)+u(nxf-1,5,:)))*delta
   endif
+<<<<<<< HEAD
 !................... AWAY FROM BOTTOM AND TOP BOUNDARIES ...................!
   do j=4,nyf-3
 !...Left boundary
@@ -5344,6 +6846,28 @@ endif
       u(3,j,:)=Oomehd(qn)*u(3,j,:)+(rhs(3,j,:) &
 !      u(3,j,:)=(rhs(3,j,:) &
         +fx6*(u(6,j,:)+Lq*u(1,j,:)+Ls(1,:))+fxx*(u(5,j,:)+u(1,j,:))+fx*(u(4,j,:)+u(2,j,:)) &
+=======
+!.Away from bottom and top boundaries
+  do j=4,nyf-3
+    if (iIDhd(qn)%a(ng)==0) then  ! Left boundary
+      u(1,j,:)=Oomehd(qn)*u(1,j,:)+(rhs(1,j,:) &
+!      u(1,j,:)=(rhs(1,j,:) &
+        +fx6*(u(4,j,:)+lq*u(3,j,:)+ls(3,:))+fxx*(u(3,j,:)+lq*u(2,j,:)+ls(2,:))+fx*(u(2,j,:)+ls(1,:)) &
+        +fy6*(u(1,j+3,:)+u(1,j-3,:))+fyy*(u(1,j+2,:)+u(1,j-2,:))+fy*(u(1,j+1,:)+u(1,j-1,:)) &
+        +fxy*(u(2,j+1,:)+u(2,j-1,:)+lq*u(1,j-1,:)+ls(1,:)+lq*u(1,j+1,:)+ls(1,:)) &
+        +fxxy*(u(3,j+1,:)+u(3,j-1,:)+lq*u(2,j-1,:)+ls(2,:)+lq*u(2,j+1,:)+ls(2,:)) &
+        +fxyy*(u(2,j+2,:)+u(2,j-2,:)+lq*u(1,j-2,:)+ls(1,:)+lq*u(1,j+2,:)+ls(1,:)))*deltaL(1)
+      u(2,j,:)=Oomehd(qn)*u(2,j,:)+(rhs(2,j,:) &
+!      u(2,j,:)=(rhs(2,j,:) &
+        +fx6*(u(5,j,:)+ls(2,:))+fxx*(u(4,j,:)+lq*u(1,j,:)+ls(1,:))+fx*(u(3,j,:)+u(1,j,:)) &
+        +fy6*(u(2,j+3,:)+u(2,j-3,:))+fyy*(u(2,j+2,:)+u(2,j-2,:))+fy*(u(2,j+1,:)+u(2,j-1,:)) &
+        +fxy*(u(3,j+1,:)+u(3,j-1,:)+u(1,j-1,:)+u(1,j+1,:)) &
+        +fxxy*(u(4,j+1,:)+u(4,j-1,:)+lq*u(1,j-1,:)+ls(1,:)+lq*u(1,j+1,:)+ls(1,:)) &
+        +fxyy*(u(3,j+2,:)+u(3,j-2,:)+u(1,j-2,:)+u(1,j+2,:)))*deltaL(2)
+      u(3,j,:)=Oomehd(qn)*u(3,j,:)+(rhs(3,j,:) &
+!      u(3,j,:)=(rhs(3,j,:) &
+        +fx6*(u(6,j,:)+lq*u(1,j,:)+ls(1,:))+fxx*(u(5,j,:)+u(1,j,:))+fx*(u(4,j,:)+u(2,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy6*(u(3,j+3,:)+u(3,j-3,:))+fyy*(u(3,j+2,:)+u(3,j-2,:))+fy*(u(3,j+1,:)+u(3,j-1,:)) &
         +fxy*(u(4,j+1,:)+u(4,j-1,:)+u(2,j-1,:)+u(2,j+1,:)) &
         +fxxy*(u(5,j+1,:)+u(5,j-1,:)+u(1,j-1,:)+u(1,j+1,:)) &
@@ -5371,7 +6895,10 @@ endif
         +fxxy*(u(5,j+1,:)+u(5,j-1,:)+u(1,j-1,:)+u(1,j+1,:)) &
         +fxyy*(u(4,j+2,:)+u(4,j-2,:)+u(2,j-2,:)+u(2,j+2,:)))*delta
     endif
+<<<<<<< HEAD
 !...Inner points
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do i=4,nxf-3
       u(i,j,:)=Oomehd(qn)*u(i,j,:)+(rhs(i,j,:) &
 !      u(i,j,:)=(rhs(i,j,:) &
@@ -5381,17 +6908,25 @@ endif
         +fxxy*(u(i+2,j+1,:)+u(i+2,j-1,:)+u(i-2,j-1,:)+u(i-2,j+1,:)) &
         +fxyy*(u(i+1,j+2,:)+u(i+1,j-2,:)+u(i-1,j-2,:)+u(i-1,j+2,:)))*delta
     enddo
+<<<<<<< HEAD
 !...Right boundary
     if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
       u(nxf-2,j,:)=Oomehd(qn)*u(nxf-2,j,:)+(rhs(nxf-2,j,:) &
 !      u(nxf-2,j,:)=(rhs(nxf-2,j,:) &
         +fx6*(Rq*u(nxf,j,:)+Rs(1,:)+u(nxf-5,j,:))+fxx*(u(nxf,j,:)+u(nxf-4,j,:))+fx*(u(nxf-1,j,:)+u(nxf-3,j,:)) &
+=======
+    if (iIDhd(qn)%a(ng)==iprocsm1) then ! Right boundary
+      u(nxf-2,j,:)=Oomehd(qn)*u(nxf-2,j,:)+(rhs(nxf-2,j,:) &
+!      u(nxf-2,j,:)=(rhs(nxf-2,j,:) &
+        +fx6*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-5,j,:))+fxx*(u(nxf,j,:)+u(nxf-4,j,:))+fx*(u(nxf-1,j,:)+u(nxf-3,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy6*(u(nxf-2,j+3,:)+u(nxf-2,j-3,:))+fyy*(u(nxf-2,j+2,:)+u(nxf-2,j-2,:))+fy*(u(nxf-2,j+1,:)+u(nxf-2,j-1,:)) &
         +fxy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)+u(nxf-3,j-1,:)+u(nxf-3,j+1,:)) &
         +fxxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-4,j-1,:)+u(nxf-4,j+1,:)) &
         +fxyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:)+u(nxf-3,j-2,:)+u(nxf-3,j+2,:)))*delta
       u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
 !      u(nxf-1,j,:)=(rhs(nxf-1,j,:) &
+<<<<<<< HEAD
         +fx6*(rs(2,:)+u(nxf-4,j,:))+fxx*(Rq*u(nxf,j,:)+Rs(1,:)+u(nxf-3,j,:))+fx*(u(nxf,j,:)+u(nxf-2,j,:)) &
         +fy6*(u(nxf-1,j+3,:)+u(nxf-1,j-3,:))+fyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))+fy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)) &
         +fxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)) &
@@ -5404,6 +6939,20 @@ endif
         +fxy*(Rq*u(nxf,j+1,:)+Rs(1,:)+Rq*u(nxf,j-1,:)+Rs(1,:)+u(nxf-1,j-1,:)+u(nxf-1,j+1,:)) &
         +fxxy*(Rq*u(nxf-1,j+1,:)+Rs(2,:)+Rq*u(nxf-1,j-1,:)+Rs(2,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)) &
         +fxyy*(Rq*u(nxf,j+2,:)+Rs(1,:)+Rq*u(nxf,j-2,:)+Rs(1,:)+u(nxf-1,j-2,:)+u(nxf-1,j+2,:)))*deltaR(1)
+=======
+        +fx6*(rs(2,:)+u(nxf-4,j,:))+fxx*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-3,j,:))+fx*(u(nxf,j,:)+u(nxf-2,j,:)) &
+        +fy6*(u(nxf-1,j+3,:)+u(nxf-1,j-3,:))+fyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))+fy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)) &
+        +fxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)) &
+        +fxxy*(rq*u(nxf,j+1,:)+rs(1,:)+rq*u(nxf,j-1,:)+rs(1,:)+u(nxf-3,j-1,:)+u(nxf-3,j+1,:)) &
+        +fxyy*(u(nxf,j+2,:)+u(nxf,j-2,:)+u(nxf-2,j-2,:)+u(nxf-2,j+2,:)))*deltaR(2)
+      u(nxf,j,:)=Oomehd(qn)*u(nxf,j,:)+(rhs(nxf,j,:) &
+!      u(nxf,j,:)=(rhs(nxf,j,:) &
+        +fx6*(rq*u(nxf-2,j,:)+rs(3,:)+u(nxf-3,j,:))+fxx*(rq*u(nxf-1,j,:)+rs(2,:)+u(nxf-2,j,:))+fx*(rs(1,:)+u(nxf-1,j,:)) &
+        +fy6*(u(nxf,j+3,:)+u(nxf,j-3,:))+fyy*(u(nxf,j+2,:)+u(nxf,j-2,:))+fy*(u(nxf,j+1,:)+u(nxf,j-1,:)) &
+        +fxy*(rq*u(nxf,j+1,:)+rs(1,:)+rq*u(nxf,j-1,:)+rs(1,:)+u(nxf-1,j-1,:)+u(nxf-1,j+1,:)) &
+        +fxxy*(rq*u(nxf-1,j+1,:)+rs(2,:)+rq*u(nxf-1,j-1,:)+rs(2,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)) &
+        +fxyy*(rq*u(nxf,j+2,:)+rs(1,:)+rq*u(nxf,j-2,:)+rs(1,:)+u(nxf-1,j-2,:)+u(nxf-1,j+2,:)))*deltaR(1)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     else
       u(nxf-2,j,:)=Oomehd(qn)*u(nxf-2,j,:)+(rhs(nxf-2,j,:) &
 !      u(nxf-2,j,:)=(rhs(nxf-2,j,:) &
@@ -5429,6 +6978,7 @@ endif
     endif
   enddo
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
 !........................... THIRD TO LAST ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,nyf-2,:)=Oomehd(qn)*u(1,nyf-2,:)+(rhs(1,nyf-2,:) &
@@ -5448,6 +6998,27 @@ endif
     u(3,nyf-2,:)=Oomehd(qn)*u(3,nyf-2,:)+(rhs(3,nyf-2,:) &
 !    u(3,nyf-2,:)=(rhs(3,nyf-2,:) &
       +fx6*(u(6,nyf-2,:)+Lq*u(1,nyf-2,:)+Ls(1,:))+fxx*(u(5,nyf-2,:)+u(1,nyf-2,:))+fx*(u(4,nyf-2,:)+u(2,nyf-2,:)) &
+=======
+!.THIRD TO LAST ROW
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf-2,:)=Oomehd(qn)*u(1,nyf-2,:)+(rhs(1,nyf-2,:) &
+!    u(1,nyf-2,:)=(rhs(1,nyf-2,:) &
+      +fx6*(u(4,nyf-2,:)+lq*u(3,nyf-2,:)+ls(3,:))+fxx*(u(3,nyf-2,:)+lq*u(2,nyf-2,:)+ls(2,:))+fx*(u(2,nyf-2,:)+ls(1,:)) &
+      +fy6*(rbufN(1,1,:)+u(1,nyf-5,:))+fyy*(u(1,nyf,:)+u(1,nyf-4,:))+fy*(u(1,nyf-1,:)+u(1,nyf-3,:)) &
+      +fxy*(u(2,nyf-1,:)+u(2,nyf-3,:)+lq*u(1,nyf-3,:)+ls(1,:)+lq*u(1,nyf-1,:)+ls(1,:)) &
+      +fxxy*(u(3,nyf-1,:)+u(3,nyf-3,:)+lq*u(2,nyf-3,:)+ls(2,:)+lq*u(2,nyf-1,:)+ls(2,:)) &
+      +fxyy*(u(2,nyf,:)+u(2,nyf-4,:)+lq*u(1,nyf-4,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:)))*deltaL(1)
+    u(2,nyf-2,:)=Oomehd(qn)*u(2,nyf-2,:)+(rhs(2,nyf-2,:) &
+!    u(2,nyf-2,:)=(rhs(2,nyf-2,:) &
+      +fx6*(u(5,nyf-2,:)+ls(2,:))+fxx*(u(4,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:))+fx*(u(3,nyf-2,:)+u(1,nyf-2,:)) &
+      +fy6*(rbufN(2,1,:)+u(2,nyf-5,:))+fyy*(u(2,nyf,:)+u(2,nyf-4,:))+fy*(u(2,nyf-1,:)+u(2,nyf-3,:)) &
+      +fxy*(u(3,nyf-1,:)+u(3,nyf-3,:)+u(1,nyf-3,:)+u(1,nyf-1,:)) &
+      +fxxy*(u(4,nyf-1,:)+u(4,nyf-3,:)+lq*u(1,nyf-3,:)+ls(1,:)+lq*u(1,nyf-1,:)+ls(1,:)) &
+      +fxyy*(u(3,nyf,:)+u(3,nyf-4,:)+u(1,nyf-4,:)+u(1,nyf,:)))*deltaL(2)
+    u(3,nyf-2,:)=Oomehd(qn)*u(3,nyf-2,:)+(rhs(3,nyf-2,:) &
+!    u(3,nyf-2,:)=(rhs(3,nyf-2,:) &
+      +fx6*(u(6,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:))+fxx*(u(5,nyf-2,:)+u(1,nyf-2,:))+fx*(u(4,nyf-2,:)+u(2,nyf-2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(rbufN(3,1,:)+u(3,nyf-5,:))+fyy*(u(3,nyf,:)+u(3,nyf-4,:))+fy*(u(3,nyf-1,:)+u(3,nyf-3,:)) &
       +fxy*(u(4,nyf-1,:)+u(4,nyf-3,:)+u(2,nyf-3,:)+u(2,nyf-1,:)) &
       +fxxy*(u(5,nyf-1,:)+u(5,nyf-3,:)+u(1,nyf-3,:)+u(1,nyf-1,:)) &
@@ -5475,7 +7046,11 @@ endif
       +fxxy*(u(5,nyf-1,:)+u(5,nyf-3,:)+u(1,nyf-3,:)+u(1,nyf-1,:)) &
       +fxyy*(u(4,nyf,:)+u(4,nyf-4,:)+u(2,nyf-4,:)+u(2,nyf,:)))*delta
   endif
+<<<<<<< HEAD
   do i=4,nxf-3 !.away from x-boundaries
+=======
+  do i=4,nxf-3
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,nyf-2,:)=Oomehd(qn)*u(i,nyf-2,:)+(rhs(i,nyf-2,:) &
 !    u(i,nyf-2,:)=(rhs(i,nyf-2,:) &
       +fx6*(u(i+3,nyf-2,:)+u(i-3,nyf-2,:))+fxx*(u(i+2,nyf-2,:)+u(i-2,nyf-2,:))+fx*(u(i+1,nyf-2,:)+u(i-1,nyf-2,:)) &
@@ -5484,16 +7059,24 @@ endif
       +fxxy*(u(i+2,nyf-1,:)+u(i+2,nyf-3,:)+u(i-2,nyf-3,:)+u(i-2,nyf-1,:)) &
       +fxyy*(u(i+1,nyf,:)+u(i+1,nyf-4,:)+u(i-1,nyf-4,:)+u(i-1,nyf,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,nyf-2,:)=Oomehd(qn)*u(nxf-2,nyf-2,:)+(rhs(nxf-2,nyf-2,:) &
 !    u(nxf-2,nyf-2,:)=(rhs(nxf-2,nyf-2,:) &
       +fx6*(Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-5,nyf-2,:))+fxx*(u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:))+fx*(u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,nyf-2,:)=Oomehd(qn)*u(nxf-2,nyf-2,:)+(rhs(nxf-2,nyf-2,:) &
+!    u(nxf-2,nyf-2,:)=(rhs(nxf-2,nyf-2,:) &
+      +fx6*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-5,nyf-2,:))+fxx*(u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:))+fx*(u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-5,:))+fyy*(u(nxf-2,nyf,:)+u(nxf-2,nyf-4,:))+fy*(u(nxf-2,nyf-1,:)+u(nxf-2,nyf-3,:)) &
       +fxy*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:)+u(nxf-3,nyf-3,:)+u(nxf-3,nyf-1,:)) &
       +fxxy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)+u(nxf-4,nyf-3,:)+u(nxf-4,nyf-1,:)) &
       +fxyy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:)+u(nxf-3,nyf-4,:)+u(nxf-3,nyf,:)))*delta
     u(nxf-1,nyf-2,:)=Oomehd(qn)*u(nxf-1,nyf-2,:)+(rhs(nxf-1,nyf-2,:) &
 !    u(nxf-1,nyf-2,:)=(rhs(nxf-1,nyf-2,:) &
+<<<<<<< HEAD
       +fx6*(rs(2,:)+u(nxf-4,nyf-2,:))+fxx*(Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-3,nyf-2,:))+fx*(u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)) &
       +fy6*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-5,:))+fyy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:))+fy*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:)) &
       +fxy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
@@ -5506,6 +7089,20 @@ endif
       +fxy*(Rq*u(nxf,nyf-1,:)+Rs(1,:)+Rq*u(nxf,nyf-3,:)+Rs(1,:)+u(nxf-1,nyf-3,:)+u(nxf-1,nyf-1,:)) &
       +fxxy*(Rq*u(nxf-1,nyf-1,:)+Rs(2,:)+Rq*u(nxf-1,nyf-3,:)+Rs(2,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
       +fxyy*(Rq*u(nxf,nyf,:)+Rs(1,:)+Rq*u(nxf,nyf-4,:)+Rs(1,:)+u(nxf-1,nyf-4,:)+u(nxf-1,nyf,:)))*deltaR(1)
+=======
+      +fx6*(rs(2,:)+u(nxf-4,nyf-2,:))+fxx*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-3,nyf-2,:))+fx*(u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)) &
+      +fy6*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-5,:))+fyy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:))+fy*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:)) &
+      +fxy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
+      +fxxy*(rq*u(nxf,nyf-1,:)+rs(1,:)+rq*u(nxf,nyf-3,:)+rs(1,:)+u(nxf-3,nyf-3,:)+u(nxf-3,nyf-1,:)) &
+      +fxyy*(u(nxf,nyf,:)+u(nxf,nyf-4,:)+u(nxf-2,nyf-4,:)+u(nxf-2,nyf,:)))*deltaR(2)
+    u(nxf,nyf-2,:)=Oomehd(qn)*u(nxf,nyf-2,:)+(rhs(nxf,nyf-2,:) &
+!    u(nxf,nyf-2,:)=(rhs(nxf,nyf-2,:) &
+      +fx6*(rq*u(nxf-2,nyf-2,:)+rs(3,:)+u(nxf-3,nyf-2,:))+fxx*(rq*u(nxf-1,nyf-2,:)+rs(2,:)+u(nxf-2,nyf-2,:))+fx*(rs(1,:)+u(nxf-1,nyf-2,:)) &
+      +fy6*(rbufN(nxf,1,:)+u(nxf,nyf-5,:))+fyy*(u(nxf,nyf,:)+u(nxf,nyf-4,:))+fy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)) &
+      +fxy*(rq*u(nxf,nyf-1,:)+rs(1,:)+rq*u(nxf,nyf-3,:)+rs(1,:)+u(nxf-1,nyf-3,:)+u(nxf-1,nyf-1,:)) &
+      +fxxy*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+rq*u(nxf-1,nyf-3,:)+rs(2,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
+      +fxyy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-4,:)+rs(1,:)+u(nxf-1,nyf-4,:)+u(nxf-1,nyf,:)))*deltaR(1)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-2,nyf-2,:)=Oomehd(qn)*u(nxf-2,nyf-2,:)+(rhs(nxf-2,nyf-2,:) &
 !    u(nxf-2,nyf-2,:)=(rhs(nxf-2,nyf-2,:) &
@@ -5529,6 +7126,7 @@ endif
       +fxxy*(rbufE(2,nyf-1,:)+rbufE(2,nyf-3,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
       +fxyy*(rbufE(1,nyf,:)+rbufE(1,nyf-4,:)+u(nxf-1,nyf-4,:)+u(nxf-1,nyf,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... SECOND TO LAST ROW ...........................!
   call MPI_WAIT(req(15),stat(:,15),ierr) !.NW corner grid points
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
@@ -5549,6 +7147,28 @@ endif
     u(3,nyf-1,:)=Oomehd(qn)*u(3,nyf-1,:)+(rhs(3,nyf-1,:) &
 !    u(3,nyf-1,:)=(rhs(3,nyf-1,:) &
       +fx6*(u(6,nyf-1,:)+Lq*u(1,nyf-1,:)+Ls(1,:))+fxx*(u(5,nyf-1,:)+u(1,nyf-1,:))+fx*(u(4,nyf-1,:)+u(2,nyf-1,:)) &
+=======
+!.SECOND TO LAST ROW
+  call MPI_WAIT(req(15),stat(:,15),ierr) !.NW corner grid points
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
+!    u(1,nyf-1,:)=(rhs(1,nyf-1,:) &
+      +fx6*(u(4,nyf-1,:)+lq*u(3,nyf-1,:)+ls(3,:))+fxx*(u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:))+fx*(u(2,nyf-1,:)+ls(1,:)) &
+      +fy6*(rbufN(1,2,:)+u(1,nyf-4,:))+fyy*(rbufN(1,1,:)+u(1,nyf-3,:))+fy*(u(1,nyf,:)+u(1,nyf-2,:)) &
+      +fxy*(u(2,nyf,:)+u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:)) &
+      +fxxy*(u(3,nyf,:)+u(3,nyf-2,:)+lq*u(2,nyf-2,:)+ls(2,:)+lq*u(2,nyf,:)+ls(2,:)) &
+      +fxyy*(rbufN(2,1,:)+u(2,nyf-3,:)+lq*u(1,nyf-3,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:)))*deltaL(1)
+    u(2,nyf-1,:)=Oomehd(qn)*u(2,nyf-1,:)+(rhs(2,nyf-1,:) &
+!    u(2,nyf-1,:)=(rhs(2,nyf-1,:) &
+      +fx6*(u(5,nyf-1,:)+ls(2,:))+fxx*(u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))+fx*(u(3,nyf-1,:)+u(1,nyf-1,:)) &
+      +fy6*(rbufN(2,2,:)+u(2,nyf-4,:))+fyy*(rbufN(2,1,:)+u(2,nyf-3,:))+fy*(u(2,nyf,:)+u(2,nyf-2,:)) &
+      +fxy*(u(3,nyf,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:)) &
+      +fxxy*(u(4,nyf,:)+u(4,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:)) &
+      +fxyy*(rbufN(3,1,:)+u(3,nyf-3,:)+u(1,nyf-3,:)+rbufN(1,1,:)))*deltaL(2)
+    u(3,nyf-1,:)=Oomehd(qn)*u(3,nyf-1,:)+(rhs(3,nyf-1,:) &
+!    u(3,nyf-1,:)=(rhs(3,nyf-1,:) &
+      +fx6*(u(6,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))+fxx*(u(5,nyf-1,:)+u(1,nyf-1,:))+fx*(u(4,nyf-1,:)+u(2,nyf-1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(rbufN(3,2,:)+u(3,nyf-4,:))+fyy*(rbufN(3,1,:)+u(3,nyf-3,:))+fy*(u(3,nyf,:)+u(3,nyf-2,:)) &
       +fxy*(u(4,nyf,:)+u(4,nyf-2,:)+u(2,nyf-2,:)+u(2,nyf,:)) &
       +fxxy*(u(5,nyf,:)+u(5,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:)) &
@@ -5576,7 +7196,11 @@ endif
       +fxxy*(u(5,nyf,:)+u(5,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:)) &
       +fxyy*(rbufN(4,1,:)+u(4,nyf-3,:)+u(2,nyf-3,:)+rbufN(2,1,:)))*delta
   endif
+<<<<<<< HEAD
   do i=4,nxf-3 !.away from x-boundaries
+=======
+  do i=4,nxf-3
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,nyf-1,:)=Oomehd(qn)*u(i,nyf-1,:)+(rhs(i,nyf-1,:) &
 !    u(i,nyf-1,:)=(rhs(i,nyf-1,:) &
       +fx6*(u(i+3,nyf-1,:)+u(i-3,nyf-1,:))+fxx*(u(i+2,nyf-1,:)+u(i-2,nyf-1,:))+fx*(u(i+1,nyf-1,:)+u(i-1,nyf-1,:)) &
@@ -5586,16 +7210,24 @@ endif
       +fxyy*(rbufN(i+1,1,:)+u(i+1,nyf-3,:)+u(i-1,nyf-3,:)+rbufN(i-1,1,:)))*delta
   enddo
   call MPI_WAIT(req(16),stat(:,16),ierr) !.NE corner grid point
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,nyf-1,:)=Oomehd(qn)*u(nxf-2,nyf-1,:)+(rhs(nxf-2,nyf-1,:) &
 !    u(nxf-2,nyf-1,:)=(rhs(nxf-2,nyf-1,:) &
       +fx6*(Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-5,nyf-1,:))+fxx*(u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:))+fx*(u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,nyf-1,:)=Oomehd(qn)*u(nxf-2,nyf-1,:)+(rhs(nxf-2,nyf-1,:) &
+!    u(nxf-2,nyf-1,:)=(rhs(nxf-2,nyf-1,:) &
+      +fx6*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-5,nyf-1,:))+fxx*(u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:))+fx*(u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(rbufN(nxf-2,2,:)+u(nxf-2,nyf-4,:))+fyy*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-3,:))+fy*(u(nxf-2,nyf,:)+u(nxf-2,nyf-2,:)) &
       +fxy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)+u(nxf-3,nyf,:)) &
       +fxxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:)+u(nxf-4,nyf,:)) &
       +fxyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:)+u(nxf-3,nyf-3,:)+rbufN(nxf-3,1,:)))*delta
     u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
 !    u(nxf-1,nyf-1,:)=(rhs(nxf-1,nyf-1,:) &
+<<<<<<< HEAD
       +fx6*(rs(2,:)+u(nxf-4,nyf-1,:))+fxx*(Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-3,nyf-1,:))+fx*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)) &
       +fy6*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-4,:))+fyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))+fy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)) &
       +fxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
@@ -5608,6 +7240,20 @@ endif
       +fxy*(Rq*u(nxf,nyf,:)+Rs(1,:)+Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-1,nyf-2,:)+u(nxf-1,nyf,:)) &
       +fxxy*(Rq*u(nxf-1,nyf,:)+Rs(2,:)+Rq*u(nxf-1,nyf-2,:)+Rs(2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
       +fxyy*(Rq*rbufN(nxf,1,:)+Rs(1,:)+Rq*u(nxf,nyf-3,:)+Rs(1,:)+u(nxf-1,nyf-3,:)+rbufN(nxf-1,1,:)))*deltaR(1)
+=======
+      +fx6*(rs(2,:)+u(nxf-4,nyf-1,:))+fxx*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:))+fx*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)) &
+      +fy6*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-4,:))+fyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))+fy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)) &
+      +fxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
+      +fxxy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-3,nyf-2,:)+u(nxf-3,nyf,:)) &
+      +fxyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:)+u(nxf-2,nyf-3,:)+rbufN(nxf-2,1,:)))*deltaR(2)
+    u(nxf,nyf-1,:)=Oomehd(qn)*u(nxf,nyf-1,:)+(rhs(nxf,nyf-1,:) &
+!    u(nxf,nyf-1,:)=(rhs(nxf,nyf-1,:) &
+      +fx6*(rq*u(nxf-2,nyf-1,:)+rs(3,:)+u(nxf-3,nyf-1,:))+fxx*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:))+fx*(rs(1,:)+u(nxf-1,nyf-1,:)) &
+      +fy6*(rbufN(nxf,2,:)+u(nxf,nyf-4,:))+fyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))+fy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)) &
+      +fxy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:)+u(nxf-1,nyf,:)) &
+      +fxxy*(rq*u(nxf-1,nyf,:)+rs(2,:)+rq*u(nxf-1,nyf-2,:)+rs(2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
+      +fxyy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-3,:)+rs(1,:)+u(nxf-1,nyf-3,:)+rbufN(nxf-1,1,:)))*deltaR(1)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-2,nyf-1,:)=Oomehd(qn)*u(nxf-2,nyf-1,:)+(rhs(nxf-2,nyf-1,:) &
 !    u(nxf-2,nyf-1,:)=(rhs(nxf-2,nyf-1,:) &
@@ -5631,6 +7277,7 @@ endif
       +fxxy*(rbufE(2,nyf,:)+rbufE(2,nyf-2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
       +fxyy*(rbufNE(1,:)+rbufE(1,nyf-3,:)+u(nxf-1,nyf-3,:)+rbufN(nxf-1,1,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... TOP TO LAST ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
 !...global NW corner
@@ -5651,12 +7298,36 @@ endif
     u(3,nyf,:)=Oomehd(qn)*u(3,nyf,:)+(rhs(3,nyf,:) &
 !    u(3,nyf,:)=(rhs(3,nyf,:) &
       +fx6*(u(6,nyf,:)+Lq*u(1,nyf,:)+Ls(1,:))+fxx*(u(5,nyf,:)+u(1,nyf,:))+fx*(u(4,nyf,:)+u(2,nyf,:)) &
+=======
+!.TOP ROW
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
+!    u(1,nyf,:)=(rhs(1,nyf,:) &
+      +fx6*(u(4,nyf,:)+lq*u(3,nyf,:)+ls(3,:))+fxx*(u(3,nyf,:)+lq*u(2,nyf,:)+ls(2,:))+fx*(u(2,nyf,:)+ls(1,:)) &
+      +fy6*(rbufN(1,3,:)+u(1,nyf-3,:))+fyy*(rbufN(1,2,:)+u(1,nyf-2,:))+fy*(rbufN(1,1,:)+u(1,nyf-1,:)) &
+      +fxy*(rbufN(2,1,:)+u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:)) &
+      +fxxy*(rbufN(3,1,:)+u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:)+lq*rbufN(2,1,:)+ls(2,:)) &
+      +fxyy*(rbufN(2,2,:)+u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*rbufN(1,2,:)+ls(1,:)))*deltaL(1)
+    u(2,nyf,:)=Oomehd(qn)*u(2,nyf,:)+(rhs(2,nyf,:) &
+!    u(2,nyf,:)=(rhs(2,nyf,:) &
+      +fx6*(u(5,nyf,:)+ls(2,:))+fxx*(u(4,nyf,:)+lq*u(1,nyf,:)+ls(1,:))+fx*(u(3,nyf,:)+u(1,nyf,:)) &
+      +fy6*(rbufN(2,3,:)+u(2,nyf-3,:))+fyy*(rbufN(2,2,:)+u(2,nyf-2,:))+fy*(rbufN(2,1,:)+u(2,nyf-1,:)) &
+      +fxy*(rbufN(3,1,:)+u(3,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)) &
+      +fxxy*(rbufN(4,1,:)+u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:)) &
+      +fxyy*(rbufN(3,2,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+rbufN(1,2,:)))*deltaL(2)
+    u(3,nyf,:)=Oomehd(qn)*u(3,nyf,:)+(rhs(3,nyf,:) &
+!    u(3,nyf,:)=(rhs(3,nyf,:) &
+      +fx6*(u(6,nyf,:)+lq*u(1,nyf,:)+ls(1,:))+fxx*(u(5,nyf,:)+u(1,nyf,:))+fx*(u(4,nyf,:)+u(2,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(rbufN(3,3,:)+u(3,nyf-3,:))+fyy*(rbufN(3,2,:)+u(3,nyf-2,:))+fy*(rbufN(3,1,:)+u(3,nyf-1,:)) &
       +fxy*(rbufN(4,1,:)+u(4,nyf-1,:)+u(2,nyf-1,:)+rbufN(2,1,:)) &
       +fxxy*(rbufN(5,1,:)+u(5,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)) &
       +fxyy*(rbufN(4,2,:)+u(4,nyf-2,:)+u(2,nyf-2,:)+rbufN(2,2,:)))*delta
   else
+<<<<<<< HEAD
 !...local NW corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
 !    u(1,nyf,:)=(rhs(1,nyf,:) &
       +fx6*(u(4,nyf,:)+rbufW(1,nyf,:))+fxx*(u(3,nyf,:)+rbufW(2,nyf,:))+fx*(u(2,nyf,:)+rbufW(3,nyf,:)) &
@@ -5679,7 +7350,11 @@ endif
       +fxxy*(rbufN(5,1,:)+u(5,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)) &
       +fxyy*(rbufN(4,2,:)+u(4,nyf-2,:)+u(2,nyf-2,:)+rbufN(2,2,:)))*delta
   endif
+<<<<<<< HEAD
   do i=4,nxf-3 !.away from x-boundaries
+=======
+  do i=4,nxf-3
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(i,nyf,:)=Oomehd(qn)*u(i,nyf,:)+(rhs(i,nyf,:) &
 !    u(i,nyf,:)=(rhs(i,nyf,:) &
       +fx6*(u(i+3,nyf,:)+u(i-3,nyf,:))+fxx*(u(i+2,nyf,:)+u(i-2,nyf,:))+fx*(u(i+1,nyf,:)+u(i-1,nyf,:)) &
@@ -5688,16 +7363,24 @@ endif
       +fxxy*(rbufN(i+2,1,:)+u(i+2,nyf-1,:)+u(i-2,nyf-1,:)+rbufN(i-2,1,:)) &
       +fxyy*(rbufN(i+1,2,:)+u(i+1,nyf-2,:)+u(i-1,nyf-2,:)+rbufN(i-1,2,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,nyf,:)=Oomehd(qn)*u(nxf-2,nyf,:)+(rhs(nxf-2,nyf,:) &
 !    u(nxf-2,nyf,:)=(rhs(nxf-2,nyf,:) &
       +fx6*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-5,nyf,:))+fxx*(u(nxf,nyf,:)+u(nxf-4,nyf,:))+fx*(u(nxf-1,nyf,:)+u(nxf-3,nyf,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,nyf,:)=Oomehd(qn)*u(nxf-2,nyf,:)+(rhs(nxf-2,nyf,:) &
+!    u(nxf-2,nyf,:)=(rhs(nxf-2,nyf,:) &
+      +fx6*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-5,nyf,:))+fxx*(u(nxf,nyf,:)+u(nxf-4,nyf,:))+fx*(u(nxf-1,nyf,:)+u(nxf-3,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy6*(rbufN(nxf-2,3,:)+u(nxf-2,nyf-3,:))+fyy*(rbufN(nxf-2,2,:)+u(nxf-2,nyf-2,:))+fy*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-1,:)) &
       +fxy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:)+rbufN(nxf-3,1,:)) &
       +fxxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:)+rbufN(nxf-4,1,:)) &
       +fxyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)+rbufN(nxf-3,2,:)))*delta
     u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
 !    u(nxf-1,nyf,:)=(rhs(nxf-1,nyf,:) &
+<<<<<<< HEAD
       +fx6*(rs(2,:)+u(nxf-4,nyf,:))+fxx*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-3,nyf,:))+fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
       +fy6*(rbufN(nxf-1,3,:)+u(nxf-1,nyf-3,:))+fyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))+fy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)) &
       +fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
@@ -5711,6 +7394,20 @@ endif
       +fxy*(Rq*rbufN(nxf,1,:)+Rs(1,:)+Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:)) &
       +fxxy*(Rq*rbufN(nxf-1,1,:)+Rs(2,:)+Rq*u(nxf-1,nyf-1,:)+Rs(2,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
       +fxyy*(Rq*rbufN(nxf,2,:)+Rs(1,:)+Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-1,nyf-2,:)+rbufN(nxf-1,2,:)))*deltaR(1)
+=======
+      +fx6*(rs(2,:)+u(nxf-4,nyf,:))+fxx*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-3,nyf,:))+fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
+      +fy6*(rbufN(nxf-1,3,:)+u(nxf-1,nyf-3,:))+fyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))+fy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)) &
+      +fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
+      +fxxy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:)+rbufN(nxf-3,1,:)) &
+      +fxyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+rbufN(nxf-2,2,:)))*deltaR(2)
+    u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
+!    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
+      +fx6*(rq*u(nxf-2,nyf,:)+rs(3,:)+u(nxf-3,nyf,:))+fxx*(rq*u(nxf-1,nyf,:)+rs(2,:)+u(nxf-2,nyf,:))+fx*(rs(1,:)+u(nxf-1,nyf,:)) &
+      +fy6*(rbufN(nxf,3,:)+u(nxf,nyf-3,:))+fyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))+fy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)) &
+      +fxy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:)) &
+      +fxxy*(rq*rbufN(nxf-1,1,:)+rs(2,:)+rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
+      +fxyy*(rq*rbufN(nxf,2,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:)+rbufN(nxf-1,2,:)))*deltaR(1)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     u(nxf-2,nyf,:)=Oomehd(qn)*u(nxf-2,nyf,:)+(rhs(nxf-2,nyf,:) &
 !    u(nxf-2,nyf,:)=(rhs(nxf-2,nyf,:) &
@@ -5726,7 +7423,10 @@ endif
       +fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
       +fxxy*(rbufNE(1,:)+rbufE(1,nyf-1,:)+u(nxf-3,nyf-1,:)+rbufN(nxf-3,1,:)) &
       +fxyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+rbufN(nxf-2,2,:)))*delta
+<<<<<<< HEAD
 !...local NE corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
 !    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
       +fx6*(rbufE(3,nyf,:)+u(nxf-3,nyf,:))+fxx*(rbufE(2,nyf,:)+u(nxf-2,nyf,:))+fx*(rbufE(1,nyf,:)+u(nxf-1,nyf,:)) &
@@ -5752,11 +7452,19 @@ endif
   real(DP), intent(in) :: u(:,:,:),rhs(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank,NErank,SErank,SWrank,NWrank
+<<<<<<< HEAD
   real(DP) :: rdx,rdy,fx,fxx,fy,fyy,fxy,fc,Lq,Rq
 #IF (HDop==3)
   real(DP) :: fx6,fy6,fx4,fy4,fxxy,fxyy
 #ENDIF
   real(DP), allocatable :: Ls(:,:),rs(:,:),loc2D(:,:)
+=======
+  real(DP) :: rdx,rdy,fx,fxx,fy,fyy,fxy,fc,lq,rq
+#IF (HDop==3)
+  real(DP) :: fx6,fy6,fx4,fy4,fxxy,fxyy
+#ENDIF
+  real(DP), allocatable :: ls(:,:),rs(:,:),loc2D(:,:)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                              sbufN,rbufS,sbufS,rbufN
   real(DP), allocatable, dimension(:,:) :: sbufNE,sbufSE,sbufSW,sbufNW, &
@@ -5767,6 +7475,7 @@ endif
     call CPU_TIME(rest1)
 #ENDIF
 
+<<<<<<< HEAD
 !.Neigboring ranks to communicate with
   Nrank  = nborhd(qn)%a(ng,1)
   NErank = nborhd(qn)%a(ng,2)
@@ -5797,10 +7506,36 @@ endif
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
     Lq = dble(xBC(1))
     Ls = 0.0_dp
+=======
+  Nrank =nborhd(qn)%a(ng,1)
+  NErank=nborhd(qn)%a(ng,2)
+  Erank =nborhd(qn)%a(ng,3)
+  SErank=nborhd(qn)%a(ng,4)
+  Srank =nborhd(qn)%a(ng,5)
+  SWrank=nborhd(qn)%a(ng,6)
+  Wrank =nborhd(qn)%a(ng,7)
+  NWrank=nborhd(qn)%a(ng,8)
+
+  allocate(reshd(nxf,nyf,nzL))
+!......... BCs of u ................................!
+  allocate(ls(HDop,nzL),rs(HDop,nzL),loc2D(HDop,nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    forall(i=1:HDop,k=1:nzL) loc2D(i,k)=sum(u(i,:,k))
+    call MPI_ALLreduce(loc2D,ls,HDop*nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    ls=2.0_dp*ls/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+    lq=dble(xBC(1))
+    ls=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq = -1.0_dp
     forall(i=1:HDop,k=1:nzL) loc2D(i,k)=sum(u(nxf-i+1,:,k))
     call MPI_ALLreduce(loc2D,Rs,HDop*nzL,MPI_DOUBLE_PRECISION, &
@@ -5809,6 +7544,16 @@ endif
   else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
     Rq = dble(xBC(2))
     Rs = 0.0_dp
+=======
+    rq=-1.0_dp
+    forall(i=1:HDop,k=1:nzL) loc2D(i,k)=sum(u(nxf-i+1,:,k))
+    call MPI_ALLreduce(loc2D,rs,HDop*nzL,MPI_DOUBLE_PRECISION, &
+                       MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
+    rs=2.0_dp*rs/dble(nyf*jprocshd(qn)%a(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rq=dble(xBC(2))
+    rs=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 !........................................................!
 
@@ -5903,7 +7648,11 @@ endif
 
 !.Boundary points
   call MPI_WAIT(req(5),stat(:,5),ierr)
+<<<<<<< HEAD
   do i=3,nxf-2 !.Bottom boundary
+=======
+  do i=3,nxf-2 ! Bottom boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     reshd(i,1,:)=rhs(i,1,:)-(fxx*(u(i+2,1,:)+u(i-2,1,:))+fx*(u(i+1,1,:)+u(i-1,1,:)) &
       +fyy*(u(i,3,:)+rbufS(i,1,:))+fy*(u(i,2,:)+rbufS(i,2,:)) &
       +fxy*(u(i+1,2,:)+rbufS(i+1,2,:)+rbufS(i-1,2,:)+u(i-1,2,:))+fc*u(i,1,:))
@@ -5912,7 +7661,11 @@ endif
       +fxy*(u(i+1,3,:)+u(i+1,1,:)+u(i-1,1,:)+u(i-1,3,:))+fc*u(i,2,:))
   enddo
   call MPI_WAIT(req(6),stat(:,6),ierr)
+<<<<<<< HEAD
   do i=3,nxf-2 !.Top boundary
+=======
+  do i=3,nxf-2 ! Top boundary
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     reshd(i,nyf-1,:)=rhs(i,nyf-1,:)-(fxx*(u(i+2,nyf-1,:)+u(i-2,nyf-1,:))+fx*(u(i+1,nyf-1,:)+u(i-1,nyf-1,:)) &
       +fyy*(rbufN(i,1,:)+u(i,nyf-3,:))+fy*(u(i,nyf,:)+u(i,nyf-2,:)) &
       +fxy*(u(i+1,nyf,:)+u(i+1,nyf-2,:)+u(i-1,nyf-2,:)+u(i-1,nyf,:))+fc*u(i,nyf-1,:))
@@ -5922,6 +7675,7 @@ endif
   enddo
 !.Left boundary
   call MPI_WAITALL(3,(/req(7),req(13),req(15)/),(/stat(:,7),stat(:,13),stat(:,15)/),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...global SW corner
     reshd(1,1,:)=rhs(1,1,:)-(fxx*(u(3,1,:)+Lq*u(2,1,:)+Ls(2,:))+fx*(u(2,1,:)+Lq*u(1,1,:)+Ls(1,:)) &
@@ -5959,6 +7713,44 @@ endif
       +fxy*(rbufN(3,1,:)+u(3,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:))+fc*u(2,nyf,:))
   else
 !...local SW corner
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...SW corner
+    reshd(1,1,:)=rhs(1,1,:)-(fxx*(u(3,1,:)+lq*u(2,1,:)+ls(2,:))+fx*(u(2,1,:)+lq*u(1,1,:)+ls(1,:)) &
+      +fyy*(u(1,3,:)+rbufS(1,1,:))+fy*(u(1,2,:)+rbufS(1,2,:)) &
+      +fxy*(u(2,2,:)+rbufS(2,2,:)+lq*rbufS(1,2,:)+ls(1,:)+lq*u(1,2,:)+ls(1,:))+fc*u(1,1,:))
+    reshd(2,1,:)=rhs(2,1,:)-(fxx*(u(4,1,:)+lq*u(1,1,:)+ls(1,:))+fx*(u(3,1,:)+u(1,1,:)) &
+      +fyy*(u(2,3,:)+rbufS(2,1,:))+fy*(u(2,2,:)+rbufS(2,2,:)) &
+      +fxy*(u(3,2,:)+rbufS(3,2,:)+rbufS(1,2,:)+u(1,2,:))+fc*u(2,1,:))
+    reshd(1,2,:)=rhs(1,2,:)-(fxx*(u(3,2,:)+lq*u(2,2,:)+ls(2,:))+fx*(u(2,2,:)+lq*u(1,2,:)+ls(1,:)) &
+      +fyy*(u(1,4,:)+rbufS(1,2,:))+fy*(u(1,3,:)+u(1,1,:)) &
+      +fxy*(u(2,3,:)+u(2,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:))+fc*u(1,2,:))
+    reshd(2,2,:)=rhs(2,2,:)-(fxx*(u(4,2,:)+lq*u(1,2,:)+ls(1,:))+fx*(u(3,2,:)+u(1,2,:)) &
+      +fyy*(u(2,4,:)+rbufS(2,2,:))+fy*(u(2,3,:)+u(2,1,:)) &
+      +fxy*(u(3,3,:)+u(3,1,:)+u(1,1,:)+u(1,3,:))+fc*u(2,2,:))
+    do j=3,nyf-2
+      reshd(1,j,:)=rhs(1,j,:)-(fxx*(u(3,j,:)+lq*u(2,j,:)+ls(2,:))+fx*(u(2,j,:)+lq*u(1,j,:)+ls(1,:)) &
+        +fyy*(u(1,j+2,:)+u(1,j-2,:))+fy*(u(1,j+1,:)+u(1,j-1,:)) &
+        +fxy*(u(2,j+1,:)+u(2,j-1,:)+lq*u(1,j-1,:)+ls(1,:)+lq*u(1,j+1,:)+ls(1,:))+fc*u(1,j,:))
+      reshd(2,j,:)=rhs(2,j,:)-(fxx*(u(4,j,:)+lq*u(1,j,:)+ls(1,:))+fx*(u(3,j,:)+u(1,j,:)) &
+        +fyy*(u(2,j+2,:)+u(2,j-2,:))+fy*(u(2,j+1,:)+u(2,j-1,:)) &
+        +fxy*(u(3,j+1,:)+u(3,j-1,:)+u(1,j-1,:)+u(1,j+1,:))+fc*u(2,j,:))
+    enddo
+!...NW corner
+    reshd(1,nyf-1,:)=rhs(1,nyf-1,:)-(fxx*(u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:))+fx*(u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)) &
+      +fyy*(rbufN(1,1,:)+u(1,nyf-3,:))+fy*(u(1,nyf,:)+u(1,nyf-2,:)) &
+      +fxy*(u(2,nyf,:)+u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:))+fc*u(1,nyf-1,:))
+    reshd(2,nyf-1,:)=rhs(2,nyf-1,:)-(fxx*(u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))+fx*(u(3,nyf-1,:)+u(1,nyf-1,:)) &
+      +fyy*(rbufN(2,1,:)+u(2,nyf-3,:))+fy*(u(2,nyf,:)+u(2,nyf-2,:)) &
+      +fxy*(u(3,nyf,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:))+fc*u(2,nyf-1,:))
+    reshd(1,nyf,:)=rhs(1,nyf,:)-(fxx*(u(3,nyf,:)+lq*u(2,nyf,:)+ls(2,:))+fx*(u(2,nyf,:)+lq*u(1,nyf,:)+ls(1,:)) &
+      +fyy*(rbufN(1,2,:)+u(1,nyf-2,:))+fy*(rbufN(1,1,:)+u(1,nyf-1,:)) &
+      +fxy*(rbufN(2,1,:)+u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:))+fc*u(1,nyf,:))
+    reshd(2,nyf,:)=rhs(2,nyf,:)-(fxx*(u(4,nyf,:)+lq*u(1,nyf,:)+ls(1,:))+fx*(u(3,nyf,:)+u(1,nyf,:)) &
+      +fyy*(rbufN(2,2,:)+u(2,nyf-2,:))+fy*(rbufN(2,1,:)+u(2,nyf-1,:)) &
+      +fxy*(rbufN(3,1,:)+u(3,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:))+fc*u(2,nyf,:))
+  else
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     reshd(1,1,:)=rhs(1,1,:)-(fxx*(u(3,1,:)+rbufW(1,1,:))+fx*(u(2,1,:)+rbufW(2,1,:)) &
       +fyy*(u(1,3,:)+rbufS(1,1,:))+fy*(u(1,2,:)+rbufS(1,2,:)) &
       +fxy*(u(2,2,:)+rbufS(2,2,:)+rbufSW(1,:)+rbufW(2,2,:))+fc*u(1,1,:))
@@ -5979,7 +7771,10 @@ endif
         +fyy*(u(2,j+2,:)+u(2,j-2,:))+fy*(u(2,j+1,:)+u(2,j-1,:)) &
         +fxy*(u(3,j+1,:)+u(3,j-1,:)+u(1,j-1,:)+u(1,j+1,:))+fc*u(2,j,:))
     enddo
+<<<<<<< HEAD
 !...local NW corner
+=======
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     reshd(1,nyf-1,:)=rhs(1,nyf-1,:)-(fxx*(u(3,nyf-1,:)+rbufW(1,nyf-1,:))+fx*(u(2,nyf-1,:)+rbufW(2,nyf-1,:)) &
       +fyy*(rbufN(1,1,:)+u(1,nyf-3,:))+fy*(u(1,nyf,:)+u(1,nyf-2,:)) &
       +fxy*(u(2,nyf,:)+u(2,nyf-2,:)+rbufW(2,nyf-2,:)+rbufW(2,nyf,:))+fc*u(1,nyf-1,:))
@@ -5995,6 +7790,7 @@ endif
   endif
 !.Right boundary
   call MPI_WAITALL(3,(/req(8),req(14),req(16)/),(/stat(:,8),stat(:,14),stat(:,16)/),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == iprocsm1) then !.Right most process (along x)
 !...SE corner
     reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-(fxx*(Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-3,1,:))+fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
@@ -6030,6 +7826,43 @@ endif
     reshd(nxf,nyf,:)=rhs(nxf,nyf,:)-(fxx*(Rq*u(nxf-1,nyf,:)+Rs(2,:)+u(nxf-2,nyf,:))+fx*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-1,nyf,:)) &
       +fyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))+fy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)) &
       +fxy*(Rq*rbufN(nxf,1,:)+Rs(1,:)+Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:))+fc*u(nxf,nyf,:))
+=======
+  if (iIDhd(qn)%a(ng) == iprocsm1) then
+!...SE corner
+    reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-(fxx*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:))+fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
+      +fyy*(u(nxf-1,3,:)+rbufS(nxf-1,1,:))+fy*(u(nxf-1,2,:)+rbufS(nxf-1,2,:)) &
+      +fxy*(u(nxf,2,:)+rbufS(nxf,2,:)+rbufS(nxf-2,2,:)+u(nxf-2,2,:))+fc*u(nxf-1,1,:))
+    reshd(nxf,1,:)=rhs(nxf,1,:)-(fxx*(rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:))+fx*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)) &
+      +fyy*(u(nxf,3,:)+rbufS(nxf,1,:))+fy*(u(nxf,2,:)+rbufS(nxf,2,:)) &
+      +fxy*(rq*u(nxf,2,:)+rs(1,:)+rq*rbufS(nxf,2,:)+rs(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,2,:))+fc*u(nxf,1,:))
+    reshd(nxf-1,2,:)=rhs(nxf-1,2,:)-(fxx*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:))+fx*(u(nxf,2,:)+u(nxf-2,2,:)) &
+      +fyy*(u(nxf-1,4,:)+rbufS(nxf-1,2,:))+fy*(u(nxf-1,3,:)+u(nxf-1,1,:)) &
+      +fxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,3,:))+fc*u(nxf-1,2,:))
+    reshd(nxf,2,:)=rhs(nxf,2,:)-(fxx*(rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:))+fx*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-1,2,:)) &
+      +fyy*(u(nxf,4,:)+rbufS(nxf,2,:))+fy*(u(nxf,3,:)+u(nxf,1,:)) &
+      +fxy*(rq*u(nxf,3,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)+u(nxf-1,3,:))+fc*u(nxf,2,:))
+    do j=3,nyf-2
+      reshd(nxf-1,j,:)=rhs(nxf-1,j,:)-(fxx*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-3,j,:))+fx*(u(nxf,j,:)+u(nxf-2,j,:)) &
+        +fyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))+fy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)) &
+        +fxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:))+fc*u(nxf-1,j,:))
+      reshd(nxf,j,:)=rhs(nxf,j,:)-(fxx*(rq*u(nxf-1,j,:)+rs(2,:)+u(nxf-2,j,:))+fx*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-1,j,:)) &
+        +fyy*(u(nxf,j+2,:)+u(nxf,j-2,:))+fy*(u(nxf,j+1,:)+u(nxf,j-1,:)) &
+        +fxy*(rq*u(nxf,j+1,:)+rs(1,:)+rq*u(nxf,j-1,:)+rs(1,:)+u(nxf-1,j-1,:)+u(nxf-1,j+1,:))+fc*u(nxf,j,:))
+    enddo
+!...NE corner
+    reshd(nxf-1,nyf-1,:)=rhs(nxf-1,nyf-1,:)-(fxx*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:))+fx*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)) &
+      +fyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))+fy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)) &
+      +fxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:))+fc*u(nxf-1,nyf-1,:))
+    reshd(nxf,nyf-1,:)=rhs(nxf,nyf-1,:)-(fxx*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:))+fx*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:)) &
+      +fyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))+fy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)) &
+      +fxy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:)+u(nxf-1,nyf,:))+fc*u(nxf,nyf-1,:))
+    reshd(nxf-1,nyf,:)=rhs(nxf-1,nyf,:)-(fxx*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-3,nyf,:))+fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
+      +fyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))+fy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)) &
+      +fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:))+fc*u(nxf-1,nyf,:))
+    reshd(nxf,nyf,:)=rhs(nxf,nyf,:)-(fxx*(rq*u(nxf-1,nyf,:)+rs(2,:)+u(nxf-2,nyf,:))+fx*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-1,nyf,:)) &
+      +fyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))+fy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)) &
+      +fxy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:))+fc*u(nxf,nyf,:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-(fxx*(rbufE(1,1,:)+u(nxf-3,1,:))+fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
       +fyy*(u(nxf-1,3,:)+rbufS(nxf-1,1,:))+fy*(u(nxf-1,2,:)+rbufS(nxf-1,2,:)) &
@@ -6138,6 +7971,7 @@ endif
   enddo
 !.Left boundary
   call MPI_WAITALL(3,(/req(7),req(13),req(15)/),(/stat(:,7),stat(:,13),stat(:,15)/),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...SW corner
     reshd(1,1,:)=rhs(1,1,:)-(fc*u(1,1,:) &
@@ -6154,11 +7988,30 @@ endif
       -fxyy*(u(3,3,:)+rbufS(3,2,:)+rbufS(1,2,:)+u(1,3,:)))
     reshd(3,1,:)=rhs(3,1,:)-(fc*u(3,1,:) &
       -fx6*(u(6,1,:)+Lq*u(1,1,:)+Ls(1,:))-fxx*(u(5,1,:)+u(1,1,:))-fx*(u(4,1,:)+u(2,1,:)) &
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...SW corner
+    reshd(1,1,:)=rhs(1,1,:)-(fc*u(1,1,:) &
+      -fx6*(u(4,1,:)+lq*u(3,1,:)+ls(3,:))-fxx*(u(3,1,:)+lq*u(2,1,:)+ls(2,:))-fx*(u(2,1,:)+lq*u(1,1,:)+ls(1,:)) &
+      -fy6*(u(1,4,:)+rbufS(1,1,:))-fyy*(u(1,3,:)+rbufS(1,2,:))-fy*(u(1,2,:)+rbufS(1,3,:)) &
+      -fxy*(u(2,2,:)+rbufS(2,3,:)+lq*rbufS(1,3,:)+ls(1,:)+lq*u(1,2,:)+ls(1,:)) &
+      -fxxy*(u(3,2,:)+rbufS(3,3,:)+lq*rbufS(2,3,:)+ls(2,:)+lq*u(2,2,:)+ls(2,:)) &
+      -fxyy*(u(2,3,:)+rbufS(2,2,:)+lq*rbufS(1,2,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:)))
+    reshd(2,1,:)=rhs(2,1,:)-(fc*u(2,1,:) &
+      -fx6*(u(5,1,:)+lq*u(2,1,:)+ls(2,:))-fxx*(u(4,1,:)+lq*u(1,1,:)+ls(1,:))-fx*(u(3,1,:)+u(1,1,:)) &
+      -fy6*(u(2,4,:)+rbufS(2,1,:))-fyy*(u(2,3,:)+rbufS(2,2,:))-fy*(u(2,2,:)+rbufS(2,3,:)) &
+      -fxy*(u(3,2,:)+rbufS(3,3,:)+rbufS(1,3,:)+u(1,2,:)) &
+      -fxxy*(u(4,2,:)+rbufS(4,3,:)+lq*rbufS(1,3,:)+ls(1,:)+lq*u(1,2,:)+ls(1,:)) &
+      -fxyy*(u(3,3,:)+rbufS(3,2,:)+rbufS(1,2,:)+u(1,3,:)))
+    reshd(3,1,:)=rhs(3,1,:)-(fc*u(3,1,:) &
+      -fx6*(u(6,1,:)+lq*u(1,1,:)+ls(1,:))-fxx*(u(5,1,:)+u(1,1,:))-fx*(u(4,1,:)+u(2,1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(u(3,4,:)+rbufS(3,1,:))-fyy*(u(3,3,:)+rbufS(3,2,:))-fy*(u(3,2,:)+rbufS(3,3,:)) &
       -fxy*(u(4,2,:)+rbufS(4,3,:)+rbufS(2,3,:)+u(2,2,:)) &
       -fxxy*(u(5,2,:)+rbufS(5,3,:)+rbufS(1,3,:)+u(1,2,:)) &
       -fxyy*(u(4,3,:)+rbufS(4,2,:)+rbufS(2,2,:)+u(2,3,:)))
     reshd(1,2,:)=rhs(1,2,:)-(fc*u(1,2,:) &
+<<<<<<< HEAD
       -fx6*(u(4,2,:)+Lq*u(3,2,:)+Ls(3,:))-fxx*(u(3,2,:)+Lq*u(2,2,:)+Ls(2,:))-fx*(u(2,2,:)+Lq*u(1,2,:)+Ls(1,:)) &
       -fy6*(u(1,5,:)+rbufS(1,2,:))-fyy*(u(1,4,:)+rbufS(1,3,:))-fy*(u(1,3,:)+u(1,1,:)) &
       -fxy*(u(2,3,:)+u(2,1,:)+Lq*u(1,1,:)+Ls(1,:)+Lq*u(1,3,:)+Ls(1,:)) &
@@ -6172,11 +8025,27 @@ endif
       -fxyy*(u(3,4,:)+rbufS(3,3,:)+rbufS(1,3,:)+u(1,4,:)))
     reshd(3,2,:)=rhs(3,2,:)-(fc*u(3,2,:) &
       -fx6*(u(6,2,:)+Lq*u(1,2,:)+Ls(1,:))-fxx*(u(5,2,:)+u(1,2,:))-fx*(u(4,2,:)+u(2,2,:)) &
+=======
+      -fx6*(u(4,2,:)+lq*u(3,2,:)+ls(3,:))-fxx*(u(3,2,:)+lq*u(2,2,:)+ls(2,:))-fx*(u(2,2,:)+lq*u(1,2,:)+ls(1,:)) &
+      -fy6*(u(1,5,:)+rbufS(1,2,:))-fyy*(u(1,4,:)+rbufS(1,3,:))-fy*(u(1,3,:)+u(1,1,:)) &
+      -fxy*(u(2,3,:)+u(2,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:)) &
+      -fxxy*(u(3,3,:)+u(3,1,:)+lq*u(2,1,:)+ls(2,:)+lq*u(2,3,:)+ls(2,:)) &
+      -fxyy*(u(2,4,:)+rbufS(2,3,:)+lq*rbufS(1,3,:)+ls(1,:)+lq*u(1,4,:)+ls(1,:)))
+    reshd(2,2,:)=rhs(2,2,:)-(fc*u(2,2,:) &
+      -fx6*(u(5,2,:)+lq*u(2,2,:)+ls(2,:))-fxx*(u(4,2,:)+lq*u(1,2,:)+ls(1,:))-fx*(u(3,2,:)+u(1,2,:)) &
+      -fy6*(u(2,5,:)+rbufS(2,2,:))-fyy*(u(2,4,:)+rbufS(2,3,:))-fy*(u(2,3,:)+u(2,1,:)) &
+      -fxy*(u(3,3,:)+u(3,1,:)+u(1,1,:)+u(1,3,:)) &
+      -fxxy*(u(4,3,:)+u(4,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,3,:)+ls(1,:)) &
+      -fxyy*(u(3,4,:)+rbufS(3,3,:)+rbufS(1,3,:)+u(1,4,:)))
+    reshd(3,2,:)=rhs(3,2,:)-(fc*u(3,2,:) &
+      -fx6*(u(6,2,:)+lq*u(1,2,:)+ls(1,:))-fxx*(u(5,2,:)+u(1,2,:))-fx*(u(4,2,:)+u(2,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(u(3,5,:)+rbufS(3,2,:))-fyy*(u(3,4,:)+rbufS(3,3,:))-fy*(u(3,3,:)+u(3,1,:)) &
       -fxy*(u(4,3,:)+u(4,1,:)+u(2,1,:)+u(2,3,:)) &
       -fxxy*(u(5,3,:)+u(5,1,:)+u(1,1,:)+u(1,3,:)) &
       -fxyy*(u(4,4,:)+rbufS(4,3,:)+rbufS(2,3,:)+u(2,4,:)))
     reshd(1,3,:)=rhs(1,3,:)-(fc*u(1,3,:) &
+<<<<<<< HEAD
       -fx6*(u(4,3,:)+Lq*u(3,3,:)+Ls(3,:))-fxx*(u(3,3,:)+Lq*u(2,3,:)+Ls(2,:))-fx*(u(2,3,:)+Lq*u(1,3,:)+Ls(1,:)) &
       -fy6*(u(1,6,:)+rbufS(1,3,:))-fyy*(u(1,5,:)+u(1,1,:))-fy*(u(1,4,:)+u(1,2,:)) &
       -fxy*(u(2,4,:)+u(2,2,:)+Lq*u(1,2,:)+Ls(1,:)+Lq*u(1,4,:)+Ls(1,:)) &
@@ -6190,10 +8059,26 @@ endif
       -fxyy*(u(3,5,:)+u(3,1,:)+u(1,1,:)+u(1,5,:)))
     reshd(3,3,:)=rhs(3,3,:)-(fc*u(3,3,:) &
       -fx6*(u(6,3,:)+Lq*u(1,3,:)+Ls(1,:))-fxx*(u(5,3,:)+u(1,3,:))-fx*(u(4,3,:)+u(2,3,:)) &
+=======
+      -fx6*(u(4,3,:)+lq*u(3,3,:)+ls(3,:))-fxx*(u(3,3,:)+lq*u(2,3,:)+ls(2,:))-fx*(u(2,3,:)+lq*u(1,3,:)+ls(1,:)) &
+      -fy6*(u(1,6,:)+rbufS(1,3,:))-fyy*(u(1,5,:)+u(1,1,:))-fy*(u(1,4,:)+u(1,2,:)) &
+      -fxy*(u(2,4,:)+u(2,2,:)+lq*u(1,2,:)+ls(1,:)+lq*u(1,4,:)+ls(1,:)) &
+      -fxxy*(u(3,4,:)+u(3,2,:)+lq*u(2,2,:)+ls(2,:)+lq*u(2,4,:)+ls(2,:)) &
+      -fxyy*(u(2,5,:)+u(2,1,:)+lq*u(1,1,:)+ls(1,:)+lq*u(1,5,:)+ls(1,:)))
+    reshd(2,3,:)=rhs(2,3,:)-(fc*u(2,3,:) &
+      -fx6*(u(5,3,:)+lq*u(2,3,:)+ls(2,:))-fxx*(u(4,3,:)+lq*u(1,3,:)+ls(1,:))-fx*(u(3,3,:)+u(1,3,:)) &
+      -fy6*(u(2,6,:)+rbufS(2,3,:))-fyy*(u(2,5,:)+u(2,1,:))-fy*(u(2,4,:)+u(2,2,:)) &
+      -fxy*(u(3,4,:)+u(3,2,:)+u(1,2,:)+u(1,4,:)) &
+      -fxxy*(u(4,4,:)+u(4,2,:)+lq*u(1,2,:)+ls(1,:)+lq*u(1,4,:)+ls(1,:)) &
+      -fxyy*(u(3,5,:)+u(3,1,:)+u(1,1,:)+u(1,5,:)))
+    reshd(3,3,:)=rhs(3,3,:)-(fc*u(3,3,:) &
+      -fx6*(u(6,3,:)+lq*u(1,3,:)+ls(1,:))-fxx*(u(5,3,:)+u(1,3,:))-fx*(u(4,3,:)+u(2,3,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(u(3,6,:)+rbufS(3,3,:))-fyy*(u(3,5,:)+u(3,1,:))-fy*(u(3,4,:)+u(3,2,:)) &
       -fxy*(u(4,4,:)+u(4,2,:)+u(2,2,:)+u(2,4,:)) &
       -fxxy*(u(5,4,:)+u(5,2,:)+u(1,2,:)+u(1,4,:)) &
       -fxyy*(u(4,5,:)+u(4,1,:)+u(2,1,:)+u(2,5,:)))
+<<<<<<< HEAD
     do j=4,nyf-3 !.Left boundary
       reshd(1,j,:)=rhs(1,j,:)-(fc*u(1,j,:) &
         -fx6*(u(4,j,:)+Lq*u(3,j,:)+Ls(3,:))-fxx*(u(3,j,:)+Lq*u(2,j,:)+Ls(2,:))-fx*(u(2,j,:)+Lq*u(1,j,:)+Ls(1,:)) &
@@ -6209,6 +8094,23 @@ endif
         -fxyy*(u(3,j+2,:)+u(3,j-2,:)+u(1,j-2,:)+u(1,j+2,:)))
       reshd(3,j,:)=rhs(3,j,:)-(fc*u(3,j,:) &
         -fx6*(u(6,j,:)+Lq*u(1,j,:)+Ls(1,:))-fxx*(u(5,j,:)+u(1,j,:))-fx*(u(4,j,:)+u(2,j,:)) &
+=======
+    do j=4,nyf-3 ! Left boundary
+      reshd(1,j,:)=rhs(1,j,:)-(fc*u(1,j,:) &
+        -fx6*(u(4,j,:)+lq*u(3,j,:)+ls(3,:))-fxx*(u(3,j,:)+lq*u(2,j,:)+ls(2,:))-fx*(u(2,j,:)+lq*u(1,j,:)+ls(1,:)) &
+        -fy6*(u(1,j+3,:)+u(1,j-3,:))-fyy*(u(1,j+2,:)+u(1,j-2,:))-fy*(u(1,j+1,:)+u(1,j-1,:)) &
+        -fxy*(u(2,j+1,:)+u(2,j-1,:)+lq*u(1,j-1,:)+ls(1,:)+lq*u(1,j+1,:)+ls(1,:)) &
+        -fxxy*(u(3,j+1,:)+u(3,j-1,:)+lq*u(2,j-1,:)+ls(2,:)+lq*u(2,j+1,:)+ls(2,:)) &
+        -fxyy*(u(2,j+2,:)+u(2,j-2,:)+lq*u(1,j-2,:)+ls(1,:)+lq*u(1,j+2,:)+ls(1,:)))
+      reshd(2,j,:)=rhs(2,j,:)-(fc*u(2,j,:) &
+        -fx6*(u(5,j,:)+lq*u(2,j,:)+ls(2,:))-fxx*(u(4,j,:)+lq*u(1,j,:)+ls(1,:))-fx*(u(3,j,:)+u(1,j,:)) &
+        -fy6*(u(2,j+3,:)+u(2,j-3,:))-fyy*(u(2,j+2,:)+u(2,j-2,:))-fy*(u(2,j+1,:)+u(2,j-1,:)) &
+        -fxy*(u(3,j+1,:)+u(3,j-1,:)+u(1,j-1,:)+u(1,j+1,:)) &
+        -fxxy*(u(4,j+1,:)+u(4,j-1,:)+lq*u(1,j-1,:)+ls(1,:)+lq*u(1,j+1,:)+ls(1,:)) &
+        -fxyy*(u(3,j+2,:)+u(3,j-2,:)+u(1,j-2,:)+u(1,j+2,:)))
+      reshd(3,j,:)=rhs(3,j,:)-(fc*u(3,j,:) &
+        -fx6*(u(6,j,:)+lq*u(1,j,:)+ls(1,:))-fxx*(u(5,j,:)+u(1,j,:))-fx*(u(4,j,:)+u(2,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fy6*(u(3,j+3,:)+u(3,j-3,:))-fyy*(u(3,j+2,:)+u(3,j-2,:))-fy*(u(3,j+1,:)+u(3,j-1,:)) &
         -fxy*(u(4,j+1,:)+u(4,j-1,:)+u(2,j-1,:)+u(2,j+1,:)) &
         -fxxy*(u(5,j+1,:)+u(5,j-1,:)+u(1,j-1,:)+u(1,j+1,:)) &
@@ -6216,6 +8118,7 @@ endif
     enddo
 !...NW corner
     reshd(1,nyf-2,:)=rhs(1,nyf-2,:)-(fc*u(1,nyf-2,:) &
+<<<<<<< HEAD
       -fx6*(u(4,nyf-2,:)+Lq*u(3,nyf-2,:)+Ls(3,:))-fxx*(u(3,nyf-2,:)+Lq*u(2,nyf-2,:)+Ls(2,:))-fx*(u(2,nyf-2,:)+Lq*u(1,nyf-2,:)+Ls(1,:)) &
       -fy6*(rbufN(1,1,:)+u(1,nyf-5,:))-fyy*(u(1,nyf,:)+u(1,nyf-4,:))-fy*(u(1,nyf-1,:)+u(1,nyf-3,:)) &
       -fxy*(u(2,nyf-1,:)+u(2,nyf-3,:)+Lq*u(1,nyf-3,:)+Ls(1,:)+Lq*u(1,nyf-1,:)+Ls(1,:)) &
@@ -6229,11 +8132,27 @@ endif
       -fxyy*(u(3,nyf,:)+u(3,nyf-4,:)+u(1,nyf-4,:)+u(1,nyf,:)))
     reshd(3,nyf-2,:)=rhs(3,nyf-2,:)-(fc*u(3,nyf-2,:) &
       -fx6*(u(6,nyf-2,:)+Lq*u(1,nyf-2,:)+Ls(1,:))-fxx*(u(5,nyf-2,:)+u(1,nyf-2,:))-fx*(u(4,nyf-2,:)+u(2,nyf-2,:)) &
+=======
+      -fx6*(u(4,nyf-2,:)+lq*u(3,nyf-2,:)+ls(3,:))-fxx*(u(3,nyf-2,:)+lq*u(2,nyf-2,:)+ls(2,:))-fx*(u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)) &
+      -fy6*(rbufN(1,1,:)+u(1,nyf-5,:))-fyy*(u(1,nyf,:)+u(1,nyf-4,:))-fy*(u(1,nyf-1,:)+u(1,nyf-3,:)) &
+      -fxy*(u(2,nyf-1,:)+u(2,nyf-3,:)+lq*u(1,nyf-3,:)+ls(1,:)+lq*u(1,nyf-1,:)+ls(1,:)) &
+      -fxxy*(u(3,nyf-1,:)+u(3,nyf-3,:)+lq*u(2,nyf-3,:)+ls(2,:)+lq*u(2,nyf-1,:)+ls(2,:)) &
+      -fxyy*(u(2,nyf,:)+u(2,nyf-4,:)+lq*u(1,nyf-4,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:)))
+    reshd(2,nyf-2,:)=rhs(2,nyf-2,:)-(fc*u(2,nyf-2,:) &
+      -fx6*(u(5,nyf-2,:)+lq*u(2,nyf-2,:)+ls(2,:))-fxx*(u(4,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:))-fx*(u(3,nyf-2,:)+u(1,nyf-2,:)) &
+      -fy6*(rbufN(2,1,:)+u(2,nyf-5,:))-fyy*(u(2,nyf,:)+u(2,nyf-4,:))-fy*(u(2,nyf-1,:)+u(2,nyf-3,:)) &
+      -fxy*(u(3,nyf-1,:)+u(3,nyf-3,:)+u(1,nyf-3,:)+u(1,nyf-1,:)) &
+      -fxxy*(u(4,nyf-1,:)+u(4,nyf-3,:)+lq*u(1,nyf-3,:)+ls(1,:)+lq*u(1,nyf-1,:)+ls(1,:)) &
+      -fxyy*(u(3,nyf,:)+u(3,nyf-4,:)+u(1,nyf-4,:)+u(1,nyf,:)))
+    reshd(3,nyf-2,:)=rhs(3,nyf-2,:)-(fc*u(3,nyf-2,:) &
+      -fx6*(u(6,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:))-fxx*(u(5,nyf-2,:)+u(1,nyf-2,:))-fx*(u(4,nyf-2,:)+u(2,nyf-2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(rbufN(3,1,:)+u(3,nyf-5,:))-fyy*(u(3,nyf,:)+u(3,nyf-4,:))-fy*(u(3,nyf-1,:)+u(3,nyf-3,:)) &
       -fxy*(u(4,nyf-1,:)+u(4,nyf-3,:)+u(2,nyf-3,:)+u(2,nyf-1,:)) &
       -fxxy*(u(5,nyf-1,:)+u(5,nyf-3,:)+u(1,nyf-3,:)+u(1,nyf-1,:)) &
       -fxyy*(u(4,nyf,:)+u(4,nyf-4,:)+u(2,nyf-4,:)+u(2,nyf,:)))
     reshd(1,nyf-1,:)=rhs(1,nyf-1,:)-(fc*u(1,nyf-1,:) &
+<<<<<<< HEAD
       -fx6*(u(4,nyf-1,:)+Lq*u(3,nyf-1,:)+Ls(3,:))-fxx*(u(3,nyf-1,:)+Lq*u(2,nyf-1,:)+Ls(2,:))-fx*(u(2,nyf-1,:)+Lq*u(1,nyf-1,:)+Ls(1,:)) &
       -fy6*(rbufN(1,2,:)+u(1,nyf-4,:))-fyy*(rbufN(1,1,:)+u(1,nyf-3,:))-fy*(u(1,nyf,:)+u(1,nyf-2,:)) &
       -fxy*(u(2,nyf,:)+u(2,nyf-2,:)+Lq*u(1,nyf-2,:)+Ls(1,:)+Lq*u(1,nyf,:)+Ls(1,:)) &
@@ -6247,11 +8166,27 @@ endif
       -fxyy*(rbufN(3,1,:)+u(3,nyf-3,:)+u(1,nyf-3,:)+rbufN(1,1,:)))
     reshd(3,nyf-1,:)=rhs(3,nyf-1,:)-(fc*u(3,nyf-1,:) &
       -fx6*(u(6,nyf-1,:)+Lq*u(1,nyf-1,:)+Ls(1,:))-fxx*(u(5,nyf-1,:)+u(1,nyf-1,:))-fx*(u(4,nyf-1,:)+u(2,nyf-1,:)) &
+=======
+      -fx6*(u(4,nyf-1,:)+lq*u(3,nyf-1,:)+ls(3,:))-fxx*(u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:))-fx*(u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)) &
+      -fy6*(rbufN(1,2,:)+u(1,nyf-4,:))-fyy*(rbufN(1,1,:)+u(1,nyf-3,:))-fy*(u(1,nyf,:)+u(1,nyf-2,:)) &
+      -fxy*(u(2,nyf,:)+u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:)) &
+      -fxxy*(u(3,nyf,:)+u(3,nyf-2,:)+lq*u(2,nyf-2,:)+ls(2,:)+lq*u(2,nyf,:)+ls(2,:)) &
+      -fxyy*(rbufN(2,1,:)+u(2,nyf-3,:)+lq*u(1,nyf-3,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:)))
+    reshd(2,nyf-1,:)=rhs(2,nyf-1,:)-(fc*u(2,nyf-1,:) &
+      -fx6*(u(5,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:))-fxx*(u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))-fx*(u(3,nyf-1,:)+u(1,nyf-1,:)) &
+      -fy6*(rbufN(2,2,:)+u(2,nyf-4,:))-fyy*(rbufN(2,1,:)+u(2,nyf-3,:))-fy*(u(2,nyf,:)+u(2,nyf-2,:)) &
+      -fxy*(u(3,nyf,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:)) &
+      -fxxy*(u(4,nyf,:)+u(4,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*u(1,nyf,:)+ls(1,:)) &
+      -fxyy*(rbufN(3,1,:)+u(3,nyf-3,:)+u(1,nyf-3,:)+rbufN(1,1,:)))
+    reshd(3,nyf-1,:)=rhs(3,nyf-1,:)-(fc*u(3,nyf-1,:) &
+      -fx6*(u(6,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))-fxx*(u(5,nyf-1,:)+u(1,nyf-1,:))-fx*(u(4,nyf-1,:)+u(2,nyf-1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(rbufN(3,2,:)+u(3,nyf-4,:))-fyy*(rbufN(3,1,:)+u(3,nyf-3,:))-fy*(u(3,nyf,:)+u(3,nyf-2,:)) &
       -fxy*(u(4,nyf,:)+u(4,nyf-2,:)+u(2,nyf-2,:)+u(2,nyf,:)) &
       -fxxy*(u(5,nyf,:)+u(5,nyf-2,:)+u(1,nyf-2,:)+u(1,nyf,:)) &
       -fxyy*(rbufN(4,1,:)+u(4,nyf-3,:)+u(2,nyf-3,:)+rbufN(2,1,:)))
     reshd(1,nyf,:)=rhs(1,nyf,:)-(fc*u(1,nyf,:) &
+<<<<<<< HEAD
       -fx6*(u(4,nyf,:)+Lq*u(3,nyf,:)+Ls(3,:))-fxx*(u(3,nyf,:)+Lq*u(2,nyf,:)+Ls(2,:))-fx*(u(2,nyf,:)+Lq*u(1,nyf,:)+Ls(1,:)) &
       -fy6*(rbufN(1,3,:)+u(1,nyf-3,:))-fyy*(rbufN(1,2,:)+u(1,nyf-2,:))-fy*(rbufN(1,1,:)+u(1,nyf-1,:)) &
       -fxy*(rbufN(2,1,:)+u(2,nyf-1,:)+Lq*u(1,nyf-1,:)+Ls(1,:)+Lq*rbufN(1,1,:)+Ls(1,:)) &
@@ -6265,6 +8200,21 @@ endif
       -fxyy*(rbufN(3,2,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+rbufN(1,2,:)))
     reshd(3,nyf,:)=rhs(3,nyf,:)-(fc*u(3,nyf,:) &
       -fx6*(u(6,nyf,:)+Lq*u(1,nyf,:)+Ls(1,:))-fxx*(u(5,nyf,:)+u(1,nyf,:))-fx*(u(4,nyf,:)+u(2,nyf,:)) &
+=======
+      -fx6*(u(4,nyf,:)+lq*u(3,nyf,:)+ls(3,:))-fxx*(u(3,nyf,:)+lq*u(2,nyf,:)+ls(2,:))-fx*(u(2,nyf,:)+lq*u(1,nyf,:)+ls(1,:)) &
+      -fy6*(rbufN(1,3,:)+u(1,nyf-3,:))-fyy*(rbufN(1,2,:)+u(1,nyf-2,:))-fy*(rbufN(1,1,:)+u(1,nyf-1,:)) &
+      -fxy*(rbufN(2,1,:)+u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:)) &
+      -fxxy*(rbufN(3,1,:)+u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:)+lq*rbufN(2,1,:)+ls(2,:)) &
+      -fxyy*(rbufN(2,2,:)+u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:)+lq*rbufN(1,2,:)+ls(1,:)))
+    reshd(2,nyf,:)=rhs(2,nyf,:)-(fc*u(2,nyf,:) &
+      -fx6*(u(5,nyf,:)+lq*u(2,nyf,:)+ls(2,:))-fxx*(u(4,nyf,:)+lq*u(1,nyf,:)+ls(1,:))-fx*(u(3,nyf,:)+u(1,nyf,:)) &
+      -fy6*(rbufN(2,3,:)+u(2,nyf-3,:))-fyy*(rbufN(2,2,:)+u(2,nyf-2,:))-fy*(rbufN(2,1,:)+u(2,nyf-1,:)) &
+      -fxy*(rbufN(3,1,:)+u(3,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)) &
+      -fxxy*(rbufN(4,1,:)+u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:)+lq*rbufN(1,1,:)+ls(1,:)) &
+      -fxyy*(rbufN(3,2,:)+u(3,nyf-2,:)+u(1,nyf-2,:)+rbufN(1,2,:)))
+    reshd(3,nyf,:)=rhs(3,nyf,:)-(fc*u(3,nyf,:) &
+      -fx6*(u(6,nyf,:)+lq*u(1,nyf,:)+ls(1,:))-fxx*(u(5,nyf,:)+u(1,nyf,:))-fx*(u(4,nyf,:)+u(2,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(rbufN(3,3,:)+u(3,nyf-3,:))-fyy*(rbufN(3,2,:)+u(3,nyf-2,:))-fy*(rbufN(3,1,:)+u(3,nyf-1,:)) &
       -fxy*(rbufN(4,1,:)+u(4,nyf-1,:)+u(2,nyf-1,:)+rbufN(2,1,:)) &
       -fxxy*(rbufN(5,1,:)+u(5,nyf-1,:)+u(1,nyf-1,:)+rbufN(1,1,:)) &
@@ -6401,15 +8351,23 @@ endif
   endif
 !.Right boundary
   call MPI_WAITALL(3,(/req(8),req(14),req(16)/),(/stat(:,8),stat(:,14),stat(:,16)/),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == iprocsm1) then !.Right most process (along x)
 !...SE corner
     reshd(nxf-2,1,:)=rhs(nxf-2,1,:)-(fc*u(nxf-2,1,:) &
       -fx6*(Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-5,1,:))-fxx*(u(nxf,1,:)+u(nxf-4,1,:))-fx*(u(nxf-1,1,:)+u(nxf-3,1,:)) &
+=======
+  if (iIDhd(qn)%a(ng) == iprocsm1) then
+!...SE corner
+    reshd(nxf-2,1,:)=rhs(nxf-2,1,:)-(fc*u(nxf-2,1,:) &
+      -fx6*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-5,1,:))-fxx*(u(nxf,1,:)+u(nxf-4,1,:))-fx*(u(nxf-1,1,:)+u(nxf-3,1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(u(nxf-2,4,:)+rbufS(nxf-2,1,:))-fyy*(u(nxf-2,3,:)+rbufS(nxf-2,2,:))-fy*(u(nxf-2,2,:)+rbufS(nxf-2,3,:)) &
       -fxy*(u(nxf-1,2,:)+rbufS(nxf-1,3,:)+rbufS(nxf-3,3,:)+u(nxf-3,2,:)) &
       -fxxy*(u(nxf,2,:)+rbufS(nxf,3,:)+rbufS(nxf-4,3,:)+u(nxf-4,2,:)) &
       -fxyy*(u(nxf-1,3,:)+rbufS(nxf-1,2,:)+rbufS(nxf-3,2,:)+u(nxf-3,3,:)))
     reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-(fc*u(nxf-1,1,:) &
+<<<<<<< HEAD
       -fx6*(Rq*u(nxf-1,1,:)+Rs(2,:)+u(nxf-4,1,:))-fxx*(Rq*u(nxf,1,:)+Rs(1,:)+u(nxf-3,1,:))-fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
       -fy6*(u(nxf-1,4,:)+rbufS(nxf-1,1,:))-fyy*(u(nxf-1,3,:)+rbufS(nxf-1,2,:))-fy*(u(nxf-1,2,:)+rbufS(nxf-1,3,:)) &
       -fxy*(u(nxf,2,:)+rbufS(nxf,3,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
@@ -6423,11 +8381,27 @@ endif
       -fxyy*(Rq*u(nxf,3,:)+Rs(1,:)+Rq*rbufS(nxf,2,:)+Rs(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,3,:)))
     reshd(nxf-2,2,:)=rhs(nxf-2,2,:)-(fc*u(nxf-2,2,:) &
       -fx6*(Rq*u(nxf,2,:)+Rs(1,:)+u(nxf-5,2,:))-fxx*(u(nxf,2,:)+u(nxf-4,2,:))-fx*(u(nxf-1,2,:)+u(nxf-3,2,:)) &
+=======
+      -fx6*(rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-4,1,:))-fxx*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:))-fx*(u(nxf,1,:)+u(nxf-2,1,:)) &
+      -fy6*(u(nxf-1,4,:)+rbufS(nxf-1,1,:))-fyy*(u(nxf-1,3,:)+rbufS(nxf-1,2,:))-fy*(u(nxf-1,2,:)+rbufS(nxf-1,3,:)) &
+      -fxy*(u(nxf,2,:)+rbufS(nxf,3,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
+      -fxxy*(rq*u(nxf,2,:)+rs(1,:)+rq*rbufS(nxf,3,:)+rs(1,:)+rbufS(nxf-3,3,:)+u(nxf-3,2,:)) &
+      -fxyy*(u(nxf,3,:)+rbufS(nxf,2,:)+rbufS(nxf-2,2,:)+u(nxf-2,3,:)))
+    reshd(nxf,1,:)=rhs(nxf,1,:)-(fc*u(nxf,1,:) &
+      -fx6*(rq*u(nxf-2,1,:)+rs(3,:)+u(nxf-3,1,:))-fxx*(rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:))-fx*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)) &
+      -fy6*(u(nxf,4,:)+rbufS(nxf,1,:))-fyy*(u(nxf,3,:)+rbufS(nxf,2,:))-fy*(u(nxf,2,:)+rbufS(nxf,3,:)) &
+      -fxy*(rq*u(nxf,2,:)+rs(1,:)+rq*rbufS(nxf,3,:)+rs(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,2,:)) &
+      -fxxy*(rq*u(nxf-1,2,:)+rs(2,:)+rq*rbufS(nxf-1,3,:)+rs(2,:)+rbufS(nxf-2,3,:)+u(nxf-2,2,:)) &
+      -fxyy*(rq*u(nxf,3,:)+rs(1,:)+rq*rbufS(nxf,2,:)+rs(1,:)+rbufS(nxf-1,2,:)+u(nxf-1,3,:)))
+    reshd(nxf-2,2,:)=rhs(nxf-2,2,:)-(fc*u(nxf-2,2,:) &
+      -fx6*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-5,2,:))-fxx*(u(nxf,2,:)+u(nxf-4,2,:))-fx*(u(nxf-1,2,:)+u(nxf-3,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(u(nxf-2,5,:)+rbufS(nxf-2,2,:))-fyy*(u(nxf-2,4,:)+rbufS(nxf-2,3,:))-fy*(u(nxf-2,3,:)+u(nxf-2,1,:)) &
       -fxy*(u(nxf-1,3,:)+u(nxf-1,1,:)+u(nxf-3,1,:)+u(nxf-3,3,:)) &
       -fxxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-4,1,:)+u(nxf-4,3,:)) &
       -fxyy*(u(nxf-1,4,:)+rbufS(nxf-1,3,:)+rbufS(nxf-3,3,:)+u(nxf-3,4,:)))
     reshd(nxf-1,2,:)=rhs(nxf-1,2,:)-(fc*u(nxf-1,2,:) &
+<<<<<<< HEAD
       -fx6*(Rq*u(nxf-1,2,:)+Rs(2,:)+u(nxf-4,2,:))-fxx*(Rq*u(nxf,2,:)+Rs(1,:)+u(nxf-3,2,:))-fx*(u(nxf,2,:)+u(nxf-2,2,:)) &
       -fy6*(u(nxf-1,5,:)+rbufS(nxf-1,2,:))-fyy*(u(nxf-1,4,:)+rbufS(nxf-1,3,:))-fy*(u(nxf-1,3,:)+u(nxf-1,1,:)) &
       -fxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
@@ -6441,11 +8415,27 @@ endif
       -fxyy*(Rq*u(nxf,4,:)+Rs(1,:)+Rq*rbufS(nxf,3,:)+Rs(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,4,:)))
     reshd(nxf-2,3,:)=rhs(nxf-2,3,:)-(fc*u(nxf-2,3,:) &
       -fx6*(Rq*u(nxf,3,:)+Rs(1,:)+u(nxf-5,3,:))-fxx*(u(nxf,3,:)+u(nxf-4,3,:))-fx*(u(nxf-1,3,:)+u(nxf-3,3,:)) &
+=======
+      -fx6*(rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-4,2,:))-fxx*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:))-fx*(u(nxf,2,:)+u(nxf-2,2,:)) &
+      -fy6*(u(nxf-1,5,:)+rbufS(nxf-1,2,:))-fyy*(u(nxf-1,4,:)+rbufS(nxf-1,3,:))-fy*(u(nxf-1,3,:)+u(nxf-1,1,:)) &
+      -fxy*(u(nxf,3,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
+      -fxxy*(rq*u(nxf,3,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:)+u(nxf-3,3,:)) &
+      -fxyy*(u(nxf,4,:)+rbufS(nxf,3,:)+rbufS(nxf-2,3,:)+u(nxf-2,4,:)))
+    reshd(nxf,2,:)=rhs(nxf,2,:)-(fc*u(nxf,2,:) &
+      -fx6*(rq*u(nxf-2,2,:)+rs(3,:)+u(nxf-3,2,:))-fxx*(rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:))-fx*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-1,2,:)) &
+      -fy6*(u(nxf,5,:)+rbufS(nxf,2,:))-fyy*(u(nxf,4,:)+rbufS(nxf,3,:))-fy*(u(nxf,3,:)+u(nxf,1,:)) &
+      -fxy*(rq*u(nxf,3,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)+u(nxf-1,3,:)) &
+      -fxxy*(rq*u(nxf-1,3,:)+rs(2,:)+rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:)+u(nxf-2,3,:)) &
+      -fxyy*(rq*u(nxf,4,:)+rs(1,:)+rq*rbufS(nxf,3,:)+rs(1,:)+rbufS(nxf-1,3,:)+u(nxf-1,4,:)))
+    reshd(nxf-2,3,:)=rhs(nxf-2,3,:)-(fc*u(nxf-2,3,:) &
+      -fx6*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-5,3,:))-fxx*(u(nxf,3,:)+u(nxf-4,3,:))-fx*(u(nxf-1,3,:)+u(nxf-3,3,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(u(nxf-2,6,:)+rbufS(nxf-2,3,:))-fyy*(u(nxf-2,5,:)+u(nxf-2,1,:))-fy*(u(nxf-2,4,:)+u(nxf-2,2,:)) &
       -fxy*(u(nxf-1,4,:)+u(nxf-1,2,:)+u(nxf-3,2,:)+u(nxf-3,4,:)) &
       -fxxy*(u(nxf,4,:)+u(nxf,2,:)+u(nxf-4,2,:)+u(nxf-4,4,:)) &
       -fxyy*(u(nxf-1,5,:)+u(nxf-1,1,:)+u(nxf-3,1,:)+u(nxf-3,5,:)))
     reshd(nxf-1,3,:)=rhs(nxf-1,3,:)-(fc*u(nxf-1,3,:) &
+<<<<<<< HEAD
       -fx6*(Rq*u(nxf-1,3,:)+Rs(2,:)+u(nxf-4,3,:))-fxx*(Rq*u(nxf,3,:)+Rs(1,:)+u(nxf-3,3,:))-fx*(u(nxf,3,:)+u(nxf-2,3,:)) &
       -fy6*(u(nxf-1,6,:)+rbufS(nxf-1,3,:))-fyy*(u(nxf-1,5,:)+u(nxf-1,1,:))-fy*(u(nxf-1,4,:)+u(nxf-1,2,:)) &
       -fxy*(u(nxf,4,:)+u(nxf,2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
@@ -6460,11 +8450,28 @@ endif
     do j=4,nyf-3 !.Right boundary
       reshd(nxf-2,j,:)=rhs(nxf-2,j,:)-(fc*u(nxf-2,j,:) &
         -fx6*(Rq*u(nxf,j,:)+Rs(1,:)+u(nxf-5,j,:))-fxx*(u(nxf,j,:)+u(nxf-4,j,:))-fx*(u(nxf-1,j,:)+u(nxf-3,j,:)) &
+=======
+      -fx6*(rq*u(nxf-1,3,:)+rs(2,:)+u(nxf-4,3,:))-fxx*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-3,3,:))-fx*(u(nxf,3,:)+u(nxf-2,3,:)) &
+      -fy6*(u(nxf-1,6,:)+rbufS(nxf-1,3,:))-fyy*(u(nxf-1,5,:)+u(nxf-1,1,:))-fy*(u(nxf-1,4,:)+u(nxf-1,2,:)) &
+      -fxy*(u(nxf,4,:)+u(nxf,2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
+      -fxxy*(rq*u(nxf,4,:)+rs(1,:)+rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:)+u(nxf-3,4,:)) &
+      -fxyy*(u(nxf,5,:)+u(nxf,1,:)+u(nxf-2,1,:)+u(nxf-2,5,:)))
+    reshd(nxf,3,:)=rhs(nxf,3,:)-(fc*u(nxf,3,:) &
+      -fx6*(rq*u(nxf-2,3,:)+rs(3,:)+u(nxf-3,3,:))-fxx*(rq*u(nxf-1,3,:)+rs(2,:)+u(nxf-2,3,:))-fx*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-1,3,:)) &
+      -fy6*(u(nxf,6,:)+rbufS(nxf,3,:))-fyy*(u(nxf,5,:)+u(nxf,1,:))-fy*(u(nxf,4,:)+u(nxf,2,:)) &
+      -fxy*(rq*u(nxf,4,:)+rs(1,:)+rq*u(nxf,2,:)+rs(1,:)+u(nxf-1,2,:)+u(nxf-1,4,:)) &
+      -fxxy*(rq*u(nxf-1,4,:)+rs(2,:)+rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:)+u(nxf-2,4,:)) &
+      -fxyy*(rq*u(nxf,5,:)+rs(1,:)+rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:)+u(nxf-1,5,:)))
+    do j=4,nyf-3 ! Right boundary
+      reshd(nxf-2,j,:)=rhs(nxf-2,j,:)-(fc*u(nxf-2,j,:) &
+        -fx6*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-5,j,:))-fxx*(u(nxf,j,:)+u(nxf-4,j,:))-fx*(u(nxf-1,j,:)+u(nxf-3,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fy6*(u(nxf-2,j+3,:)+u(nxf-2,j-3,:))-fyy*(u(nxf-2,j+2,:)+u(nxf-2,j-2,:))-fy*(u(nxf-2,j+1,:)+u(nxf-2,j-1,:)) &
         -fxy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)+u(nxf-3,j-1,:)+u(nxf-3,j+1,:)) &
         -fxxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-4,j-1,:)+u(nxf-4,j+1,:)) &
         -fxyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:)+u(nxf-3,j-2,:)+u(nxf-3,j+2,:)))
       reshd(nxf-1,j,:)=rhs(nxf-1,j,:)-(fc*u(nxf-1,j,:) &
+<<<<<<< HEAD
         -fx6*(Rq*u(nxf-1,j,:)+Rs(2,:)+u(nxf-4,j,:))-fxx*(Rq*u(nxf,j,:)+Rs(1,:)+u(nxf-3,j,:))-fx*(u(nxf,j,:)+u(nxf-2,j,:)) &
         -fy6*(u(nxf-1,j+3,:)+u(nxf-1,j-3,:))-fyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))-fy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)) &
         -fxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)) &
@@ -6480,11 +8487,29 @@ endif
 !...NE corner
     reshd(nxf-2,nyf-2,:)=rhs(nxf-2,nyf-2,:)-(fc*u(nxf-2,nyf-2,:) &
       -fx6*(Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-5,nyf-2,:))-fxx*(u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:))-fx*(u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)) &
+=======
+        -fx6*(rq*u(nxf-1,j,:)+rs(2,:)+u(nxf-4,j,:))-fxx*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-3,j,:))-fx*(u(nxf,j,:)+u(nxf-2,j,:)) &
+        -fy6*(u(nxf-1,j+3,:)+u(nxf-1,j-3,:))-fyy*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))-fy*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:)) &
+        -fxy*(u(nxf,j+1,:)+u(nxf,j-1,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)) &
+        -fxxy*(rq*u(nxf,j+1,:)+rs(1,:)+rq*u(nxf,j-1,:)+rs(1,:)+u(nxf-3,j-1,:)+u(nxf-3,j+1,:)) &
+        -fxyy*(u(nxf,j+2,:)+u(nxf,j-2,:)+u(nxf-2,j-2,:)+u(nxf-2,j+2,:)))
+      reshd(nxf,j,:)=rhs(nxf,j,:)-(fc*u(nxf,j,:) &
+        -fx6*(rq*u(nxf-2,j,:)+rs(3,:)+u(nxf-3,j,:))-fxx*(rq*u(nxf-1,j,:)+rs(2,:)+u(nxf-2,j,:))-fx*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-1,j,:)) &
+        -fy6*(u(nxf,j+3,:)+u(nxf,j-3,:))-fyy*(u(nxf,j+2,:)+u(nxf,j-2,:))-fy*(u(nxf,j+1,:)+u(nxf,j-1,:)) &
+        -fxy*(rq*u(nxf,j+1,:)+rs(1,:)+rq*u(nxf,j-1,:)+rs(1,:)+u(nxf-1,j-1,:)+u(nxf-1,j+1,:)) &
+        -fxxy*(rq*u(nxf-1,j+1,:)+rs(2,:)+rq*u(nxf-1,j-1,:)+rs(2,:)+u(nxf-2,j-1,:)+u(nxf-2,j+1,:)) &
+        -fxyy*(rq*u(nxf,j+2,:)+rs(1,:)+rq*u(nxf,j-2,:)+rs(1,:)+u(nxf-1,j-2,:)+u(nxf-1,j+2,:)))
+    enddo
+!...NE corner
+    reshd(nxf-2,nyf-2,:)=rhs(nxf-2,nyf-2,:)-(fc*u(nxf-2,nyf-2,:) &
+      -fx6*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-5,nyf-2,:))-fxx*(u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:))-fx*(u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-5,:))-fyy*(u(nxf-2,nyf,:)+u(nxf-2,nyf-4,:))-fy*(u(nxf-2,nyf-1,:)+u(nxf-2,nyf-3,:)) &
       -fxy*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:)+u(nxf-3,nyf-3,:)+u(nxf-3,nyf-1,:)) &
       -fxxy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)+u(nxf-4,nyf-3,:)+u(nxf-4,nyf-1,:)) &
       -fxyy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:)+u(nxf-3,nyf-4,:)+u(nxf-3,nyf,:)))
     reshd(nxf-1,nyf-2,:)=rhs(nxf-1,nyf-2,:)-(fc*u(nxf-1,nyf-2,:) &
+<<<<<<< HEAD
       -fx6*(Rq*u(nxf-1,nyf-2,:)+Rs(2,:)+u(nxf-4,nyf-2,:))-fxx*(Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-3,nyf-2,:))-fx*(u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)) &
       -fy6*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-5,:))-fyy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:))-fy*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:)) &
       -fxy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
@@ -6498,11 +8523,27 @@ endif
       -fxyy*(Rq*u(nxf,nyf,:)+Rs(1,:)+Rq*u(nxf,nyf-4,:)+Rs(1,:)+u(nxf-1,nyf-4,:)+u(nxf-1,nyf,:)))
     reshd(nxf-2,nyf-1,:)=rhs(nxf-2,nyf-1,:)-(fc*u(nxf-2,nyf-1,:) &
       -fx6*(Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-5,nyf-1,:))-fxx*(u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:))-fx*(u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:)) &
+=======
+      -fx6*(rq*u(nxf-1,nyf-2,:)+rs(2,:)+u(nxf-4,nyf-2,:))-fxx*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-3,nyf-2,:))-fx*(u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)) &
+      -fy6*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-5,:))-fyy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:))-fy*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:)) &
+      -fxy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
+      -fxxy*(rq*u(nxf,nyf-1,:)+rs(1,:)+rq*u(nxf,nyf-3,:)+rs(1,:)+u(nxf-3,nyf-3,:)+u(nxf-3,nyf-1,:)) &
+      -fxyy*(u(nxf,nyf,:)+u(nxf,nyf-4,:)+u(nxf-2,nyf-4,:)+u(nxf-2,nyf,:)))
+    reshd(nxf,nyf-2,:)=rhs(nxf,nyf-2,:)-(fc*u(nxf,nyf-2,:) &
+      -fx6*(rq*u(nxf-2,nyf-2,:)+rs(3,:)+u(nxf-3,nyf-2,:))-fxx*(rq*u(nxf-1,nyf-2,:)+rs(2,:)+u(nxf-2,nyf-2,:))-fx*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:)) &
+      -fy6*(rbufN(nxf,1,:)+u(nxf,nyf-5,:))-fyy*(u(nxf,nyf,:)+u(nxf,nyf-4,:))-fy*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:)) &
+      -fxy*(rq*u(nxf,nyf-1,:)+rs(1,:)+rq*u(nxf,nyf-3,:)+rs(1,:)+u(nxf-1,nyf-3,:)+u(nxf-1,nyf-1,:)) &
+      -fxxy*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+rq*u(nxf-1,nyf-3,:)+rs(2,:)+u(nxf-2,nyf-3,:)+u(nxf-2,nyf-1,:)) &
+      -fxyy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-4,:)+rs(1,:)+u(nxf-1,nyf-4,:)+u(nxf-1,nyf,:)))
+    reshd(nxf-2,nyf-1,:)=rhs(nxf-2,nyf-1,:)-(fc*u(nxf-2,nyf-1,:) &
+      -fx6*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-5,nyf-1,:))-fxx*(u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:))-fx*(u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(rbufN(nxf-2,2,:)+u(nxf-2,nyf-4,:))-fyy*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-3,:))-fy*(u(nxf-2,nyf,:)+u(nxf-2,nyf-2,:)) &
       -fxy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)+u(nxf-3,nyf,:)) &
       -fxxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:)+u(nxf-4,nyf,:)) &
       -fxyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:)+u(nxf-3,nyf-3,:)+rbufN(nxf-3,1,:)))
     reshd(nxf-1,nyf-1,:)=rhs(nxf-1,nyf-1,:)-(fc*u(nxf-1,nyf-1,:) &
+<<<<<<< HEAD
       -fx6*(Rq*u(nxf-1,nyf-1,:)+Rs(2,:)+u(nxf-4,nyf-1,:))-fxx*(Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-3,nyf-1,:))-fx*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)) &
       -fy6*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-4,:))-fyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))-fy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)) &
       -fxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
@@ -6516,11 +8557,27 @@ endif
       -fxyy*(Rq*rbufN(nxf,1,:)+Rs(1,:)+Rq*u(nxf,nyf-3,:)+Rs(1,:)+u(nxf-1,nyf-3,:)+rbufN(nxf-1,1,:)))
     reshd(nxf-2,nyf,:)=rhs(nxf-2,nyf,:)-(fc*u(nxf-2,nyf,:) &
       -fx6*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-5,nyf,:))-fxx*(u(nxf,nyf,:)+u(nxf-4,nyf,:))-fx*(u(nxf-1,nyf,:)+u(nxf-3,nyf,:)) &
+=======
+      -fx6*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-4,nyf-1,:))-fxx*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:))-fx*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)) &
+      -fy6*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-4,:))-fyy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))-fy*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:)) &
+      -fxy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
+      -fxxy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-3,nyf-2,:)+u(nxf-3,nyf,:)) &
+      -fxyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:)+u(nxf-2,nyf-3,:)+rbufN(nxf-2,1,:)))
+    reshd(nxf,nyf-1,:)=rhs(nxf,nyf-1,:)-(fc*u(nxf,nyf-1,:) &
+      -fx6*(rq*u(nxf-2,nyf-1,:)+rs(3,:)+u(nxf-3,nyf-1,:))-fxx*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:))-fx*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:)) &
+      -fy6*(rbufN(nxf,2,:)+u(nxf,nyf-4,:))-fyy*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))-fy*(u(nxf,nyf,:)+u(nxf,nyf-2,:)) &
+      -fxy*(rq*u(nxf,nyf,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:)+u(nxf-1,nyf,:)) &
+      -fxxy*(rq*u(nxf-1,nyf,:)+rs(2,:)+rq*u(nxf-1,nyf-2,:)+rs(2,:)+u(nxf-2,nyf-2,:)+u(nxf-2,nyf,:)) &
+      -fxyy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-3,:)+rs(1,:)+u(nxf-1,nyf-3,:)+rbufN(nxf-1,1,:)))
+    reshd(nxf-2,nyf,:)=rhs(nxf-2,nyf,:)-(fc*u(nxf-2,nyf,:) &
+      -fx6*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-5,nyf,:))-fxx*(u(nxf,nyf,:)+u(nxf-4,nyf,:))-fx*(u(nxf-1,nyf,:)+u(nxf-3,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy6*(rbufN(nxf-2,3,:)+u(nxf-2,nyf-3,:))-fyy*(rbufN(nxf-2,2,:)+u(nxf-2,nyf-2,:))-fy*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-1,:)) &
       -fxy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:)+rbufN(nxf-3,1,:)) &
       -fxxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:)+rbufN(nxf-4,1,:)) &
       -fxyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:)+rbufN(nxf-3,2,:)))
     reshd(nxf-1,nyf,:)=rhs(nxf-1,nyf,:)-(fc*u(nxf-1,nyf,:) &
+<<<<<<< HEAD
       -fx6*(Rq*u(nxf-1,nyf,:)+Rs(2,:)+u(nxf-4,nyf,:))-fxx*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-3,nyf,:))-fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
       -fy6*(rbufN(nxf-1,3,:)+u(nxf-1,nyf-3,:))-fyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))-fy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)) &
       -fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
@@ -6532,6 +8589,19 @@ endif
       -fxy*(Rq*rbufN(nxf,1,:)+Rs(1,:)+Rq*u(nxf,nyf-1,:)+Rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:)) &
       -fxxy*(Rq*rbufN(nxf-1,1,:)+Rs(2,:)+Rq*u(nxf-1,nyf-1,:)+Rs(2,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
       -fxyy*(Rq*rbufN(nxf,2,:)+Rs(1,:)+Rq*u(nxf,nyf-2,:)+Rs(1,:)+u(nxf-1,nyf-2,:)+rbufN(nxf-1,2,:)))
+=======
+      -fx6*(rq*u(nxf-1,nyf,:)+rs(2,:)+u(nxf-4,nyf,:))-fxx*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-3,nyf,:))-fx*(u(nxf,nyf,:)+u(nxf-2,nyf,:)) &
+      -fy6*(rbufN(nxf-1,3,:)+u(nxf-1,nyf-3,:))-fyy*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))-fy*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:)) &
+      -fxy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
+      -fxxy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:)+rbufN(nxf-3,1,:)) &
+      -fxyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:)+rbufN(nxf-2,2,:)))
+    reshd(nxf,nyf,:)=rhs(nxf,nyf,:)-(fc*u(nxf,nyf,:) &
+      -fx6*(rq*u(nxf-2,nyf,:)+rs(3,:)+u(nxf-3,nyf,:))-fxx*(rq*u(nxf-1,nyf,:)+rs(2,:)+u(nxf-2,nyf,:))-fx*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-1,nyf,:)) &
+      -fy6*(rbufN(nxf,3,:)+u(nxf,nyf-3,:))-fyy*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))-fy*(rbufN(nxf,1,:)+u(nxf,nyf-1,:)) &
+      -fxy*(rq*rbufN(nxf,1,:)+rs(1,:)+rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:)+rbufN(nxf-1,1,:)) &
+      -fxxy*(rq*rbufN(nxf-1,1,:)+rs(2,:)+rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:)+rbufN(nxf-2,1,:)) &
+      -fxyy*(rq*rbufN(nxf,2,:)+rs(1,:)+rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:)+rbufN(nxf-1,2,:)))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   else
     reshd(nxf-2,1,:)=rhs(nxf-2,1,:)-(fc*u(nxf-2,1,:) &
       -fx6*(rbufE(1,1,:)+u(nxf-5,1,:))-fxx*(u(nxf,1,:)+u(nxf-4,1,:))-fx*(u(nxf-1,1,:)+u(nxf-3,1,:)) &
@@ -6686,10 +8756,17 @@ endif
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank
   integer(I4B) :: ierr,req(8),stat(MPI_STATUS_SIZE,8)
+<<<<<<< HEAD
   real(DP), allocatable :: Ls(:,:),rs(:,:),loc2D(:,:)
   real(DP), allocatable, dimension(:,:,:) :: sbufN,sbufE,sbufS,sbufW, &
                                              rbufN,rbufE,rbufS,rbufW
   real(DP) :: fx,fy,delta,Lq,Rq
+=======
+  real(DP), allocatable :: ls(:,:),rs(:,:),loc2D(:,:)
+  real(DP), allocatable, dimension(:,:,:) :: sbufN,sbufE,sbufS,sbufW, &
+                                             rbufN,rbufE,rbufS,rbufW
+  real(DP) :: fx,fy,delta,lq,rq
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable :: deltaL(:),deltaR(:)
 
   Nrank=nborhd(qn)%a(ng,1)
@@ -6697,6 +8774,7 @@ endif
   Srank=nborhd(qn)%a(ng,5)
   Wrank=nborhd(qn)%a(ng,7)
 
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -6709,24 +8787,46 @@ endif
   if (xBC(1)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
     Lq=-1.0_dp
+=======
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+  allocate(ls(HDopd4,nzL),rs(HDopd4,nzL),loc2D(HDopd4,nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     forall(i=1:HDopd4,k=1:nzL) loc2D(i,k)=sum(u(i,:,k))
     call MPI_ALLreduce(loc2D,ls,HDopd4*nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
     ls=2.0_dp*ls/dble(nyf*jprocshd(qn)%a(ng))
   else ! if (xBC==1 .OR. xBC(1)==-1) then ! symmetry
+<<<<<<< HEAD
     Lq=dble(xBC(1))
+=======
+    lq=dble(xBC(1))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     ls=0.0_dp
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq=-1.0_dp
+=======
+    rq=-1.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     forall(i=1:HDopd4,k=1:nzL) loc2D(i,k)=sum(u(nxf-i+1,:,k))
     call MPI_ALLreduce(loc2D,rs,HDopd4*nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
     rs=2.0_dp*rs/dble(nyf*jprocshd(qn)%a(ng))
   else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+<<<<<<< HEAD
     Rq=dble(xBC(2))
+=======
+    rq=dble(xBC(2))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     rs=0.0_dp
   endif
 !........................................................!
@@ -6768,6 +8868,7 @@ endif
 #IF (HDop==8)
   delta=omehd(qn)/(1.0_dp+6.0_dp*(fx+fy))
   allocate(deltaL(1),deltaR(1))
+<<<<<<< HEAD
   deltaL=omehd(qn)/(1.0_dp+6.0_dp*(fx+fy)-4.0_dp*fx*Lq)
   deltaR=omehd(qn)/(1.0_dp+6.0_dp*(fx+fy)-4.0_dp*fx*Rq)
 
@@ -6780,6 +8881,20 @@ endif
     u(2,1,:)=Oomehd(qn)*u(2,1,:)+(rhs(2,1,:) &
 !    u(2,1,:)=(rhs(2,1,:) &
       -fx*(u(4,1,:)-4.0_dp*(u(3,1,:)+u(1,1,:))+Lq*u(1,1,:)+Ls(1,:)) &
+=======
+  deltaL=omehd(qn)/(1.0_dp+6.0_dp*(fx+fy)-4.0_dp*fx*lq)
+  deltaR=omehd(qn)/(1.0_dp+6.0_dp*(fx+fy)-4.0_dp*fx*rq)
+
+!.First row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
+!    u(1,1,:)=(rhs(1,1,:) &
+      -fx*(u(3,1,:)-4.0_dp*(u(2,1,:)+ls(1,:))+lq*u(2,1,:)+ls(2,:)) &
+      -fy*(u(1,3,:)-4.0_dp*(u(1,2,:)+rbufS(1,2,:))+rbufS(1,1,:)))*deltaL
+    u(2,1,:)=Oomehd(qn)*u(2,1,:)+(rhs(2,1,:) &
+!    u(2,1,:)=(rhs(2,1,:) &
+      -fx*(u(4,1,:)-4.0_dp*(u(3,1,:)+u(1,1,:))+lq*u(1,1,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(u(2,3,:)-4.0_dp*(u(2,2,:)+rbufS(2,2,:))+rbufS(2,1,:)))*delta
   else
     u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
@@ -6798,6 +8913,7 @@ endif
       -fy*(u(i,3,:)-4.0_dp*(u(i,2,:)+rbufS(i,2,:))+rbufS(i,1,:)))*delta
   enddo
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
 !    u(nxf-1,1,:)=(rhs(nxf-1,1,:) &
@@ -6806,6 +8922,16 @@ endif
     u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
 !    u(nxf,1,:)=(rhs(nxf,1,:) &
       -fx*(Rq*u(nxf-1,1,:)+Rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,1,:))+u(nxf-2,1,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
+!    u(nxf-1,1,:)=(rhs(nxf-1,1,:) &
+      -fx*(rq*u(nxf,1,:)+rs(1,:)-4.0_dp*(u(nxf,1,:)+u(nxf-2,1,:))+u(nxf-3,1,:)) &
+      -fy*(u(nxf-1,3,:)-4.0_dp*(u(nxf-1,2,:)+rbufS(nxf-1,2,:))+rbufS(nxf-1,1,:)))*delta
+    u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
+!    u(nxf,1,:)=(rhs(nxf,1,:) &
+      -fx*(rq*u(nxf-1,1,:)+rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,1,:))+u(nxf-2,1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(u(nxf,3,:)-4.0_dp*(u(nxf,2,:)+rbufS(nxf,2,:))+rbufS(nxf,1,:)))*deltaR
   else
     u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
@@ -6817,6 +8943,7 @@ endif
       -fx*(rbufE(2,1,:)-4.0_dp*(rbufE(1,1,:)+u(nxf-1,1,:))+u(nxf-2,1,:)) &
       -fy*(u(nxf,3,:)-4.0_dp*(u(nxf,2,:)+rbufS(nxf,2,:))+rbufS(nxf,1,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... SECOND ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
@@ -6826,6 +8953,17 @@ endif
     u(2,2,:)=Oomehd(qn)*u(2,2,:)+(rhs(2,2,:) &
 !    u(2,2,:)=(rhs(2,2,:) &
       -fx*(u(4,2,:)-4.0_dp*(u(3,2,:)+u(1,2,:))+Lq*u(1,2,:)+Ls(1,:)) &
+=======
+!.Second row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
+!    u(1,2,:)=(rhs(1,2,:) &
+      -fx*(u(3,2,:)-4.0_dp*(u(2,2,:)+ls(1,:))+lq*u(2,2,:)+ls(2,:)) &
+      -fy*(u(1,4,:)-4.0_dp*(u(1,3,:)+u(1,1,:))+rbufS(1,2,:)))*deltaL
+    u(2,2,:)=Oomehd(qn)*u(2,2,:)+(rhs(2,2,:) &
+!    u(2,2,:)=(rhs(2,2,:) &
+      -fx*(u(4,2,:)-4.0_dp*(u(3,2,:)+u(1,2,:))+lq*u(1,2,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(u(2,4,:)-4.0_dp*(u(2,3,:)+u(2,1,:))+rbufS(2,2,:)))*delta
   else
     u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
@@ -6843,6 +8981,7 @@ endif
     -fx*(u(i+2,2,:)-4.0_dp*(u(i+1,2,:)+u(i-1,2,:))+u(i-2,2,:)) &
     -fy*(u(i,4,:)-4.0_dp*(u(i,3,:)+u(i,1,:))+rbufS(i,2,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
 !    u(nxf-1,2,:)=(rhs(nxf-1,2,:) &
@@ -6851,6 +8990,16 @@ endif
     u(nxf,2,:)=Oomehd(qn)*u(nxf,2,:)+(rhs(nxf,2,:) &
 !    u(nxf,2,:)=(rhs(nxf,2,:) &
       -fx*(Rq*u(nxf-1,2,:)+Rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,2,:))+u(nxf-2,2,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
+!    u(nxf-1,2,:)=(rhs(nxf-1,2,:) &
+      -fx*(rq*u(nxf,2,:)+rs(1,:)-4.0_dp*(u(nxf,2,:)+u(nxf-2,2,:))+u(nxf-3,2,:)) &
+      -fy*(u(nxf-1,4,:)-4.0_dp*(u(nxf-1,3,:)+u(nxf-1,1,:))+rbufS(nxf-1,2,:)))*delta
+    u(nxf,2,:)=Oomehd(qn)*u(nxf,2,:)+(rhs(nxf,2,:) &
+!    u(nxf,2,:)=(rhs(nxf,2,:) &
+      -fx*(rq*u(nxf-1,2,:)+rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,2,:))+u(nxf-2,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(u(nxf,4,:)-4.0_dp*(u(nxf,3,:)+u(nxf,1,:))+rbufS(nxf,2,:)))*deltaR
   else
     u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
@@ -6862,6 +9011,7 @@ endif
       -fx*(rbufE(2,2,:)-4.0_dp*(rbufE(1,2,:)+u(nxf-1,2,:))+u(nxf-2,2,:)) &
       -fy*(u(nxf,4,:)-4.0_dp*(u(nxf,3,:)+u(nxf,1,:))+rbufS(nxf,2,:)))*delta
   endif
+<<<<<<< HEAD
 !................... AWAY FROM BOTTOM AND TOP BOUNDARIES ...................!
   do j=3,nyf-2
 !...Left boundary
@@ -6873,6 +9023,18 @@ endif
       u(2,j,:)=Oomehd(qn)*u(2,j,:)+(rhs(2,j,:) &
 !      u(2,j,:)=(rhs(2,j,:) &
         -fx*(u(4,j,:)-4.0_dp*(u(3,j,:)+u(1,j,:))+Lq*u(1,j,:)+Ls(1,:)) &
+=======
+!.Away from bottom and top boundaries
+  do j=3,nyf-2
+    if (iIDhd(qn)%a(ng)==0) then  ! Left boundary
+     u(1,j,:)=Oomehd(qn)*u(1,j,:)+(rhs(1,j,:) &
+!      u(1,j,:)=(rhs(1,j,:) &
+        -fx*(u(3,j,:)-4.0_dp*(u(2,j,:)+ls(1,:))+lq*u(2,j,:)+ls(2,:)) &
+        -fy*(u(1,j+2,:)-4.0_dp*(u(1,j+1,:)+u(1,j-1,:))+u(1,j-2,:)))*deltaL
+      u(2,j,:)=Oomehd(qn)*u(2,j,:)+(rhs(2,j,:) &
+!      u(2,j,:)=(rhs(2,j,:) &
+        -fx*(u(4,j,:)-4.0_dp*(u(3,j,:)+u(1,j,:))+lq*u(1,j,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fy*(u(2,j+2,:)-4.0_dp*(u(2,j+1,:)+u(2,j-1,:))+u(2,j-2,:)))*delta
     else
       u(1,j,:)=Oomehd(qn)*u(1,j,:)+(rhs(1,j,:) &
@@ -6890,6 +9052,7 @@ endif
         -fx*(u(i+2,j,:)-4.0_dp*(u(i+1,j,:)+u(i-1,j,:))+u(i-2,j,:)) &
         -fy*(u(i,j+2,:)-4.0_dp*(u(i,j+1,:)+u(i,j-1,:))+u(i,j-2,:)))*delta
     enddo
+<<<<<<< HEAD
 !...Right boundary
     if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
       u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
@@ -6899,6 +9062,16 @@ endif
       u(nxf,j,:)=Oomehd(qn)*u(nxf,j,:)+(rhs(nxf,j,:) &
 !      u(nxf,j,:)=(rhs(nxf,j,:) &
         -fx*(Rq*u(nxf-1,j,:)+Rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,j,:))+u(nxf-2,j,:)) &
+=======
+    if (iIDhd(qn)%a(ng)==iprocsm1) then ! Right boundary
+      u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
+!      u(nxf-1,j,:)=(rhs(nxf-1,j,:) &
+        -fx*(rq*u(nxf,j,:)+rs(1,:)-4.0_dp*(u(nxf,j,:)+u(nxf-2,j,:))+u(nxf-3,j,:)) &
+        -fy*(u(nxf-1,j+2,:)-4.0_dp*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:))+u(nxf-1,j-2,:)))*delta
+      u(nxf,j,:)=Oomehd(qn)*u(nxf,j,:)+(rhs(nxf,j,:) &
+!      u(nxf,j,:)=(rhs(nxf,j,:) &
+        -fx*(rq*u(nxf-1,j,:)+rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,j,:))+u(nxf-2,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fy*(u(nxf,j+2,:)-4.0_dp*(u(nxf,j+1,:)+u(nxf,j-1,:))+u(nxf,j-2,:)))*deltaR
     else
       u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
@@ -6912,6 +9085,7 @@ endif
     endif
   enddo
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
 !........................... SECOND TO TOP ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
@@ -6921,6 +9095,17 @@ endif
     u(2,nyf-1,:)=Oomehd(qn)*u(2,nyf-1,:)+(rhs(2,nyf-1,:) &
 !    u(2,nyf-1,:)=(rhs(2,nyf-1,:) &
       -fx*(u(4,nyf-1,:)-4.0_dp*(u(3,nyf-1,:)+u(1,nyf-1,:))+Lq*u(1,nyf-1,:)+Ls(1,:)) &
+=======
+!.Second to top row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
+!    u(1,nyf-1,:)=(rhs(1,nyf-1,:) &
+      -fx*(u(3,nyf-1,:)-4.0_dp*(u(2,nyf-1,:)+ls(1,:))+lq*u(2,nyf-1,:)+ls(2,:)) &
+      -fy*(rbufN(1,1,:)-4.0_dp*(u(1,nyf,:)+u(1,nyf-2,:))+u(1,nyf-3,:)))*deltaL
+    u(2,nyf-1,:)=Oomehd(qn)*u(2,nyf-1,:)+(rhs(2,nyf-1,:) &
+!    u(2,nyf-1,:)=(rhs(2,nyf-1,:) &
+      -fx*(u(4,nyf-1,:)-4.0_dp*(u(3,nyf-1,:)+u(1,nyf-1,:))+lq*u(1,nyf-1,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(rbufN(2,1,:)-4.0_dp*(u(2,nyf,:)+u(2,nyf-2,:))+u(2,nyf-3,:)))*delta
   else
     u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
@@ -6938,6 +9123,7 @@ endif
       -fx*(u(i+2,nyf-1,:)-4.0_dp*(u(i+1,nyf-1,:)+u(i-1,nyf-1,:))+u(i-2,nyf-1,:)) &
       -fy*(rbufN(i,1,:)-4.0_dp*(u(i,nyf,:)+u(i,nyf-2,:))+u(i,nyf-3,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
 !    u(nxf-1,nyf-1,:)=(rhs(nxf-1,nyf-1,:) &
@@ -6946,6 +9132,16 @@ endif
     u(nxf,nyf-1,:)=Oomehd(qn)*u(nxf,nyf-1,:)+(rhs(nxf,nyf-1,:) &
 !    u(nxf,nyf-1,:)=(rhs(nxf,nyf-1,:) &
      -fx*(Rq*u(nxf-1,nyf-1,:)+Rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,nyf-1,:))+u(nxf-2,nyf-1,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
+!    u(nxf-1,nyf-1,:)=(rhs(nxf-1,nyf-1,:) &
+     -fx*(rq*u(nxf,nyf-1,:)+rs(1,:)-4.0_dp*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:))+u(nxf-3,nyf-1,:)) &
+     -fy*(rbufN(nxf-1,1,:)-4.0_dp*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:))+u(nxf-1,nyf-3,:)))*delta
+    u(nxf,nyf-1,:)=Oomehd(qn)*u(nxf,nyf-1,:)+(rhs(nxf,nyf-1,:) &
+!    u(nxf,nyf-1,:)=(rhs(nxf,nyf-1,:) &
+     -fx*(rq*u(nxf-1,nyf-1,:)+rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,nyf-1,:))+u(nxf-2,nyf-1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
      -fy*(rbufN(nxf,1,:)-4.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-2,:))+u(nxf,nyf-3,:)))*deltaR
   else
     u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
@@ -6957,6 +9153,7 @@ endif
       -fx*(rbufE(2,nyf-1,:)-4.0_dp*(rbufE(1,nyf-1,:)+u(nxf-1,nyf-1,:))+u(nxf-2,nyf-1,:)) &
       -fy*(rbufN(nxf,1,:)-4.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-2,:))+u(nxf,nyf-3,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... TOP ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
@@ -6966,6 +9163,17 @@ endif
     u(2,nyf,:)=Oomehd(qn)*u(2,nyf,:)+(rhs(2,nyf,:) &
 !    u(2,nyf,:)=(rhs(2,nyf,:) &
      -fx*(u(4,nyf,:)-4.0_dp*(u(3,nyf,:)+u(1,nyf,:))+Lq*u(1,nyf,:)+Ls(1,:)) &
+=======
+!.Top row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
+!    u(1,nyf,:)=(rhs(1,nyf,:) &
+      -fx*(u(3,nyf,:)-4.0_dp*(u(2,nyf,:)+ls(1,:))+lq*u(2,nyf,:)+ls(2,:)) &
+      -fy*(rbufN(1,2,:)-4.0_dp*(rbufN(1,1,:)+u(1,nyf-1,:))+u(1,nyf-2,:)))*deltaL
+    u(2,nyf,:)=Oomehd(qn)*u(2,nyf,:)+(rhs(2,nyf,:) &
+!    u(2,nyf,:)=(rhs(2,nyf,:) &
+     -fx*(u(4,nyf,:)-4.0_dp*(u(3,nyf,:)+u(1,nyf,:))+lq*u(1,nyf,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
      -fy*(rbufN(2,2,:)-4.0_dp*(rbufN(2,1,:)+u(2,nyf-1,:))+u(2,nyf-2,:)))*delta
   else
     u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
@@ -6983,6 +9191,7 @@ endif
       -fx*(u(i+2,nyf,:)-4.0_dp*(u(i+1,nyf,:)+u(i-1,nyf,:))+u(i-2,nyf,:)) &
       -fy*(rbufN(i,2,:)-4.0_dp*(rbufN(i,1,:)+u(i,nyf-1,:))+u(i,nyf-2,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
 !    u(nxf-1,nyf,:)=(rhs(nxf-1,nyf,:) &
@@ -6991,6 +9200,16 @@ endif
     u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
 !    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
       -fx*(Rq*u(nxf-1,nyf,:)+Rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,nyf,:))+u(nxf-2,nyf,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
+!    u(nxf-1,nyf,:)=(rhs(nxf-1,nyf,:) &
+      -fx*(rq*u(nxf,nyf,:)+rs(1,:)-4.0_dp*(u(nxf,nyf,:)+u(nxf-2,nyf,:))+u(nxf-3,nyf,:)) &
+      -fy*(rbufN(nxf-1,2,:)-4.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:))+u(nxf-1,nyf-2,:)))*delta
+    u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
+!    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
+      -fx*(rq*u(nxf-1,nyf,:)+rs(2,:)-4.0_dp*(rs(1,:)+u(nxf-1,nyf,:))+u(nxf-2,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(rbufN(nxf,2,:)-4.0_dp*(rbufN(nxf,1,:)+u(nxf,nyf-1,:))+u(nxf,nyf-2,:)))*deltaR
   else
     u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
@@ -7006,6 +9225,7 @@ endif
 #ELIF (HDop==12)
   delta=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy))
   allocate(deltaL(2),deltaR(2))
+<<<<<<< HEAD
   deltaL(1)=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy)-15.0_dp*fx*Lq)
   deltaL(2)=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy)-fx*Lq)
   deltaR(1)=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy)-15.0_dp*fx*Rq)
@@ -7024,6 +9244,26 @@ endif
     u(3,1,:)=Oomehd(qn)*u(3,1,:)+(rhs(3,1,:) &
 !    u(3,1,:)=(rhs(3,1,:) &
       +fx*(u(6,1,:)-6.0_dp*(u(5,1,:)+u(1,1,:))+15.0_dp*(u(4,1,:)+u(2,1,:))+Lq*u(1,1,:)+Ls(1,:)) &
+=======
+  deltaL(1)=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy)-15.0_dp*fx*lq)
+  deltaL(2)=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy)-fx*lq)
+  deltaR(1)=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy)-15.0_dp*fx*rq)
+  deltaR(2)=omehd(qn)/(1.0_dp+20.0_dp*(fx+fy)-fx*rq)
+
+!.First row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
+!    u(1,1,:)=(rhs(1,1,:) &
+      +fx*(u(4,1,:)-6.0_dp*(u(3,1,:)+lq*u(2,1,:)+ls(2,:))+15.0_dp*(u(2,1,:)+ls(1,:))+lq*u(3,1,:)+ls(3,:)) &
+      +fy*(u(1,4,:)-6.0_dp*(u(1,3,:)+rbufS(1,2,:))+15.0_dp*(u(1,2,:)+rbufS(1,3,:))+rbufS(1,1,:)))*deltaL(1)
+    u(2,1,:)=Oomehd(qn)*u(2,1,:)+(rhs(2,1,:) &
+!    u(2,1,:)=(rhs(2,1,:) &
+      +fx*(u(5,1,:)-6.0_dp*(u(4,1,:)+lq*u(1,1,:)+ls(1,:))+15.0_dp*(u(3,1,:)+u(1,1,:))+ls(2,:)) &
+      +fy*(u(2,4,:)-6.0_dp*(u(2,3,:)+rbufS(2,2,:))+15.0_dp*(u(2,2,:)+rbufS(2,3,:))+rbufS(2,1,:)))*deltaL(2)
+    u(3,1,:)=Oomehd(qn)*u(3,1,:)+(rhs(3,1,:) &
+!    u(3,1,:)=(rhs(3,1,:) &
+      +fx*(u(6,1,:)-6.0_dp*(u(5,1,:)+u(1,1,:))+15.0_dp*(u(4,1,:)+u(2,1,:))+lq*u(1,1,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(u(3,4,:)-6.0_dp*(u(3,3,:)+rbufS(3,2,:))+15.0_dp*(u(3,2,:)+rbufS(3,3,:))+rbufS(3,1,:)))*delta
   else
     u(1,1,:)=Oomehd(qn)*u(1,1,:)+(rhs(1,1,:) &
@@ -7046,6 +9286,7 @@ endif
       +fy*(u(i,4,:)-6.0_dp*(u(i,3,:)+rbufS(i,2,:))+15.0_dp*(u(i,2,:)+rbufS(i,3,:))+rbufS(i,1,:)))*delta
   enddo
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,1,:)=Oomehd(qn)*u(nxf-2,1,:)+(rhs(nxf-2,1,:) &
 !    u(nxf-2,1,:)=(rhs(nxf-2,1,:) &
@@ -7058,6 +9299,20 @@ endif
     u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
 !    u(nxf,1,:)=(rhs(nxf,1,:) &
       +fx*(Rq*u(nxf-2,1,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,1,:)+Rs(2,:)+u(nxf-2,1,:))+15.0_dp*(rs(1,:)+u(nxf-1,1,:))+u(nxf-3,1,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,1,:)=Oomehd(qn)*u(nxf-2,1,:)+(rhs(nxf-2,1,:) &
+!    u(nxf-2,1,:)=(rhs(nxf-2,1,:) &
+      +fx*(rq*u(nxf,1,:)+rs(1,:)-6.0_dp*(u(nxf,1,:)+u(nxf-4,1,:))+15.0_dp*(u(nxf-1,1,:)+u(nxf-3,1,:))+u(nxf-5,1,:)) &
+      +fy*(u(nxf-2,4,:)-6.0_dp*(u(nxf-2,3,:)+rbufS(nxf-2,2,:))+15.0_dp*(u(nxf-2,2,:)+rbufS(nxf-2,3,:))+rbufS(nxf-2,1,:)))*delta
+    u(nxf-1,1,:)=Oomehd(qn)*u(nxf-1,1,:)+(rhs(nxf-1,1,:) &
+!    u(nxf-1,1,:)=(rhs(nxf-1,1,:) &
+      +fx*(rs(2,:)-6.0_dp*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:))+15.0_dp*(u(nxf,1,:)+u(nxf-2,1,:))+u(nxf-4,1,:)) &
+      +fy*(u(nxf-1,4,:)-6.0_dp*(u(nxf-1,3,:)+rbufS(nxf-1,2,:))+15.0_dp*(u(nxf-1,2,:)+rbufS(nxf-1,3,:))+rbufS(nxf-1,1,:)))*deltaR(2)
+    u(nxf,1,:)=Oomehd(qn)*u(nxf,1,:)+(rhs(nxf,1,:) &
+!    u(nxf,1,:)=(rhs(nxf,1,:) &
+      +fx*(rq*u(nxf-2,1,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:))+15.0_dp*(rs(1,:)+u(nxf-1,1,:))+u(nxf-3,1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(u(nxf,4,:)-6.0_dp*(u(nxf,3,:)+rbufS(nxf,2,:))+15.0_dp*(u(nxf,2,:)+rbufS(nxf,3,:))+rbufS(nxf,1,:)))*deltaR(1)
   else
     u(nxf-2,1,:)=Oomehd(qn)*u(nxf-2,1,:)+(rhs(nxf-2,1,:) &
@@ -7073,6 +9328,7 @@ endif
       +fx*(rbufE(3,1,:)-6.0_dp*(rbufE(2,1,:)+u(nxf-2,1,:))+15.0_dp*(rbufE(1,1,:)+u(nxf-1,1,:))+u(nxf-3,1,:)) &
       +fy*(u(nxf,4,:)-6.0_dp*(u(nxf,3,:)+rbufS(nxf,2,:))+15.0_dp*(u(nxf,2,:)+rbufS(nxf,3,:))+rbufS(nxf,1,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... SECOND ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
@@ -7086,6 +9342,21 @@ endif
     u(3,2,:)=Oomehd(qn)*u(3,2,:)+(rhs(3,2,:) &
 !    u(3,2,:)=(rhs(3,2,:) &
       +fx*(u(6,2,:)-6.0_dp*(u(5,2,:)+u(1,2,:))+15.0_dp*(u(4,2,:)+u(2,2,:))+Lq*u(1,2,:)+Ls(1,:)) &
+=======
+!.Second row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
+!    u(1,2,:)=(rhs(1,2,:) &
+      +fx*(u(4,2,:)-6.0_dp*(u(3,2,:)+lq*u(2,2,:)+ls(2,:))+15.0_dp*(u(2,2,:)+ls(1,:))+lq*u(3,2,:)+ls(3,:)) &
+      +fy*(u(1,5,:)-6.0_dp*(u(1,4,:)+rbufS(1,3,:))+15.0_dp*(u(1,3,:)+u(1,1,:))+rbufS(1,2,:)))*deltaL(1)
+    u(2,2,:)=Oomehd(qn)*u(2,2,:)+(rhs(2,2,:) &
+!    u(2,2,:)=(rhs(2,2,:) &
+      +fx*(u(5,2,:)-6.0_dp*(u(4,2,:)+lq*u(1,2,:)+ls(1,:))+15.0_dp*(u(3,2,:)+u(1,2,:))+ls(2,:)) &
+      +fy*(u(2,5,:)-6.0_dp*(u(2,4,:)+rbufS(2,3,:))+15.0_dp*(u(2,3,:)+u(2,1,:))+rbufS(2,2,:)))*deltaL(2)
+    u(3,2,:)=Oomehd(qn)*u(3,2,:)+(rhs(3,2,:) &
+!    u(3,2,:)=(rhs(3,2,:) &
+      +fx*(u(6,2,:)-6.0_dp*(u(5,2,:)+u(1,2,:))+15.0_dp*(u(4,2,:)+u(2,2,:))+lq*u(1,2,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(u(3,5,:)-6.0_dp*(u(3,4,:)+rbufS(3,3,:))+15.0_dp*(u(3,3,:)+u(3,1,:))+rbufS(3,2,:)))*delta
   else
     u(1,2,:)=Oomehd(qn)*u(1,2,:)+(rhs(1,2,:) &
@@ -7107,6 +9378,7 @@ endif
       +fx*(u(i+3,2,:)-6.0_dp*(u(i+2,2,:)+u(i-2,2,:))+15.0_dp*(u(i+1,2,:)+u(i-1,2,:))+u(i-3,2,:)) &
       +fy*(u(i,5,:)-6.0_dp*(u(i,4,:)+rbufS(i,3,:))+15.0_dp*(u(i,3,:)+u(i,1,:))+rbufS(i,2,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,2,:)=Oomehd(qn)*u(nxf-2,2,:)+(rhs(nxf-2,2,:) &
 !    u(nxf-2,2,:)=(rhs(nxf-2,2,:) &
@@ -7119,6 +9391,20 @@ endif
     u(nxf,2,:)=Oomehd(qn)*u(nxf,2,:)+(rhs(nxf,2,:) &
 !    u(nxf,2,:)=(rhs(nxf,2,:) &
       +fx*(Rq*u(nxf-2,2,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,2,:)+Rs(2,:)+u(nxf-2,2,:))+15.0_dp*(rs(1,:)+u(nxf-1,2,:))+u(nxf-3,2,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,2,:)=Oomehd(qn)*u(nxf-2,2,:)+(rhs(nxf-2,2,:) &
+!    u(nxf-2,2,:)=(rhs(nxf-2,2,:) &
+      +fx*(rq*u(nxf,2,:)+rs(1,:)-6.0_dp*(u(nxf,2,:)+u(nxf-4,2,:))+15.0_dp*(u(nxf-1,2,:)+u(nxf-3,2,:))+u(nxf-5,2,:)) &
+      +fy*(u(nxf-2,5,:)-6.0_dp*(u(nxf-2,4,:)+rbufS(nxf-2,3,:))+15.0_dp*(u(nxf-2,3,:)+u(nxf-2,1,:))+rbufS(nxf-2,2,:)))*delta
+    u(nxf-1,2,:)=Oomehd(qn)*u(nxf-1,2,:)+(rhs(nxf-1,2,:) &
+!    u(nxf-1,2,:)=(rhs(nxf-1,2,:) &
+      +fx*(rs(2,:)-6.0_dp*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:))+15.0_dp*(u(nxf,2,:)+u(nxf-2,2,:))+u(nxf-4,2,:)) &
+      +fy*(u(nxf-1,5,:)-6.0_dp*(u(nxf-1,4,:)+rbufS(nxf-1,3,:))+15.0_dp*(u(nxf-1,3,:)+u(nxf-1,1,:))+rbufS(nxf-1,2,:)))*deltaR(2)
+    u(nxf,2,:)=Oomehd(qn)*u(nxf,2,:)+(rhs(nxf,2,:) &
+!    u(nxf,2,:)=(rhs(nxf,2,:) &
+      +fx*(rq*u(nxf-2,2,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:))+15.0_dp*(rs(1,:)+u(nxf-1,2,:))+u(nxf-3,2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(u(nxf,5,:)-6.0_dp*(u(nxf,4,:)+rbufS(nxf,3,:))+15.0_dp*(u(nxf,3,:)+u(nxf,1,:))+rbufS(nxf,2,:)))*deltaR(1)
   else
     u(nxf-2,2,:)=Oomehd(qn)*u(nxf-2,2,:)+(rhs(nxf-2,2,:) &
@@ -7134,6 +9420,7 @@ endif
       +fx*(rbufE(3,2,:)-6.0_dp*(rbufE(2,2,:)+u(nxf-2,2,:))+15.0_dp*(rbufE(1,2,:)+u(nxf-1,2,:))+u(nxf-3,2,:)) &
       +fy*(u(nxf,5,:)-6.0_dp*(u(nxf,4,:)+rbufS(nxf,3,:))+15.0_dp*(u(nxf,3,:)+u(nxf,1,:))+rbufS(nxf,2,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... THIRD ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,3,:)=Oomehd(qn)*u(1,3,:)+(rhs(1,3,:) &
@@ -7147,6 +9434,21 @@ endif
     u(3,3,:)=Oomehd(qn)*u(3,3,:)+(rhs(3,3,:) &
 !    u(3,3,:)=(rhs(3,3,:) &
       +fx*(u(6,3,:)-6.0_dp*(u(5,3,:)+u(1,3,:))+15.0_dp*(u(4,3,:)+u(2,3,:))+Lq*u(1,3,:)+Ls(1,:)) &
+=======
+!.Third row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,3,:)=Oomehd(qn)*u(1,3,:)+(rhs(1,3,:) &
+!    u(1,3,:)=(rhs(1,3,:) &
+      +fx*(u(4,3,:)-6.0_dp*(u(3,3,:)+lq*u(2,3,:)+ls(2,:))+15.0_dp*(u(2,3,:)+ls(1,:))+lq*u(3,3,:)+ls(3,:)) &
+      +fy*(u(1,6,:)-6.0_dp*(u(1,5,:)+u(1,1,:))+15.0_dp*(u(1,4,:)+u(1,2,:))+rbufS(1,3,:)))*deltaL(1)
+    u(2,3,:)=Oomehd(qn)*u(2,3,:)+(rhs(2,3,:) &
+!    u(2,3,:)=(rhs(2,3,:) &
+      +fx*(u(5,3,:)-6.0_dp*(u(4,3,:)+lq*u(1,3,:)+ls(1,:))+15.0_dp*(u(3,3,:)+u(1,3,:))+ls(2,:)) &
+      +fy*(u(2,6,:)-6.0_dp*(u(2,5,:)+u(2,1,:))+15.0_dp*(u(2,4,:)+u(2,2,:))+rbufS(2,3,:)))*deltaL(2)
+    u(3,3,:)=Oomehd(qn)*u(3,3,:)+(rhs(3,3,:) &
+!    u(3,3,:)=(rhs(3,3,:) &
+      +fx*(u(6,3,:)-6.0_dp*(u(5,3,:)+u(1,3,:))+15.0_dp*(u(4,3,:)+u(2,3,:))+lq*u(1,3,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(u(3,6,:)-6.0_dp*(u(3,5,:)+u(3,1,:))+15.0_dp*(u(3,4,:)+u(3,2,:))+rbufS(3,3,:)))*delta
   else
     u(1,3,:)=Oomehd(qn)*u(1,3,:)+(rhs(1,3,:) &
@@ -7168,6 +9470,7 @@ endif
       +fx*(u(i+3,3,:)-6.0_dp*(u(i+2,3,:)+u(i-2,3,:))+15.0_dp*(u(i+1,3,:)+u(i-1,3,:))+u(i-3,3,:)) &
       +fy*(u(i,6,:)-6.0_dp*(u(i,5,:)+u(i,1,:))+15.0_dp*(u(i,4,:)+u(i,2,:))+rbufS(i,3,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,3,:)=Oomehd(qn)*u(nxf-2,3,:)+(rhs(nxf-2,3,:) &
 !    u(nxf-2,3,:)=(rhs(nxf-2,3,:) &
@@ -7180,6 +9483,20 @@ endif
     u(nxf,3,:)=Oomehd(qn)*u(nxf,3,:)+(rhs(nxf,3,:) &
 !    u(nxf,3,:)=(rhs(nxf,3,:) &
       +fx*(Rq*u(nxf-2,3,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,3,:)+Rs(2,:)+u(nxf-2,3,:))+15.0_dp*(rs(1,:)+u(nxf-1,3,:))+u(nxf-3,3,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,3,:)=Oomehd(qn)*u(nxf-2,3,:)+(rhs(nxf-2,3,:) &
+!    u(nxf-2,3,:)=(rhs(nxf-2,3,:) &
+      +fx*(rq*u(nxf,3,:)+rs(1,:)-6.0_dp*(u(nxf,3,:)+u(nxf-4,3,:))+15.0_dp*(u(nxf-1,3,:)+u(nxf-3,3,:))+u(nxf-5,3,:)) &
+      +fy*(u(nxf-2,6,:)-6.0_dp*(u(nxf-2,5,:)+u(nxf-2,1,:))+15.0_dp*(u(nxf-2,4,:)+u(nxf-2,2,:))+rbufS(nxf-2,3,:)))*delta
+    u(nxf-1,3,:)=Oomehd(qn)*u(nxf-1,3,:)+(rhs(nxf-1,3,:) &
+!    u(nxf-1,3,:)=(rhs(nxf-1,3,:) &
+      +fx*(rs(2,:)-6.0_dp*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-3,3,:))+15.0_dp*(u(nxf,3,:)+u(nxf-2,3,:))+u(nxf-4,3,:)) &
+      +fy*(u(nxf-1,6,:)-6.0_dp*(u(nxf-1,5,:)+u(nxf-1,1,:))+15.0_dp*(u(nxf-1,4,:)+u(nxf-1,2,:))+rbufS(nxf-1,3,:)))*deltaR(2)
+    u(nxf,3,:)=Oomehd(qn)*u(nxf,3,:)+(rhs(nxf,3,:) &
+!    u(nxf,3,:)=(rhs(nxf,3,:) &
+      +fx*(rq*u(nxf-2,3,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,3,:)+rs(2,:)+u(nxf-2,3,:))+15.0_dp*(rs(1,:)+u(nxf-1,3,:))+u(nxf-3,3,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(u(nxf,6,:)-6.0_dp*(u(nxf,5,:)+u(nxf,1,:))+15.0_dp*(u(nxf,4,:)+u(nxf,2,:))+rbufS(nxf,3,:)))*deltaR(1)
   else
     u(nxf-2,3,:)=Oomehd(qn)*u(nxf-2,3,:)+(rhs(nxf-2,3,:) &
@@ -7195,6 +9512,7 @@ endif
       +fx*(rbufE(3,3,:)-6.0_dp*(rbufE(2,3,:)+u(nxf-2,3,:))+15.0_dp*(rbufE(1,3,:)+u(nxf-1,3,:))+u(nxf-3,3,:)) &
       +fy*(u(nxf,6,:)-6.0_dp*(u(nxf,5,:)+u(nxf,1,:))+15.0_dp*(u(nxf,4,:)+u(nxf,2,:))+rbufS(nxf,3,:)))*delta
   endif
+<<<<<<< HEAD
 !................... AWAY FROM BOTTOM AND TOP BOUNDARIES ...................!
   do j=4,nyf-3
 !...Left boundary
@@ -7210,6 +9528,22 @@ endif
       u(3,j,:)=Oomehd(qn)*u(3,j,:)+(rhs(3,j,:) &
 !      u(3,j,:)=(rhs(3,j,:) &
         +fx*(u(6,j,:)-6.0_dp*(u(5,j,:)+u(1,j,:))+15.0_dp*(u(4,j,:)+u(2,j,:))+Lq*u(1,j,:)+Ls(1,:)) &
+=======
+!.Away from bottom and top boundaries
+  do j=4,nyf-3
+    if (iIDhd(qn)%a(ng)==0) then  ! Left boundary
+      u(1,j,:)=Oomehd(qn)*u(1,j,:)+(rhs(1,j,:) &
+!      u(1,j,:)=(rhs(1,j,:) &
+        +fx*(u(4,j,:)-6.0_dp*(u(3,j,:)+lq*u(2,j,:)+ls(2,:))+15.0_dp*(u(2,j,:)+ls(1,:))+lq*u(3,j,:)+ls(3,:)) &
+        +fy*(u(1,j+3,:)-6.0_dp*(u(1,j+2,:)+u(1,j-2,:))+15.0_dp*(u(1,j+1,:)+u(1,j-1,:))+u(1,j-3,:)))*deltaL(1)
+      u(2,j,:)=Oomehd(qn)*u(2,j,:)+(rhs(2,j,:) &
+!      u(2,j,:)=(rhs(2,j,:) &
+        +fx*(u(5,j,:)-6.0_dp*(u(4,j,:)+lq*u(1,j,:)+ls(1,:))+15.0_dp*(u(3,j,:)+u(1,j,:))+ls(2,:)) &
+        +fy*(u(2,j+3,:)-6.0_dp*(u(2,j+2,:)+u(2,j-2,:))+15.0_dp*(u(2,j+1,:)+u(2,j-1,:))+u(2,j-3,:)))*deltaL(2)
+      u(3,j,:)=Oomehd(qn)*u(3,j,:)+(rhs(3,j,:) &
+!      u(3,j,:)=(rhs(3,j,:) &
+        +fx*(u(6,j,:)-6.0_dp*(u(5,j,:)+u(1,j,:))+15.0_dp*(u(4,j,:)+u(2,j,:))+lq*u(1,j,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy*(u(3,j+3,:)-6.0_dp*(u(3,j+2,:)+u(3,j-2,:))+15.0_dp*(u(3,j+1,:)+u(3,j-1,:))+u(3,j-3,:)))*delta
     else
       u(1,j,:)=Oomehd(qn)*u(1,j,:)+(rhs(1,j,:) &
@@ -7231,6 +9565,7 @@ endif
         +fx*(u(i+3,j,:)-6.0_dp*(u(i+2,j,:)+u(i-2,j,:))+15.0_dp*(u(i+1,j,:)+u(i-1,j,:))+u(i-3,j,:)) &
         +fy*(u(i,j+3,:)-6.0_dp*(u(i,j+2,:)+u(i,j-2,:))+15.0_dp*(u(i,j+1,:)+u(i,j-1,:))+u(i,j-3,:)))*delta
     enddo
+<<<<<<< HEAD
 !...Right boundary
     if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
       u(nxf-2,j,:)=Oomehd(qn)*u(nxf-2,j,:)+(rhs(nxf-2,j,:) &
@@ -7244,6 +9579,20 @@ endif
       u(nxf,j,:)=Oomehd(qn)*u(nxf,j,:)+(rhs(nxf,j,:) &
 !      u(nxf,j,:)=(rhs(nxf,j,:) &
         +fx*(Rq*u(nxf-2,j,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,j,:)+Rs(2,:)+u(nxf-2,j,:))+15.0_dp*(rs(1,:)+u(nxf-1,j,:))+u(nxf-3,j,:)) &
+=======
+    if (iIDhd(qn)%a(ng)==iprocsm1) then ! Right boundary
+      u(nxf-2,j,:)=Oomehd(qn)*u(nxf-2,j,:)+(rhs(nxf-2,j,:) &
+!      u(nxf-2,j,:)=(rhs(nxf-2,j,:) &
+        +fx*(rq*u(nxf,j,:)+rs(1,:)-6.0_dp*(u(nxf,j,:)+u(nxf-4,j,:))+15.0_dp*(u(nxf-1,j,:)+u(nxf-3,j,:))+u(nxf-5,j,:)) &
+        +fy*(u(nxf-2,j+3,:)-6.0_dp*(u(nxf-2,j+2,:)+u(nxf-2,j-2,:))+15.0_dp*(u(nxf-2,j+1,:)+u(nxf-2,j-1,:))+u(nxf-2,j-3,:)))*delta
+      u(nxf-1,j,:)=Oomehd(qn)*u(nxf-1,j,:)+(rhs(nxf-1,j,:) &
+!      u(nxf-1,j,:)=(rhs(nxf-1,j,:) &
+        +fx*(rs(2,:)-6.0_dp*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-3,j,:))+15.0_dp*(u(nxf,j,:)+u(nxf-2,j,:))+u(nxf-4,j,:)) &
+        +fy*(u(nxf-1,j+3,:)-6.0_dp*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))+15.0_dp*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:))+u(nxf-1,j-3,:)))*deltaR(2)
+      u(nxf,j,:)=Oomehd(qn)*u(nxf,j,:)+(rhs(nxf,j,:) &
+!      u(nxf,j,:)=(rhs(nxf,j,:) &
+        +fx*(rq*u(nxf-2,j,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,j,:)+rs(2,:)+u(nxf-2,j,:))+15.0_dp*(rs(1,:)+u(nxf-1,j,:))+u(nxf-3,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy*(u(nxf,j+3,:)-6.0_dp*(u(nxf,j+2,:)+u(nxf,j-2,:))+15.0_dp*(u(nxf,j+1,:)+u(nxf,j-1,:))+u(nxf,j-3,:)))*deltaR(1)
     else
       u(nxf-2,j,:)=Oomehd(qn)*u(nxf-2,j,:)+(rhs(nxf-2,j,:) &
@@ -7261,6 +9610,7 @@ endif
     endif
   enddo
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
 !........................... THIRD TO TOP ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,nyf-2,:)=Oomehd(qn)*u(1,nyf-2,:)+(rhs(1,nyf-2,:) &
@@ -7274,6 +9624,21 @@ endif
     u(3,nyf-2,:)=Oomehd(qn)*u(3,nyf-2,:)+(rhs(3,nyf-2,:) &
 !    u(3,nyf-2,:)=(rhs(3,nyf-2,:) &
       +fx*(u(6,nyf-2,:)-6.0_dp*(u(5,nyf-2,:)+u(1,nyf-2,:))+15.0_dp*(u(4,nyf-2,:)+u(2,nyf-2,:))+Lq*u(1,nyf-2,:)+Ls(1,:)) &
+=======
+!.Third to top row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf-2,:)=Oomehd(qn)*u(1,nyf-2,:)+(rhs(1,nyf-2,:) &
+!    u(1,nyf-2,:)=(rhs(1,nyf-2,:) &
+      +fx*(u(4,nyf-2,:)-6.0_dp*(u(3,nyf-2,:)+lq*u(2,nyf-2,:)+ls(2,:))+15.0_dp*(u(2,nyf-2,:)+ls(1,:))+lq*u(3,nyf-2,:)+ls(3,:)) &
+      +fy*(rbufN(1,1,:)-6.0_dp*(u(1,nyf,:)+u(1,nyf-4,:))+15.0_dp*(u(1,nyf-1,:)+u(1,nyf-3,:))+u(1,nyf-5,:)))*deltaL(1)
+    u(2,nyf-2,:)=Oomehd(qn)*u(2,nyf-2,:)+(rhs(2,nyf-2,:) &
+!    u(2,nyf-2,:)=(rhs(2,nyf-2,:) &
+      +fx*(u(5,nyf-2,:)-6.0_dp*(u(4,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:))+15.0_dp*(u(3,nyf-2,:)+u(1,nyf-2,:))+ls(2,:)) &
+      +fy*(rbufN(2,1,:)-6.0_dp*(u(2,nyf,:)+u(2,nyf-4,:))+15.0_dp*(u(2,nyf-1,:)+u(2,nyf-3,:))+u(2,nyf-5,:)))*deltaL(2)
+    u(3,nyf-2,:)=Oomehd(qn)*u(3,nyf-2,:)+(rhs(3,nyf-2,:) &
+!    u(3,nyf-2,:)=(rhs(3,nyf-2,:) &
+      +fx*(u(6,nyf-2,:)-6.0_dp*(u(5,nyf-2,:)+u(1,nyf-2,:))+15.0_dp*(u(4,nyf-2,:)+u(2,nyf-2,:))+lq*u(1,nyf-2,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(3,1,:)-6.0_dp*(u(3,nyf,:)+u(3,nyf-4,:))+15.0_dp*(u(3,nyf-1,:)+u(3,nyf-3,:))+u(3,nyf-5,:)))*delta
   else
     u(1,nyf-2,:)=Oomehd(qn)*u(1,nyf-2,:)+(rhs(1,nyf-2,:) &
@@ -7295,6 +9660,7 @@ endif
       +fx*(u(i+3,nyf-2,:)-6.0_dp*(u(i+2,nyf-2,:)+u(i-2,nyf-2,:))+15.0_dp*(u(i+1,nyf-2,:)+u(i-1,nyf-2,:))+u(i-3,nyf-2,:)) &
       +fy*(rbufN(i,1,:)-6.0_dp*(u(i,nyf,:)+u(i,nyf-4,:))+15.0_dp*(u(i,nyf-1,:)+u(i,nyf-3,:))+u(i,nyf-5,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,nyf-2,:)=Oomehd(qn)*u(nxf-2,nyf-2,:)+(rhs(nxf-2,nyf-2,:) &
 !    u(nxf-2,nyf-2,:)=(rhs(nxf-2,nyf-2,:) &
@@ -7307,6 +9673,20 @@ endif
     u(nxf,nyf-2,:)=Oomehd(qn)*u(nxf,nyf-2,:)+(rhs(nxf,nyf-2,:) &
 !    u(nxf,nyf-2,:)=(rhs(nxf,nyf-2,:) &
       +fx*(Rq*u(nxf-2,nyf-2,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,nyf-2,:)+Rs(2,:)+u(nxf-2,nyf-2,:))+15.0_dp*(rs(1,:)+u(nxf-1,nyf-2,:))+u(nxf-3,nyf-2,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,nyf-2,:)=Oomehd(qn)*u(nxf-2,nyf-2,:)+(rhs(nxf-2,nyf-2,:) &
+!    u(nxf-2,nyf-2,:)=(rhs(nxf-2,nyf-2,:) &
+      +fx*(rq*u(nxf,nyf-2,:)+rs(1,:)-6.0_dp*(u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:))+15.0_dp*(u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:))+u(nxf-5,nyf-2,:)) &
+      +fy*(rbufN(nxf-2,1,:)-6.0_dp*(u(nxf-2,nyf,:)+u(nxf-2,nyf-4,:))+15.0_dp*(u(nxf-2,nyf-1,:)+u(nxf-2,nyf-3,:))+u(nxf-2,nyf-5,:)))*delta
+    u(nxf-1,nyf-2,:)=Oomehd(qn)*u(nxf-1,nyf-2,:)+(rhs(nxf-1,nyf-2,:) &
+!    u(nxf-1,nyf-2,:)=(rhs(nxf-1,nyf-2,:) &
+      +fx*(rs(2,:)-6.0_dp*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-3,nyf-2,:))+15.0_dp*(u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:))+u(nxf-4,nyf-2,:)) &
+      +fy*(rbufN(nxf-1,1,:)-6.0_dp*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:))+15.0_dp*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:))+u(nxf-1,nyf-5,:)))*deltaR(2)
+    u(nxf,nyf-2,:)=Oomehd(qn)*u(nxf,nyf-2,:)+(rhs(nxf,nyf-2,:) &
+!    u(nxf,nyf-2,:)=(rhs(nxf,nyf-2,:) &
+      +fx*(rq*u(nxf-2,nyf-2,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,nyf-2,:)+rs(2,:)+u(nxf-2,nyf-2,:))+15.0_dp*(rs(1,:)+u(nxf-1,nyf-2,:))+u(nxf-3,nyf-2,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(nxf,1,:)-6.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-4,:))+15.0_dp*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:))+u(nxf,nyf-5,:)))*deltaR(1)
   else
     u(nxf-2,nyf-2,:)=Oomehd(qn)*u(nxf-2,nyf-2,:)+(rhs(nxf-2,nyf-2,:) &
@@ -7322,6 +9702,7 @@ endif
       +fx*(rbufE(3,nyf-2,:)-6.0_dp*(rbufE(2,nyf-2,:)+u(nxf-2,nyf-2,:))+15.0_dp*(rbufE(1,nyf-2,:)+u(nxf-1,nyf-2,:))+u(nxf-3,nyf-2,:)) &
       +fy*(rbufN(nxf,1,:)-6.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-4,:))+15.0_dp*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:))+u(nxf,nyf-5,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... SECOND TO TOP ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
@@ -7335,6 +9716,21 @@ endif
     u(3,nyf-1,:)=Oomehd(qn)*u(3,nyf-1,:)+(rhs(3,nyf-1,:) &
 !    u(3,nyf-1,:)=(rhs(3,nyf-1,:) &
       +fx*(u(6,nyf-1,:)-6.0_dp*(u(5,nyf-1,:)+u(1,nyf-1,:))+15.0_dp*(u(4,nyf-1,:)+u(2,nyf-1,:))+Lq*u(1,nyf-1,:)+Ls(1,:)) &
+=======
+!.Second to top row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
+!    u(1,nyf-1,:)=(rhs(1,nyf-1,:) &
+      +fx*(u(4,nyf-1,:)-6.0_dp*(u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:))+15.0_dp*(u(2,nyf-1,:)+ls(1,:))+lq*u(3,nyf-1,:)+ls(3,:)) &
+      +fy*(rbufN(1,2,:)-6.0_dp*(rbufN(1,1,:)+u(1,nyf-3,:))+15.0_dp*(u(1,nyf,:)+u(1,nyf-2,:))+u(1,nyf-4,:)))*deltaL(1)
+    u(2,nyf-1,:)=Oomehd(qn)*u(2,nyf-1,:)+(rhs(2,nyf-1,:) &
+!    u(2,nyf-1,:)=(rhs(2,nyf-1,:) &
+      +fx*(u(5,nyf-1,:)-6.0_dp*(u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))+15.0_dp*(u(3,nyf-1,:)+u(1,nyf-1,:))+ls(2,:)) &
+      +fy*(rbufN(2,2,:)-6.0_dp*(rbufN(2,1,:)+u(2,nyf-3,:))+15.0_dp*(u(2,nyf,:)+u(2,nyf-2,:))+u(2,nyf-4,:)))*deltaL(2)
+    u(3,nyf-1,:)=Oomehd(qn)*u(3,nyf-1,:)+(rhs(3,nyf-1,:) &
+!    u(3,nyf-1,:)=(rhs(3,nyf-1,:) &
+      +fx*(u(6,nyf-1,:)-6.0_dp*(u(5,nyf-1,:)+u(1,nyf-1,:))+15.0_dp*(u(4,nyf-1,:)+u(2,nyf-1,:))+lq*u(1,nyf-1,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(3,2,:)-6.0_dp*(rbufN(3,1,:)+u(3,nyf-3,:))+15.0_dp*(u(3,nyf,:)+u(3,nyf-2,:))+u(3,nyf-4,:)))*delta
   else
     u(1,nyf-1,:)=Oomehd(qn)*u(1,nyf-1,:)+(rhs(1,nyf-1,:) &
@@ -7356,6 +9752,7 @@ endif
       +fx*(u(i+3,nyf-1,:)-6.0_dp*(u(i+2,nyf-1,:)+u(i-2,nyf-1,:))+15.0_dp*(u(i+1,nyf-1,:)+u(i-1,nyf-1,:))+u(i-3,nyf-1,:)) &
       +fy*(rbufN(i,2,:)-6.0_dp*(rbufN(i,1,:)+u(i,nyf-3,:))+15.0_dp*(u(i,nyf,:)+u(i,nyf-2,:))+u(i,nyf-4,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,nyf-1,:)=Oomehd(qn)*u(nxf-2,nyf-1,:)+(rhs(nxf-2,nyf-1,:) &
 !    u(nxf-2,nyf-1,:)=(rhs(nxf-2,nyf-1,:) &
@@ -7368,6 +9765,20 @@ endif
     u(nxf,nyf-1,:)=Oomehd(qn)*u(nxf,nyf-1,:)+(rhs(nxf,nyf-1,:) &
 !    u(nxf,nyf-1,:)=(rhs(nxf,nyf-1,:) &
      +fx*(Rq*u(nxf-2,nyf-1,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,nyf-1,:)+Rs(2,:)+u(nxf-2,nyf-1,:))+15.0_dp*(rs(1,:)+u(nxf-1,nyf-1,:))+u(nxf-3,nyf-1,:))  &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,nyf-1,:)=Oomehd(qn)*u(nxf-2,nyf-1,:)+(rhs(nxf-2,nyf-1,:) &
+!    u(nxf-2,nyf-1,:)=(rhs(nxf-2,nyf-1,:) &
+      +fx*(rq*u(nxf,nyf-1,:)+rs(1,:)-6.0_dp*(u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:))+15.0_dp*(u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:))+u(nxf-5,nyf-1,:)) &
+      +fy*(rbufN(nxf-2,2,:)-6.0_dp*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-3,:))+15.0_dp*(u(nxf-2,nyf,:)+u(nxf-2,nyf-2,:))+u(nxf-2,nyf-4,:)))*delta
+    u(nxf-1,nyf-1,:)=Oomehd(qn)*u(nxf-1,nyf-1,:)+(rhs(nxf-1,nyf-1,:) &
+!    u(nxf-1,nyf-1,:)=(rhs(nxf-1,nyf-1,:) &
+     +fx*(rs(2,:)-6.0_dp*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:))+15.0_dp*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:))+u(nxf-4,nyf-1,:)) &
+     +fy*(rbufN(nxf-1,2,:)-6.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))+15.0_dp*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:))+u(nxf-1,nyf-4,:)))*deltaR(2)
+    u(nxf,nyf-1,:)=Oomehd(qn)*u(nxf,nyf-1,:)+(rhs(nxf,nyf-1,:) &
+!    u(nxf,nyf-1,:)=(rhs(nxf,nyf-1,:) &
+     +fx*(rq*u(nxf-2,nyf-1,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:))+15.0_dp*(rs(1,:)+u(nxf-1,nyf-1,:))+u(nxf-3,nyf-1,:))  &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
      +fy*(rbufN(nxf,2,:)-6.0_dp*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))+15.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-2,:))+u(nxf,nyf-4,:)))*deltaR(1)
   else
     u(nxf-2,nyf-1,:)=Oomehd(qn)*u(nxf-2,nyf-1,:)+(rhs(nxf-2,nyf-1,:) &
@@ -7383,6 +9794,7 @@ endif
       +fx*(rbufE(3,nyf-1,:)-6.0_dp*(rbufE(2,nyf-1,:)+u(nxf-2,nyf-1,:))+15.0_dp*(rbufE(1,nyf-1,:)+u(nxf-1,nyf-1,:))+u(nxf-3,nyf-1,:)) &
       +fy*(rbufN(nxf,2,:)-6.0_dp*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))+15.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-2,:))+u(nxf,nyf-4,:)))*delta
   endif
+<<<<<<< HEAD
 !........................... TOP ROW ...........................!
   if (iIDhd(qn)%a(ng)==0) then !.Left most process (along x)
     u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
@@ -7396,6 +9808,21 @@ endif
     u(3,nyf,:)=Oomehd(qn)*u(3,nyf,:)+(rhs(3,nyf,:) &
 !    u(3,nyf,:)=(rhs(3,nyf,:) &
       +fx*(u(6,nyf,:)-6.0_dp*(u(5,nyf,:)+u(1,nyf,:))+15.0_dp*(u(4,nyf,:)+u(2,nyf,:))+Lq*u(1,nyf,:)+Ls(1,:)) &
+=======
+!.Top row
+  if (iIDhd(qn)%a(ng)==0) then
+    u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
+!    u(1,nyf,:)=(rhs(1,nyf,:) &
+      +fx*(u(4,nyf,:)-6.0_dp*(u(3,nyf,:)+lq*u(2,nyf,:)+ls(2,:))+15.0_dp*(u(2,nyf,:)+ls(1,:))+lq*u(3,nyf,:)+ls(3,:)) &
+      +fy*(rbufN(1,3,:)-6.0_dp*(rbufN(1,2,:)+u(1,nyf-2,:))+15.0_dp*(rbufN(1,1,:)+u(1,nyf-1,:))+u(1,nyf-3,:)))*deltaL(1)
+    u(2,nyf,:)=Oomehd(qn)*u(2,nyf,:)+(rhs(2,nyf,:) &
+!    u(2,nyf,:)=(rhs(2,nyf,:) &
+      +fx*(u(5,nyf,:)-6.0_dp*(u(4,nyf,:)+lq*u(1,nyf,:)+ls(1,:))+15.0_dp*(u(3,nyf,:)+u(1,nyf,:))+ls(2,:)) &
+      +fy*(rbufN(2,3,:)-6.0_dp*(rbufN(2,2,:)+u(2,nyf-2,:))+15.0_dp*(rbufN(2,1,:)+u(2,nyf-1,:))+u(2,nyf-3,:)))*deltaL(2)
+    u(3,nyf,:)=Oomehd(qn)*u(3,nyf,:)+(rhs(3,nyf,:) &
+!    u(3,nyf,:)=(rhs(3,nyf,:) &
+      +fx*(u(6,nyf,:)-6.0_dp*(u(5,nyf,:)+u(1,nyf,:))+15.0_dp*(u(4,nyf,:)+u(2,nyf,:))+lq*u(1,nyf,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(3,3,:)-6.0_dp*(rbufN(3,2,:)+u(3,nyf-2,:))+15.0_dp*(rbufN(3,1,:)+u(3,nyf-1,:))+u(3,nyf-3,:)))*delta
   else
     u(1,nyf,:)=Oomehd(qn)*u(1,nyf,:)+(rhs(1,nyf,:) &
@@ -7417,6 +9844,7 @@ endif
       +fx*(u(i+3,nyf,:)-6.0_dp*(u(i+2,nyf,:)+u(i-2,nyf,:))+15.0_dp*(u(i+1,nyf,:)+u(i-1,nyf,:))+u(i-3,nyf,:)) &
       +fy*(rbufN(i,3,:)-6.0_dp*(rbufN(i,2,:)+u(i,nyf-2,:))+15.0_dp*(rbufN(i,1,:)+u(i,nyf-1,:))+u(i,nyf-3,:)))*delta
   enddo
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng)==iprocsm1) then !.Right most process (along x)
     u(nxf-2,nyf,:)=Oomehd(qn)*u(nxf-2,nyf,:)+(rhs(nxf-2,nyf,:) &
 !    u(nxf-2,nyf,:)=(rhs(nxf-2,nyf,:) &
@@ -7429,6 +9857,20 @@ endif
     u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
 !    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
       +fx*(Rq*u(nxf-2,nyf,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,nyf,:)+Rs(2,:)+u(nxf-2,nyf,:))+15.0_dp*(rs(1,:)+u(nxf-1,nyf,:))+u(nxf-3,nyf,:)) &
+=======
+  if (iIDhd(qn)%a(ng)==iprocsm1) then
+    u(nxf-2,nyf,:)=Oomehd(qn)*u(nxf-2,nyf,:)+(rhs(nxf-2,nyf,:) &
+!    u(nxf-2,nyf,:)=(rhs(nxf-2,nyf,:) &
+      +fx*(rq*u(nxf,nyf,:)+rs(1,:)-6.0_dp*(u(nxf,nyf,:)+u(nxf-4,nyf,:))+15.0_dp*(u(nxf-1,nyf,:)+u(nxf-3,nyf,:))+u(nxf-5,nyf,:)) &
+      +fy*(rbufN(nxf-2,3,:)-6.0_dp*(rbufN(nxf-2,2,:)+u(nxf-2,nyf-2,:))+15.0_dp*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-1,:))+u(nxf-2,nyf-3,:)))*delta
+    u(nxf-1,nyf,:)=Oomehd(qn)*u(nxf-1,nyf,:)+(rhs(nxf-1,nyf,:) &
+!    u(nxf-1,nyf,:)=(rhs(nxf-1,nyf,:) &
+      +fx*(rs(2,:)-6.0_dp*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-3,nyf,:))+15.0_dp*(u(nxf,nyf,:)+u(nxf-2,nyf,:))+u(nxf-4,nyf,:)) &
+      +fy*(rbufN(nxf-1,3,:)-6.0_dp*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))+15.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:))+u(nxf-1,nyf-3,:)))*deltaR(2)
+    u(nxf,nyf,:)=Oomehd(qn)*u(nxf,nyf,:)+(rhs(nxf,nyf,:) &
+!    u(nxf,nyf,:)=(rhs(nxf,nyf,:) &
+      +fx*(rq*u(nxf-2,nyf,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,nyf,:)+rs(2,:)+u(nxf-2,nyf,:))+15.0_dp*(rs(1,:)+u(nxf-1,nyf,:))+u(nxf-3,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(nxf,3,:)-6.0_dp*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))+15.0_dp*(rbufN(nxf,1,:)+u(nxf,nyf-1,:))+u(nxf,nyf-3,:)))*deltaR(1)
   else
     u(nxf-2,nyf,:)=Oomehd(qn)*u(nxf-2,nyf,:)+(rhs(nxf-2,nyf,:) &
@@ -7461,8 +9903,13 @@ endif
   real(DP), intent(in) :: u(:,:,:),rhs(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:),qn
   integer(I4B) :: i,j,k,Nrank,Srank,Erank,Wrank
+<<<<<<< HEAD
   real(DP) :: fx,fy,fc,Lq,Rq
   real(DP), allocatable :: Ls(:,:),rs(:,:),loc2D(:,:)
+=======
+  real(DP) :: fx,fy,fc,lq,rq
+  real(DP), allocatable :: ls(:,:),rs(:,:),loc2D(:,:)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                              sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(8),stat(MPI_STATUS_SIZE,8),ierr
@@ -7477,6 +9924,7 @@ endif
   Wrank=nborhd(qn)%a(ng,7)
 
   allocate(reshd(nxf,nyf,nzL))
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -7489,24 +9937,44 @@ endif
   if (xBC(1)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
     Lq=-1.0_dp
+=======
+!......... BCs of u ................................!
+  allocate(ls(HDopd4,nzL),rs(HDopd4,nzL),loc2D(HDopd4,nzL))
+!.LHS BC of u
+  if (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     forall(i=1:HDopd4,k=1:nzL) loc2D(i,k)=sum(u(i,:,k))
     call MPI_ALLreduce(loc2D,ls,HDopd4*nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
     ls=2.0_dp*ls/dble(nyf*jprocshd(qn)%a(ng))
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+<<<<<<< HEAD
     Lq=dble(xBC(1))
+=======
+    lq=dble(xBC(1))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     ls=0.0_dp
   endif
 !.RHS BC of u
   if (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq=-1.0_dp
+=======
+    rq=-1.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     forall(i=1:HDopd4,k=1:nzL) loc2D(i,k)=sum(u(nxf-i+1,:,k))
     call MPI_ALLreduce(loc2D,rs,HDopd4*nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMhd(qn)%a(ng,1),ierr)
     rs=2.0_dp*rs/dble(nyf*jprocshd(qn)%a(ng))
   else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+<<<<<<< HEAD
     Rq=dble(xBC(2))
+=======
+    rq=dble(xBC(2))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     rs=0.0_dp
   endif
 !........................................................!
@@ -7578,6 +10046,7 @@ endif
   enddo
 !.Left boundary
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...SW corner
     reshd(1,1,:)=rhs(1,1,:)-((1.0_dp+fc)*u(1,1,:) &
@@ -7598,10 +10067,33 @@ endif
         +fy*(u(1,j+2,:)-4.0_dp*(u(1,j+1,:)+u(1,j-1,:))+u(1,j-2,:)))
       reshd(2,j,:)=rhs(2,j,:)-((1.0_dp+fc)*u(2,j,:) &
         +fx*(u(4,j,:)-4.0_dp*(u(3,j,:)+u(1,j,:))+Lq*u(1,j,:)+Ls(1,:)) &
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...SW corner
+    reshd(1,1,:)=rhs(1,1,:)-((1.0_dp+fc)*u(1,1,:) &
+      +fx*(u(3,1,:)-4.0_dp*(u(2,1,:)+lq*u(1,1,:)+ls(1,:))+lq*u(2,1,:)+ls(2,:)) &
+      +fy*(u(1,3,:)-4.0_dp*(u(1,2,:)+rbufS(1,2,:))+rbufS(1,1,:)))
+    reshd(2,1,:)=rhs(2,1,:)-((1.0_dp+fc)*u(2,1,:) &
+      +fx*(u(4,1,:)-4.0_dp*(u(3,1,:)+u(1,1,:))+lq*u(1,1,:)+ls(1,:)) &
+      +fy*(u(2,3,:)-4.0_dp*(u(2,2,:)+rbufS(2,2,:))+rbufS(2,1,:)))
+    reshd(1,2,:)=rhs(1,2,:)-((1.0_dp+fc)*u(1,2,:) &
+      +fx*(u(3,2,:)-4.0_dp*(u(2,2,:)+lq*u(1,2,:)+ls(1,:))+lq*u(2,2,:)+ls(2,:)) &
+      +fy*(u(1,4,:)-4.0_dp*(u(1,3,:)+u(1,1,:))+rbufS(1,2,:)))
+    reshd(2,2,:)=rhs(2,2,:)-((1.0_dp+fc)*u(2,2,:) &
+      +fx*(u(4,2,:)-4.0_dp*(u(3,2,:)+u(1,2,:))+lq*u(1,2,:)+ls(1,:)) &
+      +fy*(u(2,4,:)-4.0_dp*(u(2,3,:)+u(2,1,:))+rbufS(2,2,:)))
+    do j=3,nyf-2
+      reshd(1,j,:)=rhs(1,j,:)-((1.0_dp+fc)*u(1,j,:) &
+        +fx*(u(3,j,:)-4.0_dp*(u(2,j,:)+lq*u(1,j,:)+ls(1,:))+lq*u(2,j,:)+ls(2,:)) &
+        +fy*(u(1,j+2,:)-4.0_dp*(u(1,j+1,:)+u(1,j-1,:))+u(1,j-2,:)))
+      reshd(2,j,:)=rhs(2,j,:)-((1.0_dp+fc)*u(2,j,:) &
+        +fx*(u(4,j,:)-4.0_dp*(u(3,j,:)+u(1,j,:))+lq*u(1,j,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy*(u(2,j+2,:)-4.0_dp*(u(2,j+1,:)+u(2,j-1,:))+u(2,j-2,:)))
     enddo
 !...NW corner
     reshd(1,nyf-1,:)=rhs(1,nyf-1,:)-((1.0_dp+fc)*u(1,nyf-1,:) &
+<<<<<<< HEAD
       +fx*(u(3,nyf-1,:)-4.0_dp*(u(2,nyf-1,:)+Lq*u(1,nyf-1,:)+Ls(1,:))+Lq*u(2,nyf-1,:)+Ls(2,:)) &
       +fy*(rbufN(1,1,:)-4.0_dp*(u(1,nyf,:)+u(1,nyf-2,:))+u(1,nyf-3,:)))
     reshd(2,nyf-1,:)=rhs(2,nyf-1,:)-((1.0_dp+fc)*u(2,nyf-1,:) &
@@ -7612,6 +10104,18 @@ endif
       +fy*(rbufN(1,2,:)-4.0_dp*(rbufN(1,1,:)+u(1,nyf-1,:))+u(1,nyf-2,:)))
     reshd(2,nyf,:)=rhs(2,nyf,:)-((1.0_dp+fc)*u(2,nyf,:) &
       +fx*(u(4,nyf,:)-4.0_dp*(u(3,nyf,:)+u(1,nyf,:))+Lq*u(1,nyf,:)+Ls(1,:)) &
+=======
+      +fx*(u(3,nyf-1,:)-4.0_dp*(u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))+lq*u(2,nyf-1,:)+ls(2,:)) &
+      +fy*(rbufN(1,1,:)-4.0_dp*(u(1,nyf,:)+u(1,nyf-2,:))+u(1,nyf-3,:)))
+    reshd(2,nyf-1,:)=rhs(2,nyf-1,:)-((1.0_dp+fc)*u(2,nyf-1,:) &
+      +fx*(u(4,nyf-1,:)-4.0_dp*(u(3,nyf-1,:)+u(1,nyf-1,:))+lq*u(1,nyf-1,:)+ls(1,:)) &
+      +fy*(rbufN(2,1,:)-4.0_dp*(u(2,nyf,:)+u(2,nyf-2,:))+u(2,nyf-3,:)))
+    reshd(1,nyf,:)=rhs(1,nyf,:)-((1.0_dp+fc)*u(1,nyf,:) &
+      +fx*(u(3,nyf,:)-4.0_dp*(u(2,nyf,:)+lq*u(1,nyf,:)+ls(1,:))+lq*u(2,nyf,:)+ls(2,:)) &
+      +fy*(rbufN(1,2,:)-4.0_dp*(rbufN(1,1,:)+u(1,nyf-1,:))+u(1,nyf-2,:)))
+    reshd(2,nyf,:)=rhs(2,nyf,:)-((1.0_dp+fc)*u(2,nyf,:) &
+      +fx*(u(4,nyf,:)-4.0_dp*(u(3,nyf,:)+u(1,nyf,:))+lq*u(1,nyf,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(2,2,:)-4.0_dp*(rbufN(2,1,:)+u(2,nyf-1,:))+u(2,nyf-2,:)))
   else
     reshd(1,1,:)=rhs(1,1,:)-((1.0_dp+fc)*u(1,1,:) &
@@ -7649,6 +10153,7 @@ endif
   endif
 !.Right boundary
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == iprocsm1) then !.Right most process (along x)
 !...SE corner
     reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-((1.0_dp+fc)*u(nxf-1,1,:) &
@@ -7669,10 +10174,33 @@ endif
         +fy*(u(nxf-1,j+2,:)-4.0_dp*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:))+u(nxf-1,j-2,:)))
       reshd(nxf,j,:)=rhs(nxf,j,:)-((1.0_dp+fc)*u(nxf,j,:) &
         +fx*(Rq*u(nxf-1,j,:)+Rs(2,:)-4.0_dp*(Rq*u(nxf,j,:)+Rs(1,:)+u(nxf-1,j,:))+u(nxf-2,j,:)) &
+=======
+  if (iIDhd(qn)%a(ng) == iprocsm1) then
+!...SE corner
+    reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-((1.0_dp+fc)*u(nxf-1,1,:) &
+      +fx*(rq*u(nxf,1,:)+rs(1,:)-4.0_dp*(u(nxf,1,:)+u(nxf-2,1,:))+u(nxf-3,1,:)) &
+      +fy*(u(nxf-1,3,:)-4.0_dp*(u(nxf-1,2,:)+rbufS(nxf-1,2,:))+rbufS(nxf-1,1,:)))
+    reshd(nxf,1,:)=rhs(nxf,1,:)-((1.0_dp+fc)*u(nxf,1,:) &
+      +fx*(rq*u(nxf-1,1,:)+rs(2,:)-4.0_dp*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:))+u(nxf-2,1,:)) &
+      +fy*(u(nxf,3,:)-4.0_dp*(u(nxf,2,:)+rbufS(nxf,2,:))+rbufS(nxf,1,:)))
+    reshd(nxf-1,2,:)=rhs(nxf-1,2,:)-((1.0_dp+fc)*u(nxf-1,2,:) &
+      +fx*(rq*u(nxf,2,:)+rs(1,:)-4.0_dp*(u(nxf,2,:)+u(nxf-2,2,:))+u(nxf-3,2,:)) &
+      +fy*(u(nxf-1,4,:)-4.0_dp*(u(nxf-1,3,:)+u(nxf-1,1,:))+rbufS(nxf-1,2,:)))
+    reshd(nxf,2,:)=rhs(nxf,2,:)-((1.0_dp+fc)*u(nxf,2,:) &
+      +fx*(rq*u(nxf-1,2,:)+rs(2,:)-4.0_dp*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-1,2,:))+u(nxf-2,2,:)) &
+      +fy*(u(nxf,4,:)-4.0_dp*(u(nxf,3,:)+u(nxf,1,:))+rbufS(nxf,2,:)))
+    do j=3,nyf-2
+      reshd(nxf-1,j,:)=rhs(nxf-1,j,:)-((1.0_dp+fc)*u(nxf-1,j,:) &
+        +fx*(rq*u(nxf,j,:)+rs(1,:)-4.0_dp*(u(nxf,j,:)+u(nxf-2,j,:))+u(nxf-3,j,:)) &
+        +fy*(u(nxf-1,j+2,:)-4.0_dp*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:))+u(nxf-1,j-2,:)))
+      reshd(nxf,j,:)=rhs(nxf,j,:)-((1.0_dp+fc)*u(nxf,j,:) &
+        +fx*(rq*u(nxf-1,j,:)+rs(2,:)-4.0_dp*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-1,j,:))+u(nxf-2,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy*(u(nxf,j+2,:)-4.0_dp*(u(nxf,j+1,:)+u(nxf,j-1,:))+u(nxf,j-2,:)))
     enddo
 !...NE corner
     reshd(nxf-1,nyf-1,:)=rhs(nxf-1,nyf-1,:)-((1.0_dp+fc)*u(nxf-1,nyf-1,:) &
+<<<<<<< HEAD
       +fx*(Rq*u(nxf,nyf-1,:)+Rs(1,:)-4.0_dp*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:))+u(nxf-3,nyf-1,:)) &
       +fy*(rbufN(nxf-1,1,:)-4.0_dp*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:))+u(nxf-1,nyf-3,:)))
     reshd(nxf,nyf-1,:)=rhs(nxf,nyf-1,:)-((1.0_dp+fc)*u(nxf,nyf-1,:) &
@@ -7683,6 +10211,18 @@ endif
       +fy*(rbufN(nxf-1,2,:)-4.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:))+u(nxf-1,nyf-2,:)))
     reshd(nxf,nyf,:)=rhs(nxf,nyf,:)-((1.0_dp+fc)*u(nxf,nyf,:) &
       +fx*(Rq*u(nxf-1,nyf,:)+Rs(2,:)-4.0_dp*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-1,nyf,:))+u(nxf-2,nyf,:)) &
+=======
+      +fx*(rq*u(nxf,nyf-1,:)+rs(1,:)-4.0_dp*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:))+u(nxf-3,nyf-1,:)) &
+      +fy*(rbufN(nxf-1,1,:)-4.0_dp*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:))+u(nxf-1,nyf-3,:)))
+    reshd(nxf,nyf-1,:)=rhs(nxf,nyf-1,:)-((1.0_dp+fc)*u(nxf,nyf-1,:) &
+      +fx*(rq*u(nxf-1,nyf-1,:)+rs(2,:)-4.0_dp*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:))+u(nxf-2,nyf-1,:)) &
+      +fy*(rbufN(nxf,1,:)-4.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-2,:))+u(nxf,nyf-3,:)))
+    reshd(nxf-1,nyf,:)=rhs(nxf-1,nyf,:)-((1.0_dp+fc)*u(nxf-1,nyf,:) &
+      +fx*(rq*u(nxf,nyf,:)+rs(1,:)-4.0_dp*(u(nxf,nyf,:)+u(nxf-2,nyf,:))+u(nxf-3,nyf,:)) &
+      +fy*(rbufN(nxf-1,2,:)-4.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:))+u(nxf-1,nyf-2,:)))
+    reshd(nxf,nyf,:)=rhs(nxf,nyf,:)-((1.0_dp+fc)*u(nxf,nyf,:) &
+      +fx*(rq*u(nxf-1,nyf,:)+rs(2,:)-4.0_dp*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-1,nyf,:))+u(nxf-2,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(nxf,2,:)-4.0_dp*(rbufN(nxf,1,:)+u(nxf,nyf-1,:))+u(nxf,nyf-2,:)))
   else
     reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-((1.0_dp+fc)*u(nxf-1,1,:) &
@@ -7759,6 +10299,7 @@ endif
   enddo
 !.Left boundary
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == 0) then !.Left most process (along x)
 !...SW corner
     reshd(1,1,:)=rhs(1,1,:)-(fc*u(1,1,:) &
@@ -7797,10 +10338,51 @@ endif
         -fy*(u(2,j+3,:)-6.0_dp*(u(2,j+2,:)+u(2,j-2,:))+15.0_dp*(u(2,j+1,:)+u(2,j-1,:))+u(2,j-3,:)))
       reshd(3,j,:)=rhs(3,j,:)-(fc*u(3,j,:) &
         -fx*(u(6,j,:)-6.0_dp*(u(5,j,:)+u(1,j,:))+15.0_dp*(u(4,j,:)+u(2,j,:))+Lq*u(1,j,:)+Ls(1,:)) &
+=======
+  if (iIDhd(qn)%a(ng) == 0) then
+!...SW corner
+    reshd(1,1,:)=rhs(1,1,:)-(fc*u(1,1,:) &
+      -fx*(u(4,1,:)-6.0_dp*(u(3,1,:)+lq*u(2,1,:)+ls(2,:))+15.0_dp*(u(2,1,:)+lq*u(1,1,:)+ls(1,:))+lq*u(3,1,:)+ls(3,:)) &
+      -fy*(u(1,4,:)-6.0_dp*(u(1,3,:)+rbufS(1,2,:))+15.0_dp*(u(1,2,:)+rbufS(1,3,:))+rbufS(1,1,:)))
+    reshd(2,1,:)=rhs(2,1,:)-(fc*u(2,1,:) &
+      -fx*(u(5,1,:)-6.0_dp*(u(4,1,:)+lq*u(1,1,:)+ls(1,:))+15.0_dp*(u(3,1,:)+u(1,1,:))+lq*u(2,1,:)+ls(2,:)) &
+      -fy*(u(2,4,:)-6.0_dp*(u(2,3,:)+rbufS(2,2,:))+15.0_dp*(u(2,2,:)+rbufS(2,3,:))+rbufS(2,1,:)))
+    reshd(3,1,:)=rhs(3,1,:)-(fc*u(3,1,:) &
+      -fx*(u(6,1,:)-6.0_dp*(u(5,1,:)+u(1,1,:))+15.0_dp*(u(4,1,:)+u(2,1,:))+lq*u(1,1,:)+ls(1,:)) &
+      -fy*(u(3,4,:)-6.0_dp*(u(3,3,:)+rbufS(3,2,:))+15.0_dp*(u(3,2,:)+rbufS(3,3,:))+rbufS(3,1,:)))
+    reshd(1,2,:)=rhs(1,2,:)-(fc*u(1,2,:) &
+      -fx*(u(4,2,:)-6.0_dp*(u(3,2,:)+lq*u(2,2,:)+ls(2,:))+15.0_dp*(u(2,2,:)+lq*u(1,2,:)+ls(1,:))+lq*u(3,2,:)+ls(3,:)) &
+      -fy*(u(1,5,:)-6.0_dp*(u(1,4,:)+rbufS(1,3,:))+15.0_dp*(u(1,3,:)+u(1,1,:))+rbufS(1,2,:)))
+    reshd(2,2,:)=rhs(2,2,:)-(fc*u(2,2,:) &
+      -fx*(u(5,2,:)-6.0_dp*(u(4,2,:)+lq*u(1,2,:)+ls(1,:))+15.0_dp*(u(3,2,:)+u(1,2,:))+lq*u(2,2,:)+ls(2,:)) &
+      -fy*(u(2,5,:)-6.0_dp*(u(2,4,:)+rbufS(2,3,:))+15.0_dp*(u(2,3,:)+u(2,1,:))+rbufS(2,2,:)))
+    reshd(3,2,:)=rhs(3,2,:)-(fc*u(3,2,:) &
+      -fx*(u(6,2,:)-6.0_dp*(u(5,2,:)+u(1,2,:))+15.0_dp*(u(4,2,:)+u(2,2,:))+lq*u(1,2,:)+ls(1,:)) &
+      -fy*(u(3,5,:)-6.0_dp*(u(3,4,:)+rbufS(3,3,:))+15.0_dp*(u(3,3,:)+u(3,1,:))+rbufS(3,2,:)))
+    reshd(1,3,:)=rhs(1,3,:)-(fc*u(1,3,:) &
+      -fx*(u(4,3,:)-6.0_dp*(u(3,3,:)+lq*u(2,3,:)+ls(2,:))+15.0_dp*(u(2,3,:)+lq*u(1,3,:)+ls(1,:))+lq*u(3,3,:)+ls(3,:)) &
+      -fy*(u(1,6,:)-6.0_dp*(u(1,5,:)+u(1,1,:))+15.0_dp*(u(1,4,:)+u(1,2,:))+rbufS(1,3,:)))
+    reshd(2,3,:)=rhs(2,3,:)-(fc*u(2,3,:) &
+      -fx*(u(5,3,:)-6.0_dp*(u(4,3,:)+lq*u(1,3,:)+ls(1,:))+15.0_dp*(u(3,3,:)+u(1,3,:))+lq*u(2,3,:)+ls(2,:)) &
+      -fy*(u(2,6,:)-6.0_dp*(u(2,5,:)+u(2,1,:))+15.0_dp*(u(2,4,:)+u(2,2,:))+rbufS(2,3,:)))
+    reshd(3,3,:)=rhs(3,3,:)-(fc*u(3,3,:) &
+      -fx*(u(6,3,:)-6.0_dp*(u(5,3,:)+u(1,3,:))+15.0_dp*(u(4,3,:)+u(2,3,:))+lq*u(1,3,:)+ls(1,:)) &
+      -fy*(u(3,6,:)-6.0_dp*(u(3,5,:)+u(3,1,:))+15.0_dp*(u(3,4,:)+u(3,2,:))+rbufS(3,3,:)))
+    do j=4,nyf-3 ! Left boundary
+      reshd(1,j,:)=rhs(1,j,:)-(fc*u(1,j,:) &
+        -fx*(u(4,j,:)-6.0_dp*(u(3,j,:)+lq*u(2,j,:)+ls(2,:))+15.0_dp*(u(2,j,:)+lq*u(1,j,:)+ls(1,:))+lq*u(3,j,:)+ls(3,:)) &
+        -fy*(u(1,j+3,:)-6.0_dp*(u(1,j+2,:)+u(1,j-2,:))+15.0_dp*(u(1,j+1,:)+u(1,j-1,:))+u(1,j-3,:)))
+      reshd(2,j,:)=rhs(2,j,:)-(fc*u(2,j,:) &
+        -fx*(u(5,j,:)-6.0_dp*(u(4,j,:)+lq*u(1,j,:)+ls(1,:))+15.0_dp*(u(3,j,:)+u(1,j,:))+lq*u(2,j,:)+ls(2,:)) &
+        -fy*(u(2,j+3,:)-6.0_dp*(u(2,j+2,:)+u(2,j-2,:))+15.0_dp*(u(2,j+1,:)+u(2,j-1,:))+u(2,j-3,:)))
+      reshd(3,j,:)=rhs(3,j,:)-(fc*u(3,j,:) &
+        -fx*(u(6,j,:)-6.0_dp*(u(5,j,:)+u(1,j,:))+15.0_dp*(u(4,j,:)+u(2,j,:))+lq*u(1,j,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fy*(u(3,j+3,:)-6.0_dp*(u(3,j+2,:)+u(3,j-2,:))+15.0_dp*(u(3,j+1,:)+u(3,j-1,:))+u(3,j-3,:)))
     enddo
 !...NW corner
     reshd(1,nyf-2,:)=rhs(1,nyf-2,:)-(fc*u(1,nyf-2,:) &
+<<<<<<< HEAD
       -fx*(u(4,nyf-2,:)-6.0_dp*(u(3,nyf-2,:)+Lq*u(2,nyf-2,:)+Ls(2,:))+15.0_dp*(u(2,nyf-2,:)+Lq*u(1,nyf-2,:)+Ls(1,:))+Lq*u(3,nyf-2,:)+Ls(3,:)) &
       -fy*(rbufN(1,1,:)-6.0_dp*(u(1,nyf,:)+u(1,nyf-4,:))+15.0_dp*(u(1,nyf-1,:)+u(1,nyf-3,:))+u(1,nyf-5,:)))
     reshd(2,nyf-2,:)=rhs(2,nyf-2,:)-(fc*u(2,nyf-2,:) &
@@ -7826,6 +10408,33 @@ endif
       -fy*(rbufN(2,3,:)-6.0_dp*(rbufN(2,2,:)+u(2,nyf-2,:))+15.0_dp*(rbufN(2,1,:)+u(2,nyf-1,:))+u(2,nyf-3,:)))
     reshd(3,nyf,:)=rhs(3,nyf,:)-(fc*u(3,nyf,:) &
       -fx*(u(6,nyf,:)-6.0_dp*(u(5,nyf,:)+u(1,nyf,:))+15.0_dp*(u(4,nyf,:)+u(2,nyf,:))+Lq*u(1,nyf,:)+Ls(1,:)) &
+=======
+      -fx*(u(4,nyf-2,:)-6.0_dp*(u(3,nyf-2,:)+lq*u(2,nyf-2,:)+ls(2,:))+15.0_dp*(u(2,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:))+lq*u(3,nyf-2,:)+ls(3,:)) &
+      -fy*(rbufN(1,1,:)-6.0_dp*(u(1,nyf,:)+u(1,nyf-4,:))+15.0_dp*(u(1,nyf-1,:)+u(1,nyf-3,:))+u(1,nyf-5,:)))
+    reshd(2,nyf-2,:)=rhs(2,nyf-2,:)-(fc*u(2,nyf-2,:) &
+      -fx*(u(5,nyf-2,:)-6.0_dp*(u(4,nyf-2,:)+lq*u(1,nyf-2,:)+ls(1,:))+15.0_dp*(u(3,nyf-2,:)+u(1,nyf-2,:))+lq*u(2,nyf-2,:)+ls(2,:)) &
+      -fy*(rbufN(2,1,:)-6.0_dp*(u(2,nyf,:)+u(2,nyf-4,:))+15.0_dp*(u(2,nyf-1,:)+u(2,nyf-3,:))+u(2,nyf-5,:)))
+    reshd(3,nyf-2,:)=rhs(3,nyf-2,:)-(fc*u(3,nyf-2,:) &
+      -fx*(u(6,nyf-2,:)-6.0_dp*(u(5,nyf-2,:)+u(1,nyf-2,:))+15.0_dp*(u(4,nyf-2,:)+u(2,nyf-2,:))+lq*u(1,nyf-2,:)+ls(1,:)) &
+      -fy*(rbufN(3,1,:)-6.0_dp*(u(3,nyf,:)+u(3,nyf-4,:))+15.0_dp*(u(3,nyf-1,:)+u(3,nyf-3,:))+u(3,nyf-5,:)))
+    reshd(1,nyf-1,:)=rhs(1,nyf-1,:)-(fc*u(1,nyf-1,:) &
+      -fx*(u(4,nyf-1,:)-6.0_dp*(u(3,nyf-1,:)+lq*u(2,nyf-1,:)+ls(2,:))+15.0_dp*(u(2,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))+lq*u(3,nyf-1,:)+ls(3,:)) &
+      -fy*(rbufN(1,2,:)-6.0_dp*(rbufN(1,1,:)+u(1,nyf-3,:))+15.0_dp*(u(1,nyf,:)+u(1,nyf-2,:))+u(1,nyf-4,:)))
+    reshd(2,nyf-1,:)=rhs(2,nyf-1,:)-(fc*u(2,nyf-1,:) &
+      -fx*(u(5,nyf-1,:)-6.0_dp*(u(4,nyf-1,:)+lq*u(1,nyf-1,:)+ls(1,:))+15.0_dp*(u(3,nyf-1,:)+u(1,nyf-1,:))+lq*u(2,nyf-1,:)+ls(2,:)) &
+      -fy*(rbufN(2,2,:)-6.0_dp*(rbufN(2,1,:)+u(2,nyf-3,:))+15.0_dp*(u(2,nyf,:)+u(2,nyf-2,:))+u(2,nyf-4,:)))
+    reshd(3,nyf-1,:)=rhs(3,nyf-1,:)-(fc*u(3,nyf-1,:) &
+      -fx*(u(6,nyf-1,:)-6.0_dp*(u(5,nyf-1,:)+u(1,nyf-1,:))+15.0_dp*(u(4,nyf-1,:)+u(2,nyf-1,:))+lq*u(1,nyf-1,:)+ls(1,:)) &
+      -fy*(rbufN(3,2,:)-6.0_dp*(rbufN(3,1,:)+u(3,nyf-3,:))+15.0_dp*(u(3,nyf,:)+u(3,nyf-2,:))+u(3,nyf-4,:)))
+    reshd(1,nyf,:)=rhs(1,nyf,:)-(fc*u(1,nyf,:) &
+      -fx*(u(4,nyf,:)-6.0_dp*(u(3,nyf,:)+lq*u(2,nyf,:)+ls(2,:))+15.0_dp*(u(2,nyf,:)+lq*u(1,nyf,:)+ls(1,:))+lq*u(3,nyf,:)+ls(3,:)) &
+      -fy*(rbufN(1,3,:)-6.0_dp*(rbufN(1,2,:)+u(1,nyf-2,:))+15.0_dp*(rbufN(1,1,:)+u(1,nyf-1,:))+u(1,nyf-3,:)))
+    reshd(2,nyf,:)=rhs(2,nyf,:)-(fc*u(2,nyf,:) &
+      -fx*(u(5,nyf,:)-6.0_dp*(u(4,nyf,:)+lq*u(1,nyf,:)+ls(1,:))+15.0_dp*(u(3,nyf,:)+u(1,nyf,:))+lq*u(2,nyf,:)+ls(2,:)) &
+      -fy*(rbufN(2,3,:)-6.0_dp*(rbufN(2,2,:)+u(2,nyf-2,:))+15.0_dp*(rbufN(2,1,:)+u(2,nyf-1,:))+u(2,nyf-3,:)))
+    reshd(3,nyf,:)=rhs(3,nyf,:)-(fc*u(3,nyf,:) &
+      -fx*(u(6,nyf,:)-6.0_dp*(u(5,nyf,:)+u(1,nyf,:))+15.0_dp*(u(4,nyf,:)+u(2,nyf,:))+lq*u(1,nyf,:)+ls(1,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(rbufN(3,3,:)-6.0_dp*(rbufN(3,2,:)+u(3,nyf-2,:))+15.0_dp*(rbufN(3,1,:)+u(3,nyf-1,:))+u(3,nyf-3,:)))
   else
     reshd(1,1,:)=rhs(1,1,:)-(fc*u(1,1,:) &
@@ -7896,6 +10505,7 @@ endif
   endif
 !.Right boundary
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDhd(qn)%a(ng) == iprocsm1) then !.Right most process (along x)
 !...SE corner
     reshd(nxf-2,1,:)=rhs(nxf-2,1,:)-(fc*u(nxf-2,1,:) &
@@ -7934,10 +10544,51 @@ endif
         -fy*(u(nxf-1,j+3,:)-6.0_dp*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))+15.0_dp*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:))+u(nxf-1,j-3,:)))
       reshd(nxf,j,:)=rhs(nxf,j,:)-(fc*u(nxf,j,:) &
         -fx*(Rq*u(nxf-2,j,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,j,:)+Rs(2,:)+u(nxf-2,j,:))+15.0_dp*(Rq*u(nxf,j,:)+Rs(1,:)+u(nxf-1,j,:))+u(nxf-3,j,:)) &
+=======
+  if (iIDhd(qn)%a(ng) == iprocsm1) then
+!...SE corner
+    reshd(nxf-2,1,:)=rhs(nxf-2,1,:)-(fc*u(nxf-2,1,:) &
+      -fx*(rq*u(nxf,1,:)+rs(1,:)-6.0_dp*(u(nxf,1,:)+u(nxf-4,1,:))+15.0_dp*(u(nxf-1,1,:)+u(nxf-3,1,:))+u(nxf-5,1,:)) &
+      -fy*(u(nxf-2,4,:)-6.0_dp*(u(nxf-2,3,:)+rbufS(nxf-2,2,:))+15.0_dp*(u(nxf-2,2,:)+rbufS(nxf-2,3,:))+rbufS(nxf-2,1,:)))
+    reshd(nxf-1,1,:)=rhs(nxf-1,1,:)-(fc*u(nxf-1,1,:) &
+      -fx*(rq*u(nxf-1,1,:)+rs(2,:)-6.0_dp*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-3,1,:))+15.0_dp*(u(nxf,1,:)+u(nxf-2,1,:))+u(nxf-4,1,:)) &
+      -fy*(u(nxf-1,4,:)-6.0_dp*(u(nxf-1,3,:)+rbufS(nxf-1,2,:))+15.0_dp*(u(nxf-1,2,:)+rbufS(nxf-1,3,:))+rbufS(nxf-1,1,:)))
+    reshd(nxf,1,:)=rhs(nxf,1,:)-(fc*u(nxf,1,:) &
+      -fx*(rq*u(nxf-2,1,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,1,:)+rs(2,:)+u(nxf-2,1,:))+15.0_dp*(rq*u(nxf,1,:)+rs(1,:)+u(nxf-1,1,:))+u(nxf-3,1,:)) &
+      -fy*(u(nxf,4,:)-6.0_dp*(u(nxf,3,:)+rbufS(nxf,2,:))+15.0_dp*(u(nxf,2,:)+rbufS(nxf,3,:))+rbufS(nxf,1,:)))
+    reshd(nxf-2,2,:)=rhs(nxf-2,2,:)-(fc*u(nxf-2,2,:) &
+      -fx*(rq*u(nxf,2,:)+rs(1,:)-6.0_dp*(u(nxf,2,:)+u(nxf-4,2,:))+15.0_dp*(u(nxf-1,2,:)+u(nxf-3,2,:))+u(nxf-5,2,:)) &
+      -fy*(u(nxf-2,5,:)-6.0_dp*(u(nxf-2,4,:)+rbufS(nxf-2,3,:))+15.0_dp*(u(nxf-2,3,:)+u(nxf-2,1,:))+rbufS(nxf-2,2,:)))
+    reshd(nxf-1,2,:)=rhs(nxf-1,2,:)-(fc*u(nxf-1,2,:) &
+      -fx*(rq*u(nxf-1,2,:)+rs(2,:)-6.0_dp*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-3,2,:))+15.0_dp*(u(nxf,2,:)+u(nxf-2,2,:))+u(nxf-4,2,:)) &
+      -fy*(u(nxf-1,5,:)-6.0_dp*(u(nxf-1,4,:)+rbufS(nxf-1,3,:))+15.0_dp*(u(nxf-1,3,:)+u(nxf-1,1,:))+rbufS(nxf-1,2,:)))
+    reshd(nxf,2,:)=rhs(nxf,2,:)-(fc*u(nxf,2,:) &
+      -fx*(rq*u(nxf-2,2,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,2,:)+rs(2,:)+u(nxf-2,2,:))+15.0_dp*(rq*u(nxf,2,:)+rs(1,:)+u(nxf-1,2,:))+u(nxf-3,2,:)) &
+      -fy*(u(nxf,5,:)-6.0_dp*(u(nxf,4,:)+rbufS(nxf,3,:))+15.0_dp*(u(nxf,3,:)+u(nxf,1,:))+rbufS(nxf,2,:)))
+    reshd(nxf-2,3,:)=rhs(nxf-2,3,:)-(fc*u(nxf-2,3,:) &
+      -fx*(rq*u(nxf,3,:)+rs(1,:)-6.0_dp*(u(nxf,3,:)+u(nxf-4,3,:))+15.0_dp*(u(nxf-1,3,:)+u(nxf-3,3,:))+u(nxf-5,3,:)) &
+      -fy*(u(nxf-2,6,:)-6.0_dp*(u(nxf-2,5,:)+u(nxf-2,1,:))+15.0_dp*(u(nxf-2,4,:)+u(nxf-2,2,:))+rbufS(nxf-2,3,:)))
+    reshd(nxf-1,3,:)=rhs(nxf-1,3,:)-(fc*u(nxf-1,3,:) &
+      -fx*(rq*u(nxf-1,3,:)+rs(2,:)-6.0_dp*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-3,3,:))+15.0_dp*(u(nxf,3,:)+u(nxf-2,3,:))+u(nxf-4,3,:)) &
+      -fy*(u(nxf-1,6,:)-6.0_dp*(u(nxf-1,5,:)+u(nxf-1,1,:))+15.0_dp*(u(nxf-1,4,:)+u(nxf-1,2,:))+rbufS(nxf-1,3,:)))
+    reshd(nxf,3,:)=rhs(nxf,3,:)-(fc*u(nxf,3,:) &
+      -fx*(rq*u(nxf-2,3,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,3,:)+rs(2,:)+u(nxf-2,3,:))+15.0_dp*(rq*u(nxf,3,:)+rs(1,:)+u(nxf-1,3,:))+u(nxf-3,3,:)) &
+      -fy*(u(nxf,6,:)-6.0_dp*(u(nxf,5,:)+u(nxf,1,:))+15.0_dp*(u(nxf,4,:)+u(nxf,2,:))+rbufS(nxf,3,:)))
+    do j=4,nyf-3 ! Right boundary
+      reshd(nxf-2,j,:)=rhs(nxf-2,j,:)-(fc*u(nxf-2,j,:) &
+        -fx*(rq*u(nxf,j,:)+rs(1,:)-6.0_dp*(u(nxf,j,:)+u(nxf-4,j,:))+15.0_dp*(u(nxf-1,j,:)+u(nxf-3,j,:))+u(nxf-5,j,:)) &
+        -fy*(u(nxf-2,j+3,:)-6.0_dp*(u(nxf-2,j+2,:)+u(nxf-2,j-2,:))+15.0_dp*(u(nxf-2,j+1,:)+u(nxf-2,j-1,:))+u(nxf-2,j-3,:)))
+      reshd(nxf-1,j,:)=rhs(nxf-1,j,:)-(fc*u(nxf-1,j,:) &
+        -fx*(rq*u(nxf-1,j,:)+rs(2,:)-6.0_dp*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-3,j,:))+15.0_dp*(u(nxf,j,:)+u(nxf-2,j,:))+u(nxf-4,j,:)) &
+        -fy*(u(nxf-1,j+3,:)-6.0_dp*(u(nxf-1,j+2,:)+u(nxf-1,j-2,:))+15.0_dp*(u(nxf-1,j+1,:)+u(nxf-1,j-1,:))+u(nxf-1,j-3,:)))
+      reshd(nxf,j,:)=rhs(nxf,j,:)-(fc*u(nxf,j,:) &
+        -fx*(rq*u(nxf-2,j,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,j,:)+rs(2,:)+u(nxf-2,j,:))+15.0_dp*(rq*u(nxf,j,:)+rs(1,:)+u(nxf-1,j,:))+u(nxf-3,j,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         -fy*(u(nxf,j+3,:)-6.0_dp*(u(nxf,j+2,:)+u(nxf,j-2,:))+15.0_dp*(u(nxf,j+1,:)+u(nxf,j-1,:))+u(nxf,j-3,:)))
     enddo
 !...NE corner
     reshd(nxf-2,nyf-2,:)=rhs(nxf-2,nyf-2,:)-(fc*u(nxf-2,nyf-2,:) &
+<<<<<<< HEAD
       -fx*(Rq*u(nxf,nyf-2,:)+Rs(1,:)-6.0_dp*(u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:))+15.0_dp*(u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:))+u(nxf-5,nyf-2,:)) &
       -fy*(rbufN(nxf-2,1,:)-6.0_dp*(u(nxf-2,nyf,:)+u(nxf-2,nyf-4,:))+15.0_dp*(u(nxf-2,nyf-1,:)+u(nxf-2,nyf-3,:))+u(nxf-2,nyf-5,:)))
     reshd(nxf-1,nyf-2,:)=rhs(nxf-1,nyf-2,:)-(fc*u(nxf-1,nyf-2,:) &
@@ -7963,6 +10614,33 @@ endif
       -fy*(rbufN(nxf-1,3,:)-6.0_dp*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))+15.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:))+u(nxf-1,nyf-3,:)))
     reshd(nxf,nyf,:)=rhs(nxf,nyf,:)-(fc*u(nxf,nyf,:) &
       -fx*(Rq*u(nxf-2,nyf,:)+Rs(3,:)-6.0_dp*(Rq*u(nxf-1,nyf,:)+Rs(2,:)+u(nxf-2,nyf,:))+15.0_dp*(Rq*u(nxf,nyf,:)+Rs(1,:)+u(nxf-1,nyf,:))+u(nxf-3,nyf,:)) &
+=======
+      -fx*(rq*u(nxf,nyf-2,:)+rs(1,:)-6.0_dp*(u(nxf,nyf-2,:)+u(nxf-4,nyf-2,:))+15.0_dp*(u(nxf-1,nyf-2,:)+u(nxf-3,nyf-2,:))+u(nxf-5,nyf-2,:)) &
+      -fy*(rbufN(nxf-2,1,:)-6.0_dp*(u(nxf-2,nyf,:)+u(nxf-2,nyf-4,:))+15.0_dp*(u(nxf-2,nyf-1,:)+u(nxf-2,nyf-3,:))+u(nxf-2,nyf-5,:)))
+    reshd(nxf-1,nyf-2,:)=rhs(nxf-1,nyf-2,:)-(fc*u(nxf-1,nyf-2,:) &
+      -fx*(rq*u(nxf-1,nyf-2,:)+rs(2,:)-6.0_dp*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-3,nyf-2,:))+15.0_dp*(u(nxf,nyf-2,:)+u(nxf-2,nyf-2,:))+u(nxf-4,nyf-2,:)) &
+      -fy*(rbufN(nxf-1,1,:)-6.0_dp*(u(nxf-1,nyf,:)+u(nxf-1,nyf-4,:))+15.0_dp*(u(nxf-1,nyf-1,:)+u(nxf-1,nyf-3,:))+u(nxf-1,nyf-5,:)))
+    reshd(nxf,nyf-2,:)=rhs(nxf,nyf-2,:)-(fc*u(nxf,nyf-2,:) &
+      -fx*(rq*u(nxf-2,nyf-2,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,nyf-2,:)+rs(2,:)+u(nxf-2,nyf-2,:))+15.0_dp*(rq*u(nxf,nyf-2,:)+rs(1,:)+u(nxf-1,nyf-2,:))+u(nxf-3,nyf-2,:)) &
+      -fy*(rbufN(nxf,1,:)-6.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-4,:))+15.0_dp*(u(nxf,nyf-1,:)+u(nxf,nyf-3,:))+u(nxf,nyf-5,:)))
+    reshd(nxf-2,nyf-1,:)=rhs(nxf-2,nyf-1,:)-(fc*u(nxf-2,nyf-1,:) &
+      -fx*(rq*u(nxf,nyf-1,:)+rs(1,:)-6.0_dp*(u(nxf,nyf-1,:)+u(nxf-4,nyf-1,:))+15.0_dp*(u(nxf-1,nyf-1,:)+u(nxf-3,nyf-1,:))+u(nxf-5,nyf-1,:)) &
+      -fy*(rbufN(nxf-2,2,:)-6.0_dp*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-3,:))+15.0_dp*(u(nxf-2,nyf,:)+u(nxf-2,nyf-2,:))+u(nxf-2,nyf-4,:)))
+    reshd(nxf-1,nyf-1,:)=rhs(nxf-1,nyf-1,:)-(fc*u(nxf-1,nyf-1,:) &
+      -fx*(rq*u(nxf-1,nyf-1,:)+rs(2,:)-6.0_dp*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-3,nyf-1,:))+15.0_dp*(u(nxf,nyf-1,:)+u(nxf-2,nyf-1,:))+u(nxf-4,nyf-1,:)) &
+      -fy*(rbufN(nxf-1,2,:)-6.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-3,:))+15.0_dp*(u(nxf-1,nyf,:)+u(nxf-1,nyf-2,:))+u(nxf-1,nyf-4,:)))
+    reshd(nxf,nyf-1,:)=rhs(nxf,nyf-1,:)-(fc*u(nxf,nyf-1,:) &
+      -fx*(rq*u(nxf-2,nyf-1,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,nyf-1,:)+rs(2,:)+u(nxf-2,nyf-1,:))+15.0_dp*(rq*u(nxf,nyf-1,:)+rs(1,:)+u(nxf-1,nyf-1,:))+u(nxf-3,nyf-1,:)) &
+      -fy*(rbufN(nxf,2,:)-6.0_dp*(rbufN(nxf,1,:)+u(nxf,nyf-3,:))+15.0_dp*(u(nxf,nyf,:)+u(nxf,nyf-2,:))+u(nxf,nyf-4,:)))
+    reshd(nxf-2,nyf,:)=rhs(nxf-2,nyf,:)-(fc*u(nxf-2,nyf,:) &
+      -fx*(rq*u(nxf,nyf,:)+rs(1,:)-6.0_dp*(u(nxf,nyf,:)+u(nxf-4,nyf,:))+15.0_dp*(u(nxf-1,nyf,:)+u(nxf-3,nyf,:))+u(nxf-5,nyf,:)) &
+      -fy*(rbufN(nxf-2,3,:)-6.0_dp*(rbufN(nxf-2,2,:)+u(nxf-2,nyf-2,:))+15.0_dp*(rbufN(nxf-2,1,:)+u(nxf-2,nyf-1,:))+u(nxf-2,nyf-3,:)))
+    reshd(nxf-1,nyf,:)=rhs(nxf-1,nyf,:)-(fc*u(nxf-1,nyf,:) &
+      -fx*(rq*u(nxf-1,nyf,:)+rs(2,:)-6.0_dp*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-3,nyf,:))+15.0_dp*(u(nxf,nyf,:)+u(nxf-2,nyf,:))+u(nxf-4,nyf,:)) &
+      -fy*(rbufN(nxf-1,3,:)-6.0_dp*(rbufN(nxf-1,2,:)+u(nxf-1,nyf-2,:))+15.0_dp*(rbufN(nxf-1,1,:)+u(nxf-1,nyf-1,:))+u(nxf-1,nyf-3,:)))
+    reshd(nxf,nyf,:)=rhs(nxf,nyf,:)-(fc*u(nxf,nyf,:) &
+      -fx*(rq*u(nxf-2,nyf,:)+rs(3,:)-6.0_dp*(rq*u(nxf-1,nyf,:)+rs(2,:)+u(nxf-2,nyf,:))+15.0_dp*(rq*u(nxf,nyf,:)+rs(1,:)+u(nxf-1,nyf,:))+u(nxf-3,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       -fy*(rbufN(nxf,3,:)-6.0_dp*(rbufN(nxf,2,:)+u(nxf,nyf-2,:))+15.0_dp*(rbufN(nxf,1,:)+u(nxf,nyf-1,:))+u(nxf,nyf-3,:)))
   else
     reshd(nxf-2,1,:)=rhs(nxf-2,1,:)-(fc*u(nxf-2,1,:) &
@@ -8157,10 +10835,17 @@ endif
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), allocatable, intent(in) :: rhs(:,:,:)
   integer(I4B), intent(in) :: ng,xBC(:)
+<<<<<<< HEAD
   real(DP), allocatable :: Ls(:),rs(:),loc1D(:)
   integer(I4B) :: i,j,k,il,nxfd2,nyfd2,Nrank,Srank,Erank,Wrank
   real(DP) :: fx,fy,fc,delta,deltaL,deltaR
   real(DP) :: Lq,Rq,Lr,rr
+=======
+  real(DP), allocatable :: ls(:),rs(:),loc1D(:)
+  integer(I4B) :: i,j,k,il,nxfd2,nyfd2,Nrank,Srank,Erank,Wrank
+  real(DP) :: fx,fy,fc,delta,deltaL,deltaR
+  real(DP) :: lq,rq,lr,rr
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                            sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(4),stat(MPI_STATUS_SIZE,4),ierr
@@ -8173,6 +10858,7 @@ endif
   Srank=nborph(ng,5)
   Wrank=nborph(ng,7)
 
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -8191,32 +10877,65 @@ endif
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
     Lq=-1.0_dp
     Lr=0.0_dp
+=======
+!.First choose the value of certain factors in the stencil/matrix
+!.based on the input boundary conditions
+!......... BCs of u ................................!
+!.LHS BC of u
+  allocate(ls(nzL),loc1D(nzL))
+  if (xBC(1)==0) then
+!...linear extrapolation w/o boundary value
+    lq=2.0_dp
+    lr=-1.0_dp
+    ls=0.0_dp
+  elseif (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    lr=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     forall(k=1:nzL) loc1D(k)=sum(u(1,:,k))
     call MPI_ALLreduce(loc1D,ls,nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMph(ng,1),ierr)
     ls=2.0_dp*ls/dble(nyf*jprocsph(ng))
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+<<<<<<< HEAD
     Lq=dble(xBC(1))
     Lr=0.0_dp
+=======
+    lq=dble(xBC(1))
+    lr=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     ls=0.0_dp
   endif
 !.RHS BC of u
   allocate(rs(nzL))
   if (xBC(2)==0) then
 !...linear extrapolation w/o boundary value
+<<<<<<< HEAD
     Rq=2.0_dp
+=======
+    rq=2.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     rr=-1.0_dp
     rs=0.0_dp
   elseif (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
+<<<<<<< HEAD
     Rq=-1.0_dp
+=======
+    rq=-1.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     rr=0.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
     call MPI_ALLreduce(loc1D,rs,nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMph(ng,1),ierr)
     rs=2.0_dp*rs/dble(nyf*jprocsph(ng))
   else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+<<<<<<< HEAD
     Rq=dble(xBC(2))
+=======
+    rq=dble(xBC(2))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     rr=0.0_dp
     rs=0.0_dp
   endif
@@ -8225,8 +10944,13 @@ endif
   fy=(dble(nyf*jprocsph(ng))/bLy)**2
   fc=2.0_dp*(fx+fy)
   delta=omeph/fc
+<<<<<<< HEAD
   deltaL=omeph/(fc-fx*Lq)
   deltaR=omeph/(fc-fx*Rq)
+=======
+  deltaL=omeph/(fc-fx*lq)
+  deltaR=omeph/(fc-fx*rq)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 
 !.Send buffer names indicate direction data is sent to
 !.and receive buffers direction data is received from.
@@ -8263,7 +10987,11 @@ endif
   enddo
 !.Right boundary, even j
     call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDph(ng) .eq. iprocsm1) then !.Right most process (along x)
+=======
+  if (iIDph(ng) .eq. iprocsm1) then
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     do j=2,nyf-2,2
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+(fx*(rs+u(nxf-1,j,:)) &
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-rhs(nxf,j,:))*deltaR
@@ -8309,11 +11037,19 @@ endif
   enddo
 !.Left boundary, odd j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDph(ng)==0) then !.Left most process (along x)
     u(1,1,:)=Oomeph*u(1,1,:)+(fx*(u(2,1,:)+Ls) &
       +fy*(u(1,2,:)+rbufS(1,:))-rhs(1,1,:))*deltaL ! SW corner
     do j=3,nyf-1,2
       u(1,j,:)=Oomeph*u(1,j,:)+(fx*(u(2,j,:)+Ls) &
+=======
+  if (iIDph(ng)==0) then
+    u(1,1,:)=Oomeph*u(1,1,:)+(fx*(u(2,1,:)+ls) &
+      +fy*(u(1,2,:)+rbufS(1,:))-rhs(1,1,:))*deltaL ! SW corner
+    do j=3,nyf-1,2
+      u(1,j,:)=Oomeph*u(1,j,:)+(fx*(u(2,j,:)+ls) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy*(u(1,j+1,:)+u(1,j-1,:))-rhs(1,j,:))*deltaL
     enddo
   else
@@ -8357,12 +11093,21 @@ endif
   enddo
 !.Left boundary, even j
   call MPI_WAIT(req(4),stat(:,4),ierr)
+<<<<<<< HEAD
   if (iIDph(ng)==0) then !.Left most process (along x)
     do j=2,nyf-2,2
       u(1,j,:)=Oomeph*u(1,j,:)+(fx*(u(2,j,:)+Ls) &
         +fy*(u(1,j+1,:)+u(1,j-1,:))-rhs(1,j,:))*deltaL
     enddo
     u(1,nyf,:)=Oomeph*u(1,nyf,:)+(fx*(u(2,nyf,:)+Ls) &
+=======
+  if (iIDph(ng)==0) then
+    do j=2,nyf-2,2
+      u(1,j,:)=Oomeph*u(1,j,:)+(fx*(u(2,j,:)+ls) &
+        +fy*(u(1,j+1,:)+u(1,j-1,:))-rhs(1,j,:))*deltaL
+    enddo
+    u(1,nyf,:)=Oomeph*u(1,nyf,:)+(fx*(u(2,nyf,:)+ls) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(1,:)+u(1,nyf-1,:))-rhs(1,nyf,:))*deltaL !.NW corner
   else
     do j=2,nyf-2,2
@@ -8401,8 +11146,13 @@ endif
       +fy*(u(i,2,:)+rbufS(i/2,:))-rhs(i,1,:))*delta
   enddo
 !.Right boundary, odd j
+<<<<<<< HEAD
   call MPI_WAIT(req(4),stat(:,4),ierr)
   if (iIDph(ng)==iprocsm1) then !.Right most process (along x)
+=======
+    call MPI_WAIT(req(4),stat(:,4),ierr)
+  if (iIDph(ng)==iprocsm1) then
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     u(nxf,1,:)=Oomeph*u(nxf,1,:)+(fx*(rs+u(nxf-1,1,:)) &
       +fy*(u(nxf,2,:)+rbufS(nxfd2,:))-rhs(nxf,1,:))*deltaR !.SE corner
     do j=3,nyf-1,2
@@ -8429,9 +11179,15 @@ endif
   real(DP), dimension(:,:,:), intent(in) :: u, rhs
   integer(I4B), intent(in) :: ng,xBC(:)
   real(DP), allocatable :: respoi(:,:,:)
+<<<<<<< HEAD
   real(DP), allocatable :: Ls(:),rs(:),loc1D(:)
   integer(I4B) :: i,j,k,il,Nrank,Srank,Erank,Wrank
   real(DP) :: fx,fy,fc,Lq,Lr,Rq,Rr
+=======
+  real(DP), allocatable :: ls(:),rs(:),loc1D(:)
+  integer(I4B) :: i,j,k,il,Nrank,Srank,Erank,Wrank
+  real(DP) :: fx,fy,fc,lq,lr,rq,rr
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   real(DP), allocatable, dimension(:,:) :: sbufW,rbufE,sbufE,rbufW, &
                                            sbufN,rbufS,sbufS,rbufN
   integer(I4B) :: req(8),stat(MPI_STATUS_SIZE,8)
@@ -8446,6 +11202,7 @@ endif
   Wrank=nborph(ng,7)
 
   allocate(respoi(nxf,nyf,nzL))
+<<<<<<< HEAD
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
 !.written as
@@ -8464,11 +11221,26 @@ endif
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
     Lq=-1.0_dp
     Lr=0.0_dp
+=======
+!.LHS BC of u
+!  allocate(lsu(nyf,nzL))
+  allocate(ls(nzL),loc1D(nzL))
+  if (xBC(1)==0) then
+!...linear extrapolation w/o boundary value
+    lq=2.0_dp
+    lr=-1.0_dp
+    ls=0.0_dp
+  elseif (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lq=-1.0_dp
+    lr=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     forall(k=1:nzL) loc1D(k)=sum(u(1,:,k))
     call MPI_ALLreduce(loc1D,ls,nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMph(ng,1),ierr)
     ls=2.0_dp*ls/dble(nyf*jprocsph(ng))
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+<<<<<<< HEAD
     Lq=dble(xBC(1))
     Lr=0.0_dp
     ls=0.0_dp
@@ -8484,13 +11256,35 @@ endif
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
     Rq=-1.0_dp
     Rr=0.0_dp
+=======
+    lq=dble(xBC(1))
+    lr=0.0_dp
+    ls=0.0_dp
+  endif
+!.RHS BC of u
+  allocate(rs(nzL))
+  if (xBC(2)==0) then
+!...linear extrapolation w/o boundary value
+    rq=2.0_dp
+    rr=-1.0_dp
+    rs=0.0_dp
+  elseif (xBC(2)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    rq=-1.0_dp
+    rr=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
     call MPI_ALLreduce(loc1D,rs,nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMph(ng,1),ierr)
     rs=2.0_dp*rs/dble(nyf*jprocsph(ng))
   else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+<<<<<<< HEAD
     Rq=dble(xBC(2))
     Rr=0.0_dp
+=======
+    rq=dble(xBC(2))
+    rr=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     rs=0.0_dp
   endif
   fx=(dble(nxf*iprocsph(ng))/bLx)**2         !.1/(hx^2)
@@ -8542,11 +11336,19 @@ endif
       +fy*(u(i,2,:)+rbufS(i,:))-fc*u(i,1,:))
   enddo
   call MPI_WAIT(req(6),stat(:,6),ierr)
+<<<<<<< HEAD
   if (iIDph(ng) == 0) then !.Left most process (along x)
     respoi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+Lq*u(1,1,:)+Lr*u(2,1,:)+Ls) &
       +fy*(u(1,2,:)+rbufS(1,:))-fc*u(1,1,:)) !.SW corner
     do j=2,nyf-1 !.Left boundary
       respoi(1,j,:)=rhs(1,j,:)-(fx*(u(2,j,:)+Lq*u(1,j,:)+Lr*u(2,j,:)+Ls) &
+=======
+  if (iIDph(ng) == 0) then
+    respoi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+lq*u(1,1,:)+lr*u(2,1,:)+ls) &
+      +fy*(u(1,2,:)+rbufS(1,:))-fc*u(1,1,:)) !.SW corner
+    do j=2,nyf-1 !.Left boundary
+      respoi(1,j,:)=rhs(1,j,:)-(fx*(u(2,j,:)+lq*u(1,j,:)+lr*u(2,j,:)+ls) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
         +fy*(u(1,j+1,:)+u(1,j-1,:))-fc*u(1,j,:))
     enddo
   else
@@ -8559,9 +11361,14 @@ endif
   endif
 
   call MPI_WAIT(req(7),stat(:,7),ierr)
+<<<<<<< HEAD
   if (iIDph(ng)==0) then !.Left most process (along x)
 !...NW corner
     respoi(1,nyf,:)=rhs(1,nyf,:)-(fx*(u(2,nyf,:)+Lq*u(1,nyf,:)+Lr*u(2,nyf,:)+Ls) &
+=======
+  if (iIDph(ng)==0) then !.NW corner
+    respoi(1,nyf,:)=rhs(1,nyf,:)-(fx*(u(2,nyf,:)+lq*u(1,nyf,:)+lr*u(2,nyf,:)+ls) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(1,:)+u(1,nyf-1,:))-fc*u(1,nyf,:))
   else
     respoi(1,nyf,:)=rhs(1,nyf,:)-(fx*(u(2,nyf,:)+rbufW(nyf,:)) &
@@ -8573,6 +11380,7 @@ endif
   enddo
 
   call MPI_WAIT(req(8),stat(:,8),ierr)
+<<<<<<< HEAD
   if (iIDph(ng) == iprocsm1) then !.Right most process (along x)
     respoi(nxf,1,:)=rhs(nxf,1,:)-(fx*(Rq*u(nxf,1,:)+Rr*u(nxf-1,1,:)+Rs+u(nxf-1,1,:)) &
       +fy*(u(nxf,2,:)+rbufS(nxf,:))-fc*u(nxf,1,:)) !.SE corner
@@ -8581,6 +11389,16 @@ endif
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-fc*u(nxf,j,:))
     enddo
     respoi(nxf,nyf,:)=rhs(nxf,nyf,:)-(fx*(Rq*u(nxf,nyf,:)+Rr*u(nxf-1,nyf,:)+Rs+u(nxf-1,nyf,:)) &
+=======
+  if (iIDph(ng) == iprocsm1) then
+    respoi(nxf,1,:)=rhs(nxf,1,:)-(fx*(rq*u(nxf,1,:)+rr*u(nxf-1,1,:)+rs+u(nxf-1,1,:)) &
+      +fy*(u(nxf,2,:)+rbufS(nxf,:))-fc*u(nxf,1,:)) !.SE corner
+    do j=2,nyf-1 !.Right boundary
+      respoi(nxf,j,:)=rhs(nxf,j,:)-(fx*(rq*u(nxf,j,:)+rr*u(nxf-1,j,:)+rs+u(nxf-1,j,:)) &
+        +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-fc*u(nxf,j,:))
+    enddo
+    respoi(nxf,nyf,:)=rhs(nxf,nyf,:)-(fx*(rq*u(nxf,nyf,:)+rr*u(nxf-1,nyf,:)+rs+u(nxf-1,nyf,:)) &
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))-fc*u(nxf,nyf,:)) !.NE corner
   else
     respoi(nxf,1,:)=rhs(nxf,1,:)-(fx*(rbufE(1,:)+u(nxf-1,1,:)) &
@@ -9457,11 +12275,19 @@ endif
   integer(I4B) :: ic,iff,jc,jf,k,k1,k2,iL,iU,jL,jU,ierr,cof,p,q
   integer(I4B) :: Nrank,Srank,Erank,Wrank
   integer(I4B), allocatable :: Drank(:)
+<<<<<<< HEAD
   real(DP), allocatable :: Lsu(:),Rsu(:),loc1D(:)
   real(DP), allocatable, dimension(:,:) :: rbufN,sbufN,rbufE,sbufE, &
                                            rbufS,sbufS,rbufW,sbufW
   real(DP), allocatable, dimension(:) :: rNE,rSE,rSW,rNW,sNE,sSE,sSW,sNW
   real(DP) :: Lqu,Rqu,Lru,Rru
+=======
+  real(DP), allocatable :: lsu(:),rsu(:),loc1D(:)
+  real(DP), allocatable, dimension(:,:) :: rbufN,sbufN,rbufE,sbufE, &
+                                           rbufS,sbufS,rbufW,sbufW
+  real(DP), allocatable, dimension(:) :: rNE,rSE,rSW,rNW,sNE,sSE,sSW,sNW
+  real(DP) :: lqu,rqu,lru,rru
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   integer(I4B) :: req(16),stat(MPI_STATUS_SIZE,16)
 
   Nrank=nbors(1)
@@ -9519,6 +12345,7 @@ endif
 !.based on the input boundary conditions
 !......... BCs of u ................................!
 !.LHS BC of u
+<<<<<<< HEAD
   allocate(Lsu(nzL),loc1D(nzL))
   if (xBC(1)==0) then
 !...linear extrapolation w/o boundary value
@@ -9555,6 +12382,44 @@ endif
     Rqu=dble(xBC(2))
     Rru=0.0_dp
     Rsu=0.0_dp
+=======
+  allocate(lsu(nzL),loc1D(nzL))
+  if (xBC(1)==0) then
+!...linear extrapolation w/o boundary value
+    lqu=2.0_dp
+    lru=-1.0_dp
+    lsu=0.0_dp
+  elseif (xBC(1)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    lqu=-1.0_dp
+    lru=0.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(uc(1,:,k))
+    call MPI_ALLreduce(loc1D,lsu,nzL,MPI_DOUBLE_PRECISION,MPI_SUM,COMMs(1),ierr)
+    lsu=2.0_dp*lsu/dble(nyc*jprocs)
+  else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
+    lqu=dble(xBC(1))
+    lru=0.0_dp
+    lsu=0.0_dp
+  endif
+!.RHS BC of u
+  allocate(rsu(nzL))
+  if (xBC(2)==0) then
+!...linear extrapolation w/o boundary value
+    rqu=2.0_dp
+    rru=-1.0_dp
+    rsu=0.0_dp
+  elseif (xBC(2)==2) then
+!...ky=0 component has even symmetry, ky.neq.0 component is odd
+    rqu=-1.0_dp
+    rru=0.0_dp
+    forall(k=1:nzL) loc1D(k)=sum(uc(nxc,:,k))
+    call MPI_ALLreduce(loc1D,rsu,nzL,MPI_DOUBLE_PRECISION,MPI_SUM,COMMs(1),ierr)
+    rsu=2.0_dp*rsu/dble(nyc*jprocs)
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
+    rqu=dble(xBC(2))
+    rru=0.0_dp
+    rsu=0.0_dp
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
   endif
 
   if (ldc==0) then
@@ -9686,12 +12551,18 @@ endif
       call MPI_WAITALL(3,(/req(6),req(8),req(10)/), &
         (/stat(:,6),stat(:,8),stat(:,10)/),ierr)
     if (iID==0) then
+<<<<<<< HEAD
       prolng(1,1,:)=0.0625_dp*(9.0_dp*uc(1,1,:)+3.0_dp*(Lqu*uc(1,1,:) &
         +Lru*uc(2,1,:)+Lsu+rbufS(1,:))+Lqu*rbufS(1,:)+Lru*rbufS(2,:)+Lsu)
+=======
+      prolng(1,1,:)=0.0625_dp*(9.0_dp*uc(1,1,:)+3.0_dp*(lqu*uc(1,1,:) &
+        +lru*uc(2,1,:)+lsu+rbufS(1,:))+lqu*rbufS(1,:)+lru*rbufS(2,:)+lsu)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !.For some reason this loop causes issues with -O3 on Discovery
 !      do jf=2,nyf-1
 !        jc=(jf+1)/2
 !        k2=(-1)**IAND(jf,1) ! k=1 even jf, k=-1 odd jf
+<<<<<<< HEAD
 !        prolng(1,jf,:)=0.0625_dp*(9.0_dp*uc(1,jc,:)+3.0_dp*(Lqu*uc(1,jc,:) &
 !          +Lru*uc(2,jc,:)+Lsu+uc(1,jc+k2,:))+Lqu*uc(1,jc+k2,:)+Lru*uc(2,jc+k2,:)+Lsu)
 !      enddo
@@ -9707,6 +12578,23 @@ endif
       enddo
       prolng(1,nyf,:)=0.0625_dp*(9.0_dp*uc(1,nyc,:)+3.0_dp*(Lqu*uc(1,nyc,:) &
         +Lru*uc(2,nyc,:)+Lsu+rbufN(1,:))+Lqu*rbufN(1,:)+Lru*rbufN(2,:)+Lsu)
+=======
+!        prolng(1,jf,:)=0.0625_dp*(9.0_dp*uc(1,jc,:)+3.0_dp*(lqu*uc(1,jc,:) &
+!          +lru*uc(2,jc,:)+lsu+uc(1,jc+k2,:))+lqu*uc(1,jc+k2,:)+lru*uc(2,jc+k2,:)+lsu)
+!      enddo
+      do jf=2,nyf-2,2 ! Grid points with jf=even
+        jc=jf/2
+        prolng(1,jf,:)=0.0625_dp*(9.0_dp*uc(1,jc,:)+3.0_dp*(lqu*uc(1,jc,:) &
+          +lru*uc(2,jc,:)+lsu+uc(1,jc+1,:))+lqu*uc(1,jc+1,:)+lru*uc(2,jc+1,:)+lsu)
+      enddo
+      do jf=3,nyf-1,2 ! Grid points with jf=odd
+        jc=(jf+1)/2
+        prolng(1,jf,:)=0.0625_dp*(9.0_dp*uc(1,jc,:)+3.0_dp*(lqu*uc(1,jc,:) &
+          +lru*uc(2,jc,:)+lsu+uc(1,jc-1,:))+lqu*uc(1,jc-1,:)+lru*uc(2,jc-1,:)+lsu)
+      enddo
+      prolng(1,nyf,:)=0.0625_dp*(9.0_dp*uc(1,nyc,:)+3.0_dp*(lqu*uc(1,nyc,:) &
+        +lru*uc(2,nyc,:)+lsu+rbufN(1,:))+lqu*rbufN(1,:)+lru*rbufN(2,:)+lsu)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     else
       prolng(1,1,:)=0.0625_dp*(9.0_dp*uc(1,1,:) &
         +3.0_dp*(rbufW(1,:)+rbufS(1,:))+rSW)
@@ -9737,30 +12625,54 @@ endif
     if (iID==iprocsm1) then
 !.....Right boundary
       prolng(nxf,1,:)=0.0625_dp*(9.0_dp*uc(nxc,1,:) &
+<<<<<<< HEAD
         +3.0_dp*(Rqu*uc(nxc,1,:)+Rru*uc(nxc-1,1,:)+Rsu(:) &
         +rbufS(nxc,:))+Rqu*rbufS(nxc,:)+Rru*rbufS(nxc-1,:)+Rsu(:))
+=======
+        +3.0_dp*(rqu*uc(nxc,1,:)+rru*uc(nxc-1,1,:)+rsu(:) &
+        +rbufS(nxc,:))+rqu*rbufS(nxc,:)+rru*rbufS(nxc-1,:)+rsu(:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !      do jf=2,nyf-1
 !        jc=(jf+1)/2
 !        k2=(-1)**IAND(jf,1) ! k=1 even jf, k=-1 odd jf
 !        prolng(nxf,jf,:)=0.0625_dp*(9.0_dp*uc(nxc,jc,:) &
+<<<<<<< HEAD
 !          +3.0_dp*(Rqu*uc(nxc,jc,:)+Rru*uc(nxc-1,jc,:)+Rsu(:) &
 !          +uc(nxc,jc+k2,:))+Rqu*uc(nxc,jc+k2,:)+Rru*uc(nxc-1,jc+k2,:)+Rsu(:))
+=======
+!          +3.0_dp*(rqu*uc(nxc,jc,:)+rru*uc(nxc-1,jc,:)+rsu(:) &
+!          +uc(nxc,jc+k2,:))+rqu*uc(nxc,jc+k2,:)+rru*uc(nxc-1,jc+k2,:)+rsu(:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
 !      enddo
       do jf=2,nyf-2,2 ! Grid points with jf=even
         jc=jf/2
         prolng(nxf,jf,:)=0.0625_dp*(9.0_dp*uc(nxc,jc,:) &
+<<<<<<< HEAD
           +3.0_dp*(Rqu*uc(nxc,jc,:)+Rru*uc(nxc-1,jc,:)+Rsu &
           +uc(nxc,jc+1,:))+Rqu*uc(nxc,jc+1,:)+Rru*uc(nxc-1,jc+1,:)+Rsu)
+=======
+          +3.0_dp*(rqu*uc(nxc,jc,:)+rru*uc(nxc-1,jc,:)+rsu &
+          +uc(nxc,jc+1,:))+rqu*uc(nxc,jc+1,:)+rru*uc(nxc-1,jc+1,:)+rsu)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       enddo
       do jf=3,nyf-1,2 ! Grid points with jf=odd
         jc=(jf+1)/2
         prolng(nxf,jf,:)=0.0625_dp*(9.0_dp*uc(nxc,jc,:) &
+<<<<<<< HEAD
           +3.0_dp*(Rqu*uc(nxc,jc,:)+Rru*uc(nxc-1,jc,:)+Rsu+uc(nxc,jc-1,:)) &
           +Rqu*uc(nxc,jc-1,:)+Rru*uc(nxc-1,jc-1,:)+Rsu)
       enddo
       prolng(nxf,nyf,:)=0.0625_dp*(9.0_dp*uc(nxc,nyc,:) &
         +3.0_dp*(Rqu*uc(nxc,nyc,:)+Rru*uc(nxc-1,nyc,:)+Rsu(:) &
         +rbufN(nxc,:))+Rqu*rbufN(nxc,:)+Rru*rbufN(nxc-1,:)+Rsu(:))
+=======
+          +3.0_dp*(rqu*uc(nxc,jc,:)+rru*uc(nxc-1,jc,:)+rsu+uc(nxc,jc-1,:)) &
+          +rqu*uc(nxc,jc-1,:)+rru*uc(nxc-1,jc-1,:)+rsu)
+      enddo
+      prolng(nxf,nyf,:)=0.0625_dp*(9.0_dp*uc(nxc,nyc,:) &
+        +3.0_dp*(rqu*uc(nxc,nyc,:)+rru*uc(nxc-1,nyc,:)+rsu(:) &
+        +rbufN(nxc,:))+rqu*rbufN(nxc,:)+rru*rbufN(nxc-1,:)+rsu(:))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
     else
       prolng(nxf,1,:)=0.0625_dp*(9.0_dp*uc(nxc,1,:) &
         +3.0_dp*(rbufE(1,:)+rbufS(nxc,:))+rSE)
@@ -9814,15 +12726,25 @@ endif
 
       call MPI_WAIT(req(2),stat(:,2),ierr)
       if (iID==0) then
+<<<<<<< HEAD
         forall(k=1:nzL) prolng(1,:,k)=0.25_dp*(Lqu*uc(1,:,k) &
           +Lru*uc(2,:,k)+Lsu(k))+0.75_dp*uc(1,:,k)
+=======
+        forall(k=1:nzL) prolng(1,:,k)=0.25_dp*(lqu*uc(1,:,k) &
+          +lru*uc(2,:,k)+lsu(k))+0.75_dp*uc(1,:,k)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       else
         prolng(1,:,:)=0.25_dp*rbufW+0.75_dp*uc(1,:,:)
       endif
       call MPI_WAIT(req(4),stat(:,4),ierr)
       if (iID==iprocsm1) then
+<<<<<<< HEAD
         forall(k=1:nzL) prolng(nxf,:,k)=0.75_dp*uc(nxc,:,k)+0.25_dp*(Rqu*uc(nxc,:,k) &
           +Rru*uc(nxc-1,:,k)+Rsu(k))
+=======
+        forall(k=1:nzL) prolng(nxf,:,k)=0.75_dp*uc(nxc,:,k)+0.25_dp*(rqu*uc(nxc,:,k) &
+          +rru*uc(nxc-1,:,k)+rsu(k))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       else
         prolng(nxf,:,:)=0.75_dp*uc(nxc,:,:)+0.25_dp*rbufE
       endif
@@ -9838,20 +12760,34 @@ endif
 
       call MPI_WAIT(req(2),stat(:,2),ierr) 
       if (iID==0) then
+<<<<<<< HEAD
         forall(k=1:nzL) prolng(1,:,k)=0.375_dp*(Lqu*uc(1,:,k) &
           +Lru*uc(2,:,k)+Lsu(k))+0.625_dp*uc(1,:,k)
         forall(k=1:nzL) prolng(2,:,k)=0.125_dp*(Lqu*uc(1,:,k) &
           +Lru*uc(2,:,k)+Lsu(k))+0.875_dp*uc(1,:,k)
+=======
+        forall(k=1:nzL) prolng(1,:,k)=0.375_dp*(lqu*uc(1,:,k) &
+          +lru*uc(2,:,k)+lsu(k))+0.625_dp*uc(1,:,k)
+        forall(k=1:nzL) prolng(2,:,k)=0.125_dp*(lqu*uc(1,:,k) &
+          +lru*uc(2,:,k)+lsu(k))+0.875_dp*uc(1,:,k)
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       else
         prolng(1,:,:)=0.375_dp*rbufW+0.625_dp*uc(1,:,:)
         prolng(2,:,:)=0.125_dp*rbufW+0.875_dp*uc(1,:,:)
       endif
         call MPI_WAIT(req(4),stat(:,4),ierr) 
       if (iID==iprocsm1) then
+<<<<<<< HEAD
         forall(k=1:nzL) prolng(nxf-1,:,k)=0.875_dp*uc(nxc,:,k)+0.125_dp*(Rqu*uc(nxc,:,k) &
           +Rru*uc(nxc-1,:,k)+Rsu(k))
         forall(k=1:nzL) prolng(nxf,:,k)=0.625_dp*uc(nxc,:,k)+0.375_dp*(Rqu*uc(nxc,:,k) &
           +Rru*uc(nxc-1,:,k)+Rsu(k))
+=======
+        forall(k=1:nzL) prolng(nxf-1,:,k)=0.875_dp*uc(nxc,:,k)+0.125_dp*(rqu*uc(nxc,:,k) &
+          +rru*uc(nxc-1,:,k)+rsu(k))
+        forall(k=1:nzL) prolng(nxf,:,k)=0.625_dp*uc(nxc,:,k)+0.375_dp*(rqu*uc(nxc,:,k) &
+          +rru*uc(nxc-1,:,k)+rsu(k))
+>>>>>>> 2d0cde6fc616ecb74f97c15bc06d0381fcac3651
       else
         prolng(nxf-1,:,:)=0.875_dp*uc(nxc,:,:)+0.125_dp*rbufE
         prolng(nxf,:,:)=0.625_dp*uc(nxc,:,:)+0.375_dp*rbufE
