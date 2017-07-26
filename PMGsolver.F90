@@ -4180,10 +4180,10 @@ endif
 #ENDIF
 
 !.Neigboring ranks to communicate with
-  Nrank =nborhd(qn)%a(ng,1)
-  Erank =nborhd(qn)%a(ng,3)
-  Srank =nborhd(qn)%a(ng,5)
-  Wrank =nborhd(qn)%a(ng,7)
+  Nrank = nborhd(qn)%a(ng,1)
+  Erank = nborhd(qn)%a(ng,3)
+  Srank = nborhd(qn)%a(ng,5)
+  Wrank = nborhd(qn)%a(ng,7)
 
 !.Boundary conditions are implemented with some amount of flexibility.
 !.The right boundary for example, if u(nxf+1) is needed, it will be
