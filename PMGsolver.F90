@@ -8527,7 +8527,7 @@ endif
   real(DP), dimension(:,:,:), intent(in) :: u, rhs
   integer(I4B), intent(in) :: ng,xBC(:)
   real(DP), allocatable :: respoi(:,:,:)
-  real(DP), allocatable :: Ls(:),rs(:),loc1D(:)
+  real(DP), allocatable :: Ls(:),Rs(:),loc1D(:)
   integer(I4B) :: i,j,k,il,Nrank,Srank,Erank,Wrank
   real(DP) :: fx,fy,fc,Lq,Lr,Rq,Rr
   real(DP), allocatable, dimension(:,:) :: sbufW,rbufE,sbufE,rbufW, &
@@ -8576,25 +8576,25 @@ endif
   allocate(Rs(nzL))
   if (xBC(2)==0) then
 !...linear extrapolation w/o boundary value
-    Rq=2.0_dp
-    Rr=-1.0_dp
-    rs=0.0_dp
+    Rq =  2.0_dp
+    Rr = -1.0_dp
+    Rs =  0.0_dp
   elseif (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
-    Rq=-1.0_dp
-    Rr=0.0_dp
+    Rq = -1.0_dp
+    Rr =  0.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u(nxf,:,k))
-    call MPI_ALLreduce(loc1D,rs,nzL,MPI_DOUBLE_PRECISION, &
+    call MPI_ALLreduce(loc1D,Rs,nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMph(ng,1),ierr)
-    rs=2.0_dp*rs/dble(nyf*jprocsph(ng))
-  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
-    Rq=dble(xBC(2))
-    Rr=0.0_dp
-    rs=0.0_dp
+    Rs =  2.0_dp*Rs/dble(nyf*jprocsph(ng))
+  else ! if (xBC(2)==1 .OR. xBC(2)==-1) then !.symmetry
+    Rq = dble(xBC(2))
+    Rr = 0.0_dp
+    Rs = 0.0_dp
   endif
-  fx=(dble(nxf*iprocsph(ng))/bLx)**2         !.1/(hx^2)
-  fy=(dble(nyf*jprocsph(ng))/bLy)**2         !.1/(hy^2)
-  fc=2.0_dp*(fx+fy)
+  fx = (dble(nxf*iprocsph(ng))/bLx)**2         !.1/(hx^2)
+  fy = (dble(nyf*jprocsph(ng))/bLy)**2         !.1/(hy^2)
+  fc = 2.0_dp*(fx+fy)
 
   allocate(sbufS(nxf,nzL),rbufN(nxf,nzL),sbufW(nyf,nzL),rbufE(nyf,nzL))
   allocate(sbufN(nxf,nzL),rbufS(nxf,nzL),sbufE(nyf,nzL),rbufW(nyf,nzL))
@@ -8642,13 +8642,15 @@ endif
   enddo
   call MPI_WAIT(req(6),stat(:,6),ierr)
   if (iIDph(ng) == 0) then !.Left most process (along x)
+!...global SW corner
     respoi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+Lq*u(1,1,:)+Lr*u(2,1,:)+Ls) &
-      +fy*(u(1,2,:)+rbufS(1,:))-fc*u(1,1,:)) !.SW corner
+      +fy*(u(1,2,:)+rbufS(1,:))-fc*u(1,1,:))
     do j=2,nyf-1 !.Left boundary
       respoi(1,j,:)=rhs(1,j,:)-(fx*(u(2,j,:)+Lq*u(1,j,:)+Lr*u(2,j,:)+Ls) &
         +fy*(u(1,j+1,:)+u(1,j-1,:))-fc*u(1,j,:))
     enddo
   else
+!...local SW corner
     respoi(1,1,:)=rhs(1,1,:)-(fx*(u(2,1,:)+rbufW(1,:)) &
       +fy*(u(1,2,:)+rbufS(1,:))-fc*u(1,1,:))
     do j=2,nyf-1
@@ -8659,10 +8661,11 @@ endif
 
   call MPI_WAIT(req(7),stat(:,7),ierr)
   if (iIDph(ng)==0) then !.Left most process (along x)
-!...NW corner
+!...global NW corner
     respoi(1,nyf,:)=rhs(1,nyf,:)-(fx*(u(2,nyf,:)+Lq*u(1,nyf,:)+Lr*u(2,nyf,:)+Ls) &
       +fy*(rbufN(1,:)+u(1,nyf-1,:))-fc*u(1,nyf,:))
   else
+!...local NW corner
     respoi(1,nyf,:)=rhs(1,nyf,:)-(fx*(u(2,nyf,:)+rbufW(nyf,:)) &
       +fy*(rbufN(1,:)+u(1,nyf-1,:))-fc*u(1,nyf,:))
   endif
@@ -8673,26 +8676,30 @@ endif
 
   call MPI_WAIT(req(8),stat(:,8),ierr)
   if (iIDph(ng) == iprocsm1) then !.Right most process (along x)
+!...global SE corner
     respoi(nxf,1,:)=rhs(nxf,1,:)-(fx*(Rq*u(nxf,1,:)+Rr*u(nxf-1,1,:)+Rs+u(nxf-1,1,:)) &
-      +fy*(u(nxf,2,:)+rbufS(nxf,:))-fc*u(nxf,1,:)) !.SE corner
+      +fy*(u(nxf,2,:)+rbufS(nxf,:))-fc*u(nxf,1,:))
     do j=2,nyf-1 !.Right boundary
       respoi(nxf,j,:)=rhs(nxf,j,:)-(fx*(Rq*u(nxf,j,:)+Rr*u(nxf-1,j,:)+Rs+u(nxf-1,j,:)) &
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-fc*u(nxf,j,:))
     enddo
+!...global NE corner
     respoi(nxf,nyf,:)=rhs(nxf,nyf,:)-(fx*(Rq*u(nxf,nyf,:)+Rr*u(nxf-1,nyf,:)+Rs+u(nxf-1,nyf,:)) &
-      +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))-fc*u(nxf,nyf,:)) !.NE corner
+      +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))-fc*u(nxf,nyf,:))
   else
+!...local SE corner
     respoi(nxf,1,:)=rhs(nxf,1,:)-(fx*(rbufE(1,:)+u(nxf-1,1,:)) &
       +fy*(u(nxf,2,:)+rbufS(nxf,:))-fc*u(nxf,1,:))
     do j=2,nyf-1 !.Right boundary
       respoi(nxf,j,:)=rhs(nxf,j,:)-(fx*(rbufE(j,:)+u(nxf-1,j,:)) &
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-fc*u(nxf,j,:))
     enddo
+!...local NE corner
     respoi(nxf,nyf,:)=rhs(nxf,nyf,:)-(fx*(rbufE(nyf,:)+u(nxf-1,nyf,:)) &
-      +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))-fc*u(nxf,nyf,:)) !.NE corner
+      +fy*(rbufN(nxf,:)+u(nxf,nyf-1,:))-fc*u(nxf,nyf,:))
   endif
-    call MPI_WAITALL(4,(/req(1),req(2),req(3),req(4)/), &
-                       (/stat(:,1),stat(:,2),stat(:,3),stat(:,4)/),ierr)
+  call MPI_WAITALL(4,(/req(1),req(2),req(3),req(4)/), &
+                     (/stat(:,1),stat(:,2),stat(:,3),stat(:,4)/),ierr)
 
 #IF (MGTIMER==1)
     call CPU_TIME(rest2)
@@ -8701,11 +8708,17 @@ endif
   end function respoi
 !*********************************************************
   subroutine MGphi(u,lambda,rho,xBC,ur)
-! Multigrid (GAMMA-cycle) algorithm for solution of linear elliptic equation
+!.Multigrid (GAMMA-cycle) algorithm for solution of linear elliptic equation
 !                div(lambda*grad(u))=rho.
-! Input u(inx,iny,nzL) contains the initial guess to u, while on output it
-! contains the final approximation. 
-! Right hand side Dirichlet values inputted in urb
+!.where lambda=plasma density, u=phi and rho=w.
+!.INPUTS
+!. real(dp) dimension(:,:,:) u: initial guess to solution (on finest grid)
+!. real(dp) dimension(:,:,:) lambda: spatially dependent coefficient
+!. real(dp) dimension(:,:,:) rho: the right-hand side of Poisson equation
+!. integer(2) xBC: boundary conditions along x
+!. real(dp) dimension(:,:) ur: Dirichlet value for Right boundary
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) u: updated solution
   implicit none
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), allocatable, intent(in) :: rho(:,:,:),lambda(:,:,:),ur(:,:)
@@ -8718,6 +8731,7 @@ endif
   integer(I4B) :: i,j,ierr
 #ENDIF
 
+!.Number of points along x and y on finest grid
   nxf=nxFph(lgph)
   nyf=nyFph(lgph)
 
@@ -8735,14 +8749,16 @@ endif
   call CPU_TIME(rstdiff1)
 #ENDIF
 !.Also need to compute coarsened lambda at each grid (Diff)
+!.Assume coefficient is even and use linear extrapolation
+!.at the boundaries
   Diff(lgph)%a=lambda
   do ng=lgph,2,-1
-    nxf=nxFph(ng)
-    nyf=nyFph(ng)
-    nxc=nxCph(ng)
-    nyc=nyCph(ng)
-    nxu=nxFph(ng-1)
-    nyu=nyFph(ng-1)
+    nxf=nxFph(ng)   !.Fine grid number of grid points along x
+    nyf=nyFph(ng)   !.Fine grid number of grid points along y
+    nxc=nxCph(ng)   !.Coarse grid number of grid points along x
+    nyc=nyCph(ng)   !.Coarse grid number of grid points along y
+    nxu=nxFph(ng-1) !.Next fine grid number of grid points along x
+    nyu=nyFph(ng-1) !.Next fine grid number of grid points along y
     if (acuph(ng,1)) Diff(ng-1)%a=rstrct(Diff(ng)%a,wdcph(ng),(/0,0/), &
         acuph(ng-1,:),urnkph(ng-1)%a,nurnkph(ng-1,:))
   enddo
@@ -8752,35 +8768,42 @@ endif
   resDtph=resDtph+rstdiff2-rstdiff1
 #ENDIF
 
+!.Reset the number of grid points variable to finest grid
   nxf=nxFph(lgph)
   nyf=nyFph(lgph)
 
   do jcycle=1,BETph
 
-    call Gcycphi(lgph,u,Diff,rho,xBC,ur) !.G-cycle
+    call Gcycphi(lgph,u,Diff,rho,xBC,ur) !.Gamma cycle
 
+!..............................................................
 #IF (DispRes==1)
     allocate(res(nxf,nyf,nzL))
     iprocsm1=iprocsph(lgph)-1
     jprocsm1=jprocsph(lgph)-1
-    res=0.0_dp
-    nresL=0.0_dp
-    nres=0.0_dp
-    res=resphi(lgph,u,Diff(lgph)%a,rho,xBC,ur)
+    res=0.0_dp          !.Residual
+    nresL=0.0_dp        !.Local norm of the residual
+    nres=0.0_dp         !.Global norm of the residual
+    res=resphi(lgph,u,Diff(lgph)%a,rho,xBC,ur)  !.Compute residual
+!...Compute residual norm
     do i=1,nxf; do j=1,nyf
       nresL=nresL+(res(i,j,1))**2
     enddo; enddo
     call MPI_REDUCE(nresL,nres,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,XYcomm0,ierr)
     nres=nres/dble(nxf*iprocsph(lgph)*nyf*jprocsph(lgph))
+!...Display residual norm after each Gamma cycle
     if (wrnk0==0) write(*,"('jcyc:',I4,'  |          nres=',E16.8E3)") jcycle,nres
     deallocate(res)
 #ENDIF
+!..............................................................
 
   enddo
+
 #IF (MGTIMER==1)
   call CPU_TIME(mg2)
   mgtph=mg2-mg1
 
+!.Save timer results in file
   if (wrnk0==0) then
     open(unit=10,file='mgtimes.out',status='unknown',form='unformatted')
     write(10) (/initPMG,mgtph,resDtph,preXtph,postXtph,proltph,rNrtph,restph/)
@@ -8791,11 +8814,16 @@ endif
   end subroutine MGphi
 !*********************************************************
   subroutine MGpsi(u,rho,iksq,xBC)
-!.Multigrid (V-cycle) algorithm for solution of linear elliptic equation
-!                u - ksq*(L)u=rho
-!.where L is the Laplacian operator. Input u contains the
-!.initial guess to the solution u, rho the source RHS. On output u
-!.contains the final approximation.
+!.Gamma cycles to solve modified Helmholtz equation
+!                u - ksq*(L)u = rho
+!.where L=Laplacian, u=psi, rho=rpsi and ksq=(electron skin depth)^2.
+!.INPUTS
+!. real(dp) dimension(:,:,:) u: initial guess to solution (on finest grid)
+!. real(dp) dimension(:,:,:) rho: the right-hand side of modified Helmholtz equation
+!. real(dp) iksq: constant coefficient in modified Helmholtz equation
+!. integer(2) xBC: boundary conditions along x
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) u: updated solution
   implicit none
   real(DP), intent(inout) :: u(:,:,:),rho(:,:,:)
   real(DP), intent(in) :: iksq
@@ -8808,8 +8836,9 @@ endif
   integer(I4B) :: i,j,ierr
 #ENDIF
 
-  ksq=iksq
+  ksq=iksq !.constant coefficient in modified Helmholtz equation
 
+!.Number of points along x and y on finest grid
   nxf=nxFps(lgps)
   nyf=nyFps(lgps)
 
@@ -8825,23 +8854,24 @@ endif
 
   do jcycle=1,BETps
 
-    call Gcycpsi(lgps,u,rho,xBC) !.G-cycle loop
+    call Gcycpsi(lgps,u,rho,xBC) !.Gamma cycle
 
 !..............................................................
 #IF (DispRes == 1)
-!...PRINT NORM OF RESIDUE FOR TESTING
     allocate(res(nxf,nyf,nzL))
     iprocsm1=iprocsps(lgps)-1
     jprocsm1=jprocsps(lgps)-1
-    res=0.0_dp
-    nresL=0.0_dp
-    nres=0.0_dp
-    res=respsi(lgps,u,rho,xBC)
+    res=0.0_dp          !.Residual
+    nresL=0.0_dp        !.Local norm of the residual
+    nres=0.0_dp         !.Global norm of the residual
+    res=respsi(lgps,u,rho,xBC)  !.Compute residual
+!...Compute residual norm
     do i=1,nxf; do j=1,nyf
       nresL=nresL+(res(i,j,1))**2
     enddo; enddo
     call MPI_REDUCE(nresL,nres,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,XYcomm0,ierr)
     nres=nres/dble(nxf*iprocsps(lgps)*nyf*jprocsps(lgps))
+!...Display residual norm after each Gamma cycle
     if (wrnk0==0) write(*,"('jcyc:',I4,'  |          nres=',E16.8E3)") jcycle,nres
     deallocate(res)
 #ENDIF
@@ -8853,6 +8883,7 @@ endif
   call CPU_TIME(mg2)
   mgtps=mg2-mg1
 
+!.Save timer results in file
   if (wrnk0==0) then
     open(unit=10,file='mgtimes.out',status='unknown',form='unformatted')
     write(10) (/initPMG,mgtps,resDtps,preXtps,postXtps,proltps,rNrtps,restps/)
@@ -8937,13 +8968,13 @@ endif
     allocate(res1(nxf,nyf,nzL))
     iprocsm1=iprocshd(qn)%a(lghd(qn))-1
     jprocsm1=jprocshd(qn)%a(lghd(qn))-1
-    res1=0.0_dp
-    nresL=0.0_dp
-    nres=0.0_dp
+    res1=0.0_dp         !.Residual
+    nresL=0.0_dp        !.Local norm of the residual
+    nres=0.0_dp         !.Global norm of the residual
 #IF (HDop==4)
     allocate(res2(nxf,nyf,nzL))
     res2=0.0_dp
-    call reshd(lghd(qn),res1,res2,au1,u,rho,rhs2,xBC,qn)
+    call reshd(lghd(qn),res1,res2,au1,u,rho,rhs2,xBC,qn)   !.Compute residual
 #ELIF (HDop==6)
     allocate(res2(nxf,nyf,nzL),res3(nxf,nyf,nzL))
     res2=0.0_dp
@@ -8952,11 +8983,13 @@ endif
 #ELSE
     res1=reshd(lghd(qn),u,rho,xBC,qn)
 #ENDIF
+!...Compute residual norm
     do i=1,nxf; do j=1,nyf
       nresL=nresL+(res1(i,j,1))**2
     enddo; enddo
     call MPI_REDUCE(nresL,nres,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,XYcomm0,ierr)
     nres=nres/dble(nxf*iprocshd(qn)%a(lghd(qn))*nyf*jprocshd(qn)%a(lghd(qn)))
+!...Display residual norm after each Gamma cycle
     if (wrnk0==0) write(*,"('jcyc:',I4,'  |          nres=',E16.8E3)") jcycle,nres
     deallocate(res1)
 #IF (HDop==4)
@@ -8973,6 +9006,7 @@ endif
   call CPU_TIME(mg2)
   mgthd=mg2-mg1
 
+!.Save timer results in file
   if (wrnk0==0) then
     open(unit=10,file='mgtimes.out',status='unknown',form='unformatted')
     write(10) (/initPMG,mgthd,resDthd,preXthd,postXthd,prolthd,rNrthd,resthd/)
@@ -9113,15 +9147,17 @@ endif
           allocate(res(nxf,nyf,nzL))
           iprocsm1=iprocsph(lgph)-1
           jprocsm1=jprocsph(lgph)-1
-          res=0.0_dp
-          nresL=0.0_dp
-          nres=0.0_dp
-          res=resphi(ng,un,Diff(ng)%a,rho(ng)%a,xBC,ur(ng)%a)
+          res=0.0_dp          !.Residual
+          nresL=0.0_dp        !.Local norm of the residual
+          nres=0.0_dp         !.Global norm of the residual
+          res=resphi(ng,un,Diff(ng)%a,rho(ng)%a,xBC,ur(ng)%a)  !.Compute residual
+!.........Compute residual norm
           do i=1,nxf; do j=1,nyf
             nresL=nresL+(res(i,j,1))**2
           enddo; enddo
           call MPI_REDUCE(nresL,nres,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,XYcomm0,ierr)
           nres=nres/dble(nxf*iprocsph(lgph)*nyf*jprocsph(lgph))
+!.........Display residual norm after each Gamma cycle
           if (wrnk0==0) write(*,"('jcyc:',I4,'  |          nres=',E16.8E3)") jcycle,nres
           deallocate(res)
         endif
@@ -9183,15 +9219,17 @@ endif
     allocate(res(nxf,nyf,nzL))
     iprocsm1=iprocsph(lgph)-1
     jprocsm1=jprocsph(lgph)-1
-    res=0.0_dp
-    nresL=0.0_dp
-    nres=0.0_dp
-    res=respoi(lgph,u,rho,xBC)
+    res=0.0_dp          !.Residual
+    nresL=0.0_dp        !.Local norm of the residual
+    nres=0.0_dp         !.Global norm of the residual
+    res=respoi(lgph,u,rho,xBC)  !.Compute residual
+!...Compute residual norm
     do i=1,nxf; do j=1,nyf
       nresL=nresL+(res(i,j,1))**2
     enddo; enddo
     call MPI_REDUCE(nresL,nres,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,XYcomm0,ierr)
     nres=nres/dble(nxf*iprocsph(lgph)*nyf*jprocsph(lgph))
+!...Display residual norm after each Gamma cycle
     if (wrnk0==0) write(*,"('jcyc:',I4,'  |          nres=',E16.8E3)") jcycle,nres
     deallocate(res)
 #ENDIF
@@ -9201,6 +9239,7 @@ endif
   call CPU_TIME(mg2)
   mgtpo=mg2-mg1
 
+!.Save timer results in file
   if (wrnk0==0) then
     open(unit=10,file='mgtimes.out',status='unknown',form='unformatted')
     write(10) (/initPMG,mgtpo,resDtpo,preXtpo,postXtpo,proltpo,rNrtpo,restpo/)
@@ -9298,15 +9337,17 @@ endif
           allocate(res(nxf,nyf,nzL))
           iprocsm1=iprocsph(lgph)-1
           jprocsm1=jprocsph(lgph)-1
-          res=0.0_dp
-          nresL=0.0_dp
-          nres=0.0_dp
-          res=respoi(ng,un,rho(ng)%a,xBC)
+          res=0.0_dp          !.Residual
+          nresL=0.0_dp        !.Local norm of the residual
+          nres=0.0_dp         !.Global norm of the residual
+          res=respoi(ng,un,rho(ng)%a,xBC)  !.Compute residual
+!.........Compute residual norm
           do i=1,nxf; do j=1,nyf
             nresL=nresL+(res(i,j,1))**2
           enddo; enddo
           call MPI_REDUCE(nresL,nres,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,XYcomm0,ierr)
           nres=nres/dble(nxf*iprocsph(lgph)*nyf*jprocsph(lgph))
+!.........Display residual norm after each Gamma cycle
           if (wrnk0==0) write(*,"('jcyc:',I4,'  |          nres=',E16.8E3)") jcycle,nres
           deallocate(res)
         endif
