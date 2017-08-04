@@ -8350,6 +8350,7 @@ endif
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+(fx*(Rs+u(nxf-1,j,:)) &
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-rhs(nxf,j,:))*deltaR
     enddo
+!...global NE corner
     u(nxf,nyf,:)=Oomeph*u(nxf,nyf,:)+(fx*(Rs+u(nxf-1,nyf,:)) &
       +fy*(rbufN(nxfd2,:)+u(nxf,nyf-1,:))-rhs(nxf,nyf,:))*deltaR
   else
@@ -8357,11 +8358,12 @@ endif
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+(fx*(rbufE(j/2,:)+u(nxf-1,j,:)) &
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-rhs(nxf,j,:))*delta
     enddo
+!...local NE corner
     u(nxf,nyf,:)=Oomeph*u(nxf,nyf,:)+(fx*(rbufE(nyfd2,:)+u(nxf-1,nyf,:)) &
       +fy*(rbufN(nxfd2,:)+u(nxf,nyf-1,:))-rhs(nxf,nyf,:))*delta
   endif
 
-    call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+  call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
   allocate(sbufN(nxfd2,nzL),rbufS(nxfd2,nzL),sbufE(nyfd2,nzL),rbufW(nyfd2,nzL))
 !.Send top row of array to North rank
   sbufN=u(1:nxf-1:2,nyf,:)
@@ -8392,13 +8394,15 @@ endif
 !.Left boundary, odd j
   call MPI_WAIT(req(4),stat(:,4),ierr)
   if (iIDph(ng)==0) then !.Left most process (along x)
+!...global SW corner
     u(1,1,:)=Oomeph*u(1,1,:)+(fx*(u(2,1,:)+Ls) &
-      +fy*(u(1,2,:)+rbufS(1,:))-rhs(1,1,:))*deltaL ! SW corner
+      +fy*(u(1,2,:)+rbufS(1,:))-rhs(1,1,:))*deltaL
     do j=3,nyf-1,2
       u(1,j,:)=Oomeph*u(1,j,:)+(fx*(u(2,j,:)+Ls) &
         +fy*(u(1,j+1,:)+u(1,j-1,:))-rhs(1,j,:))*deltaL
     enddo
   else
+!...local SW corner
     u(1,1,:)=Oomeph*u(1,1,:)+(fx*(u(2,1,:)+rbufW(1,:)) &
       +fy*(u(1,2,:)+rbufS(1,:))-rhs(1,1,:))*delta
     do j=3,nyf-1,2
@@ -8407,7 +8411,7 @@ endif
     enddo
   endif
 
-    call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+  call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
 !.Now do even-odd and odd-even squares of the grid, i.e, the black
 !.squares of the checker-board
 !.Comunicate red grid points needed
@@ -8444,18 +8448,20 @@ endif
       u(1,j,:)=Oomeph*u(1,j,:)+(fx*(u(2,j,:)+Ls) &
         +fy*(u(1,j+1,:)+u(1,j-1,:))-rhs(1,j,:))*deltaL
     enddo
+!...global NW corner
     u(1,nyf,:)=Oomeph*u(1,nyf,:)+(fx*(u(2,nyf,:)+Ls) &
-      +fy*(rbufN(1,:)+u(1,nyf-1,:))-rhs(1,nyf,:))*deltaL !.NW corner
+      +fy*(rbufN(1,:)+u(1,nyf-1,:))-rhs(1,nyf,:))*deltaL
   else
     do j=2,nyf-2,2
       u(1,j,:)=Oomeph*u(1,j,:)+(fx*(u(2,j,:)+rbufW(j/2,:)) &
         +fy*(u(1,j+1,:)+u(1,j-1,:))-rhs(1,j,:))*delta
     enddo
+!...local NW corner
     u(1,nyf,:)=Oomeph*u(1,nyf,:)+(fx*(u(2,nyf,:)+rbufW(nyfd2,:)) &
       +fy*(rbufN(1,:)+u(1,nyf-1,:))-rhs(1,nyf,:))*delta
   endif
 
-    call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+  call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
 !.Send top row of array to North rank
   sbufN=u(2:nxf:2,nyf,:)
   call MPI_ISEND(sbufN,nxfd2*nzL,MPI_DOUBLE_PRECISION,Nrank, &
@@ -8485,13 +8491,15 @@ endif
 !.Right boundary, odd j
   call MPI_WAIT(req(4),stat(:,4),ierr)
   if (iIDph(ng)==iprocsm1) then !.Right most process (along x)
+!...global SE corner
     u(nxf,1,:)=Oomeph*u(nxf,1,:)+(fx*(Rs+u(nxf-1,1,:)) &
-      +fy*(u(nxf,2,:)+rbufS(nxfd2,:))-rhs(nxf,1,:))*deltaR !.SE corner
+      +fy*(u(nxf,2,:)+rbufS(nxfd2,:))-rhs(nxf,1,:))*deltaR
     do j=3,nyf-1,2
       u(nxf,j,:)=Oomeph*u(nxf,j,:)+(fx*(Rs+u(nxf-1,j,:)) &
         +fy*(u(nxf,j+1,:)+u(nxf,j-1,:))-rhs(nxf,j,:))*deltaR
     enddo
   else
+!...local SE corner
     u(nxf,1,:)=Oomeph*u(nxf,1,:)+(fx*(rbufE(1,:)+u(nxf-1,1,:)) &
       +fy*(u(nxf,2,:)+rbufS(nxfd2,:))-rhs(nxf,1,:))*delta
     do j=3,nyf-1,2
@@ -8500,12 +8508,20 @@ endif
     enddo
   endif
 
-    call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
+  call MPI_WAITALL(2,(/req(1),req(3)/),(/stat(:,1),stat(:,3)/),ierr)
   end subroutine relaxpoi
 !*********************************************************
   function respoi(ng,u,rhs,xBC)
-! Returns minus the residual. Input quantities are u and rhs, while
-! the residual is returned in res.
+!.Returns minus the residual of the Poisson equation.
+!       res = rhs - div(grad(u))
+!.using a 2nd order accurate finite difference stencil.
+!.INPUTS
+!. integer ng: current grid
+!. real(dp) dimension(:,:,:) u: current solution at grid ng
+!. real(dp) dimension(:,:,:) rhs: the right-hand side of Poisson equation
+!. integer(2) xBC: boundary conditions along x
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) respoi: negated residual
   implicit none
   include 'mpif.h'
   real(DP), dimension(:,:,:), intent(in) :: u, rhs
@@ -8522,10 +8538,11 @@ endif
 #IF (MGTIMER==1)
     call CPU_TIME(rest1)
 #ENDIF
-  Nrank=nborph(ng,1)
-  Erank=nborph(ng,3)
-  Srank=nborph(ng,5)
-  Wrank=nborph(ng,7)
+!.Neighboring ranks to communicate with
+  Nrank = nborph(ng,1)
+  Erank = nborph(ng,3)
+  Srank = nborph(ng,5)
+  Wrank = nborph(ng,7)
 
   allocate(respoi(nxf,nyf,nzL))
 !.Boundary conditions are implemented with some amount of flexibility.
@@ -8539,21 +8556,21 @@ endif
   allocate(Ls(nzL),loc1D(nzL))
   if (xBC(1)==0) then
 !...linear extrapolation w/o boundary value
-    Lq=2.0_dp
-    Lr=-1.0_dp
-    ls=0.0_dp
+    Lq =  2.0_dp
+    Lr = -1.0_dp
+    Ls =  0.0_dp
   elseif (xBC(1)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
-    Lq=-1.0_dp
-    Lr=0.0_dp
+    Lq = -1.0_dp
+    Lr =  0.0_dp
     forall(k=1:nzL) loc1D(k)=sum(u(1,:,k))
-    call MPI_ALLreduce(loc1D,ls,nzL,MPI_DOUBLE_PRECISION, &
+    call MPI_ALLreduce(loc1D,Ls,nzL,MPI_DOUBLE_PRECISION, &
                        MPI_SUM,COMMph(ng,1),ierr)
-    ls=2.0_dp*ls/dble(nyf*jprocsph(ng))
+    Ls =  2.0_dp*Ls/dble(nyf*jprocsph(ng))
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
-    Lq=dble(xBC(1))
-    Lr=0.0_dp
-    ls=0.0_dp
+    Lq = dble(xBC(1))
+    Lr = 0.0_dp
+    Ls = 0.0_dp
   endif
 !.RHS BC of u
   allocate(Rs(nzL))
