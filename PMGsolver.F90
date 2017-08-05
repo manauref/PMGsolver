@@ -40,6 +40,9 @@
 ! IMPORTANT NOTES
 !   i) Not all solvers support the same boundary conditions
 !  ii) Modified Helmholtz relaxation has damped relaxation commented out
+! iii) Some restriction and prolongation operators have been removed
+!      for simplicity. I believe IR=0, ISR=1, IPRO=2 are the only options
+!      available in this file.
 ! ASSUMPTIONS
 !   a) Periodic along y and not periodic along x 
 !   b) The length of the simulation domain is defined as 2*pi times
@@ -55,6 +58,7 @@
 !   3. smallest grid has >=4 points along x
 !   4. Boundary condition on the right (along x) is Dirichlet(? check)
 !   5. The boundary conditions of lambda are assumed even
+!   6. Use boundary linear extrapolation when restricting lambda
 ! 
 ! Hyperdiffusion
 !   1. Hyperdiffusion may be applied to more than one quantity
@@ -8708,7 +8712,7 @@ endif
   end function respoi
 !*********************************************************
   subroutine MGphi(u,lambda,rho,xBC,ur)
-!.Multigrid (GAMMA-cycle) algorithm for solution of linear elliptic equation
+!.Multigrid (GAMMA-cycle) algorithm for solution of the Poisson equation
 !                div(lambda*grad(u))=rho.
 !.where lambda=plasma density, u=phi and rho=w.
 !.INPUTS
@@ -8757,8 +8761,10 @@ endif
     nyf=nyFph(ng)   !.Fine grid number of grid points along y
     nxc=nxCph(ng)   !.Coarse grid number of grid points along x
     nyc=nyCph(ng)   !.Coarse grid number of grid points along y
-    nxu=nxFph(ng-1) !.Next fine grid number of grid points along x
-    nyu=nyFph(ng-1) !.Next fine grid number of grid points along y
+    nxu=nxFph(ng-1) !.Unified domain coarse grid number of points along x
+    nyu=nyFph(ng-1) !.Unified domain coarse grid number of points along y
+!...Restrict spatially dependent coefficient, assuming it is even
+!...and using linear extrapolation at the boundaries
     if (acuph(ng,1)) Diff(ng-1)%a=rstrct(Diff(ng)%a,wdcph(ng),(/0,0/), &
         acuph(ng-1,:),urnkph(ng-1)%a,nurnkph(ng-1,:))
   enddo
@@ -8894,23 +8900,28 @@ endif
   end subroutine MGpsi
 !*********************************************************
   subroutine MGhd(u,rho,iDiff,xBC,qn)
-!.Multigrid (V-cycle) algorithm for solution of linear elliptic equation
-!                u + Diff*(L^pd)u=rho
-!.where Diff is a constant diffusion coefficient, L the Laplacian
-!.operator and pd the number of Laplacians whose composite make the
-!.hyper-diffusion operator. Input u(inx,iny) contains the initial guess
-!.to the solution u, av the initial guess to auxiliary variable values,
-!.rho the source RHS. On output u contains the final approximation.
-!.Domain and grid defined by aLx, aLy, inx and iny
+!.Gamma cyclesfor the solution of linear elliptic equation
+!                u + Diff*(L^pd)u = rho
+!.where Diff=constant diffusion coefficient, L=Laplacian,
+!.and pd the number of Laplacians whose composite make the
+!.hyper-diffusion operator.
+!.INPUTS
+!. real(dp) dimension(:,:,:) u: initial guess (on finest grid)
+!. real(dp) dimension(:,:,:) rhso: the right-hand side of hyperdiffusion BVP
+!. integer(2) xBC: boundary conditions along x
+!. integer qn: quantity being hyperdiffused (1 to nqhd)
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) u: updated solution
   implicit none
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), intent(in) :: iDiff(:),rho(:,:,:)
   integer(I4B), intent(in) :: xBC(:),qn
   integer(I4B) :: jcycle
 #IF (HDop==4 .OR. HDop==6)
-  real(DP), allocatable :: rhs2(:,:,:), au1(:,:,:) !.au=auxiliary variable
+  real(DP), allocatable :: rhs2(:,:,:)  !.auxiliary right hand side variable
+  real(DP), allocatable :: au1(:,:,:)   !.auxiliary variable
 #IF (HDop==6)
-  real(DP), allocatable :: au2(:,:,:) !.second auxiliary variable
+  real(DP), allocatable :: au2(:,:,:)   !.second auxiliary variable
 #ENDIF
 #ENDIF
 #IF (DispRes == 1)
@@ -8925,11 +8936,15 @@ endif
   integer(I4B) :: i,j,ierr
 #ENDIF
 
+!.Hyperdiffusion coefficient
   hDiff=iDiff
 
+!.Number of points along x and y in finest grid
   nxf=nxFhd(qn)%a(lghd(qn))
   nyf=nyFhd(qn)%a(lghd(qn))
 
+!.Initial guess to auxiliary variable is zero and
+!.auxiliary right hand side is always zero
 #IF (HDop==4 .OR. HDop==6)
   allocate(rhs2(nxf,nyf,nzL),au1(nxf,nyf,nzL))
   rhs2=0.0_dp
@@ -8949,20 +8964,20 @@ endif
   resthd=0.0_dp
   call CPU_TIME(mg1)
 #ENDIF
-  do jcycle=1,BEThd(qn) !.G-cycle(s)
+
+  do jcycle=1,BEThd(qn)
 
 #IF (HDop==4)
     call Gcychd(lghd(qn),au1,u,rho,rhs2,xBC,qn) !.Split Gamma-cycle loop
 #ELIF (HDop==6)
     call Gcychd(lghd(qn),au1,au2,u,rho,rhs2,rhs2,xBC,qn) !.Split Gamma-cycle loop
 #ELSE
-!...Bi/TriHelmholtz (not split) Gamma-cycle or Nonisotropic diffusion
+!...Bi/TriHelmholtz (not split) Gamma-cycle or ANISOWC diffusion
     call Gcychd(lghd(qn),u,rho,xBC,qn)
 #ENDIF
 
 !..............................................................
 #IF (DispRes == 1)
-!...PRINT NORM OF RESIDUE FOR TESTING
     nxf=nxFhd(qn)%a(lghd(qn))
     nyf=nyFhd(qn)%a(lghd(qn))
     allocate(res1(nxf,nyf,nzL))
@@ -8971,10 +8986,11 @@ endif
     res1=0.0_dp         !.Residual
     nresL=0.0_dp        !.Local norm of the residual
     nres=0.0_dp         !.Global norm of the residual
+!...Compute residual
 #IF (HDop==4)
     allocate(res2(nxf,nyf,nzL))
     res2=0.0_dp
-    call reshd(lghd(qn),res1,res2,au1,u,rho,rhs2,xBC,qn)   !.Compute residual
+    call reshd(lghd(qn),res1,res2,au1,u,rho,rhs2,xBC,qn)
 #ELIF (HDop==6)
     allocate(res2(nxf,nyf,nzL),res3(nxf,nyf,nzL))
     res2=0.0_dp
@@ -9017,14 +9033,20 @@ endif
   end subroutine MGhd
 !*********************************************************
   subroutine FMGphi(u,lambda,rhs,xBC,urb)
-! Full Multigrid Algorithm for solution of linear elliptic equation
-!                div(lambda*grad(u))=rhs
-! u(inx,iny,nzL) is filled on output with the final approximation.
-! Right hand side Dirichlet values inputted in urb
+!.Full Multigrid Algorithm for solution of the Poisson equation
+!                div(lambda*grad(u)) = rhs
+!.where lambda=plasma density, u=phi and rho=w.
+!.INPUTS
+!. real(dp) dimension(:,:,:) u: initial guess to solution (on finest grid)
+!. real(dp) dimension(:,:,:) lambda: spatially dependent coefficient
+!. real(dp) dimension(:,:,:) rhs: the right-hand side of Poisson equation
+!. integer(2) xBC: boundary conditions along x
+!. real(dp) dimension(:,:) urb: Dirichlet value for Right boundary
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) u: updated solution
   implicit none
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), intent(in) :: rhs(:,:,:),urb(:,:),lambda(:,:,:)
-!.Left and right boundary conditions
   integer(I4B), intent(in) :: xBC(:)
   integer(I4B) :: jcycle,ng
   type(allo3d), allocatable :: rho(:)
@@ -9040,27 +9062,30 @@ endif
   integer(I4B) :: i,j,ierr
 #ENDIF
 
+!.Number of points along x and y on finest grid
   nxf=nxFph(lgph)
   nyf=nyFph(lgph)
+!.For FMG need an array that contains the right hand
+!.side variable restricted to each grid
   allocate(rho(lgph))
-  allocate(rho(lgph)%a(nxf,nyf,nzL))  !.Allocate storage for RHS on grid ng
-  rho(lgph)%a=rhs        !.fill it with the input RHS
+  allocate(rho(lgph)%a(nxf,nyf,nzL))    !.Allocate storage for RHS on grid ng
+  rho(lgph)%a=rhs                       !.fill it with the input RHS
 
+!.Also need the RHS Dirichlet values restricted to each grid
   allocate(ur(lgph))
-  allocate(ur(lgph)%a(nyf,nzL))  !.Dirichlet boundary values on grid ng
-  ur(lgph)%a=urb        !.fill it with u(x=Lx) on finest grid
+  allocate(ur(lgph)%a(nyf,nzL))         !.Dirichlet boundary values on grid ng
+  ur(lgph)%a=urb                        !.fill it with u(x=Lx) on finest grid
 
   do ng=lgph,2,-1
 !...These two are not needed with simplest coarsening stencil
-!    iprocsm1=iprocsph(ng)-1
-!    jprocsm1=jprocsph(ng)-1
-!...Extract fine and coarse grids dimensions from nxv, nyv
-    nxf=nxFph(ng)
-    nyf=nyFph(ng)
-    nxc=nxCph(ng)
-    nyc=nyCph(ng)
-    nxu=nxFph(ng-1)
-    nyu=nyFph(ng-1)
+    iprocsm1 = iprocsph(ng)-1
+    jprocsm1 = jprocsph(ng)-1
+    nxf = nxFph(ng)     !.Fine grid number of points along x
+    nyf = nyFph(ng)     !.Fine grid number of points along y 
+    nxc = nxCph(ng)     !.Coarse grid number of points along x
+    nyc = nyCph(ng)     !.Coarse grid number of points along y
+    nxu = nxFph(ng-1)   !.Unfied domain coarse grid number of points along x
+    nyu = nyFph(ng-1)   !.Unfied domain coarse grid number of points along y
 !...Full Multi-grid needs the source RHS at every grid. Restrict and save
 !...IMPORTANT: check the symmetries here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     allocate(rho(ng-1)%a(nxu,nyu,nzL))
@@ -9091,14 +9116,16 @@ endif
   Diff(lgph)%a=lambda
   do ng=lgph,2,-1
 !...These two are not needed with simplest coarsening stencil
-!    iprocsm1=iprocsph(ng)-1
-!    jprocsm1=jprocsph(ng)-1
-    nxf=nxFph(ng)
-    nyf=nyFph(ng)
-    nxc=nxCph(ng)
-    nyc=nyCph(ng)
-    nxu=nxFph(ng-1)
-    nyu=nyFph(ng-1)
+    iprocsm1=iprocsph(ng)-1
+    jprocsm1=jprocsph(ng)-1
+    nxf=nxFph(ng)   !.Fine grid number of grid points along x
+    nyf=nyFph(ng)   !.Fine grid number of grid points along y
+    nxc=nxCph(ng)   !.Coarse grid number of grid points along x
+    nyc=nyCph(ng)   !.Coarse grid number of grid points along y
+    nxu=nxFph(ng-1) !.Unified domain coarse grid number of points along x
+    nyu=nyFph(ng-1) !.Unified domain coarse grid number of points along y
+!...Restrict spatially dependent coefficient, assuming it is even
+!...and using linear extrapolation at the boundaries
     if (acuph(ng,1)) Diff(ng-1)%a=rstrct(Diff(ng)%a,wdcph(ng),(/0,0/), &
         acuph(ng-1,:),urnkph(ng-1)%a,nurnkph(ng-1,:))
   enddo
@@ -9111,6 +9138,7 @@ endif
   allocate(un(nxf,nyf,nzL))
   un=0.0_dp !.Initial guess
 
+!.Relax on coarsest grid
   if (acuph(1,1)) then
     do jcycle=1,10 !NU2ph
       call relaxphi(1,un,Diff(1)%a,rho(1)%a,xBC,ur(1)%a)
@@ -9121,11 +9149,10 @@ endif
 
     iprocsm1=iprocsph(ng)-1
     jprocsm1=jprocsph(ng)-1
-!...New fine grid is twice of last coarse grid (minus 1 for x due to wall point)
-    nxf=nxFph(ng)
-    nyf=nyFph(ng)
-    nxc=nxCph(ng)
-    nyc=nyCph(ng)
+    nxf=nxFph(ng)   !.Fine grid number of grid points along x
+    nyf=nyFph(ng)   !.Fine grid number of grid points along y
+    nxc=nxCph(ng)   !.Coarse grid number of grid points along x
+    nyc=nyCph(ng)   !.Coarse grid number of grid points along y
 !...Associate pointer of previous estimate (u_{n-1}) to current estimate (u_n)
     un1=>un
     allocate(un(nxf,nyf,nzL))
@@ -9138,11 +9165,10 @@ endif
     if (acuph(ng,1)) then
       do jcycle=1,BETph
 
-        call Gcycphi(ng,un,Diff,rho(ng)%a,xBC,ur(ng)%a) !.G-cycle
+        call Gcycphi(ng,un,Diff,rho(ng)%a,xBC,ur(ng)%a) !.Gamma cycle
 
 !..............................................................
 #IF (DispRes == 1)
-!.......PRINT NORM OF RESIDUE FOR TESTING
         if (ng==lgph) then
           allocate(res(nxf,nyf,nzL))
           iprocsm1=iprocsph(lgph)-1
@@ -9179,10 +9205,14 @@ endif
   end subroutine FMGphi
 !*********************************************************
   subroutine MGpoi(u,rho,xBC)
-!.Multigrid (GAMMA-cycle) algorithm for solution of Poisson equation
+!.GAMMA cycle(s) for solution of Poisson equation
 !.               nabla^2(u)=rho.
-!.Input u(inx,iny,nzL) contains the initial guess to u, while on
-!.output it contains the final approximation.
+!.INPUTS
+!. real(dp) dimension(:,:,:) u: initial guess to solution (on finest grid)
+!. real(dp) dimension(:,:,:) rho: the right-hand side of Poisson equation
+!. integer(2) xBC: boundary conditions along x
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) u: updated solution
   implicit none
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), allocatable, intent(in) :: rho(:,:,:)
@@ -9195,6 +9225,7 @@ endif
   integer(I4B) :: i,j,ierr
 #ENDIF
 
+!.Number of points along x and y on finest grid
   nxf=nxFph(lgph)
   nyf=nyFph(lgph)
 
@@ -9213,7 +9244,7 @@ endif
 
   do jcycle=1,BETph
 
-    call Gcycpoi(lgph,u,rho,xBC) !.G-cycle
+    call Gcycpoi(lgph,u,rho,xBC) !.Gamma cycle
 
 #IF (DispRes==1)
     allocate(res(nxf,nyf,nzL))
@@ -9250,9 +9281,14 @@ endif
   end subroutine MGpoi
 !*********************************************************
   subroutine FMGpoi(u,rhs,xBC)
-! Full Multigrid Algorithm for solution of Poisson equation
-!                nabla^2(u)=rhs
-! u(inx,iny,nzL) is filled on output with the final approximation.
+!.Full Multigrid Algorithm for solution of Poisson equation
+!.               nabla^2(u) = rhs
+!.INPUTS
+!. real(dp) dimension(:,:,:) u: initial guess to solution (on finest grid)
+!. real(dp) dimension(:,:,:) rhs: the right-hand side of Poisson equation
+!. integer(2) xBC: boundary conditions along x
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) u: updated solution
   implicit none
   real(DP), intent(inout) :: u(:,:,:)
   real(DP), intent(in) :: rhs(:,:,:)
@@ -9269,23 +9305,25 @@ endif
   integer(I4B) :: i,j,ierr
 #ENDIF
 
+!.Number of points along x and y on finest grid
   nxf=nxFph(lgph)
   nyf=nyFph(lgph)
+!.FMG needs RHS variable restricted to every grid
   allocate(rho(lgph))
-  allocate(rho(lgph)%a(nxf,nyf,nzL))  !.Allocate storage for RHS on grid ng
-  rho(lgph)%a=rhs        !.fill it with the input RHS
+  allocate(rho(lgph)%a(nxf,nyf,nzL))    !.Allocate storage for RHS on grid ng
+  rho(lgph)%a=rhs                       !.fill it with the input RHS
 
   do ng=lgph,2,-1
 !...These two are not needed with simplest coarsening stencil
-!    iprocsm1=iprocsph(ng)-1
-!    jprocsm1=jprocsph(ng)-1
+    iprocsm1=iprocsph(ng)-1
+    jprocsm1=jprocsph(ng)-1
 !...Extract fine and coarse grids dimensions from nxv, nyv
-    nxf=nxFph(ng)
-    nyf=nyFph(ng)
-    nxc=nxCph(ng)
-    nyc=nyCph(ng)
-    nxu=nxFph(ng-1)
-    nyu=nyFph(ng-1)
+    nxf=nxFph(ng)   !.Fine grid number of grid points along x
+    nyf=nyFph(ng)   !.Fine grid number of grid points along y
+    nxc=nxCph(ng)   !.Coarse grid number of grid points along x
+    nyc=nyCph(ng)   !.Coarse grid number of grid points along y
+    nxu=nxFph(ng-1) !.Unified domain coarse grid number of points along x
+    nyu=nyFph(ng-1) !.Unified domain coarse grid number of points along y
 !...Full Multi-grid needs the source RHS at every grid. Restrict and save
 !...IMPORTANT: check the symmetries here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     allocate(rho(ng-1)%a(nxu,nyu,nzL))
@@ -9301,6 +9339,7 @@ endif
   allocate(un(nxf,nyf,nzL))
   un=0.0_dp !.Initial guess
 
+!.Relax on coarsest grid
   if (acuph(1,1)) then
     do jcycle=1,10 !NU2ph
       call relaxpoi(1,un,rho(1)%a,xBC)
@@ -9312,10 +9351,10 @@ endif
     iprocsm1=iprocsph(ng)-1
     jprocsm1=jprocsph(ng)-1
 !...New fine grid is twice of last coarse grid (minus 1 for x due to wall point)
-    nxf=nxFph(ng)
-    nyf=nyFph(ng)
-    nxc=nxCph(ng)
-    nyc=nyCph(ng)
+    nxf=nxFph(ng)   !.Fine grid number of grid points along x
+    nyf=nyFph(ng)   !.Fine grid number of grid points along y
+    nxc=nxCph(ng)   !.Coarse grid number of grid points along x
+    nyc=nyCph(ng)   !.Coarse grid number of grid points along y
 !...Associate pointer of previous estimate (u_{n-1}) to current estimate (u_n)
     un1=>un
     allocate(un(nxf,nyf,nzL))
@@ -9328,11 +9367,10 @@ endif
     if (acuph(ng,1)) then
       do jcycle=1,BETph
 
-        call Gcycpoi(ng,un,rho(ng)%a,xBC) !.G-cycle
+        call Gcycpoi(ng,un,rho(ng)%a,xBC) !.Gamma cycle
 
 !..............................................................
 #IF (DispRes == 1)
-!.......PRINT NORM OF RESIDUE FOR TESTING
         if (ng==lgph) then
           allocate(res(nxf,nyf,nzL))
           iprocsm1=iprocsph(lgph)-1
@@ -9375,10 +9413,20 @@ endif
 !.so that the volume to surface area of each process remains
 !.sufficiently high for good parallel performance
 !.Other inputs:
-! ldc: last dimension coarsened. If =0 restrict along both dimensions,
-!      if =1 restrict along x, if =2 restrict along y
-! (l/r)sym: left/right BC for uf, =1 even, =-1 odd, =0 linear extrapolation
-! ufr: u(x=Lx) is the Dirichlet value at right boundary
+!.INPUTS
+!.  real(dp) dimension(:,:,:) uf: current solution on fine grid
+!.  integer ldc: last dimension coarsened, =0 restrict along both dimensions,
+!.               if =1 restrict along x, if =2 restrict along y
+!.  integer(2) xBC: boundary conditions along x
+!.  logical dimension(:,:) acu: is process active and is subdomain unification
+!.                              happening at this level?
+!.  integer dimension(:) urnk: ranks data is sent to/received from when unifying
+!.                             subdomains
+!.  integer dimension(:,:) nurnk: number of ranks data is sent to/received from
+!.                                when unifying subdomains
+!.  real(dp) dimension(:,:) ufr: u(x=Lx) is the Dirichlet value at right boundary
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) rstrct: restricted solution on coarse (unified) grid
   implicit none
   include 'mpif.h'
   real(DP), allocatable, intent(in) :: uf(:,:,:)
@@ -9391,9 +9439,10 @@ endif
   integer(I4B) :: stat(MPI_STATUS_SIZE)
 
   allocate(rstrct(nxu,nyu,nzL),rst(nxc,nyc,nzL))
-  cof=maxval((/ nxf/nxc,nyf/nyc /))
+!.coarsening factor, =2 or =4
+  cof=maxval((/ nxf/nxc, nyf/nyc /))
 
-!.Restrict interior points
+!................... Restrict interior points ...................!
   if (ldc==0) then
 !.Restrict along both directions
 
@@ -9411,8 +9460,30 @@ endif
 !...Kwak restriction
 #ELIF (IR==2)
 !...Bilinear averaging (1/64=.015625)
+    do jc=2,nyc-1
+      jf=2*jc
+      do ic=2,nxc-1
+        iff=2*ic
+        rstrct(ic,jc,:)=.015625_dp*(9.0_dp*(uf(iff,jf,:)+uf(iff,jf-1,:) &
+          +uf(iff-1,jf-1,:)+uf(iff-1,jf,:))+3.0_dp*(uf(iff,jf+1,:)+uf(iff+1,jf,:) &
+          +uf(iff+1,jf-1,:)+uf(iff,jf-2,:)+uf(iff-1,jf-2,:)+uf(iff-2,jf-1,:) &
+          +uf(iff-2,jf,:)+uf(iff-1,jf+1,:))+uf(iff+1,jf+1,:)+uf(iff+1,jf-2,:) &
+          +uf(iff-2,jf-2,:)+uf(iff-2,jf+1,:))
+      enddo
+    enddo
 #ELIF (IR==3)
 !...Cubic interpolation (1/256=.00390625)
+    do jc=2,nyc-1
+      jf=2*jc
+      do ic=2,nxc-1
+        iff=2*ic
+        rstrct(ic,jc,:)=.00390625_dp*(81.0_dp*(uf(iff,jf,:)+uf(iff,jf-1,:) &
+          +uf(iff-1,jf-1,:)+uf(iff-1,jf,:))-9.0_dp*(uf(iff,jf+1,:)+uf(iff+1,jf,:) &
+          +uf(iff+1,jf-1,:)+uf(iff,jf-2,:)+uf(iff-1,jf-2,:)+uf(iff-2,jf-1,:) &
+          +uf(iff-2,jf,:)+uf(iff-1,jf+1,:))+uf(iff+1,jf+1,:)+uf(iff+1,jf-2,:) &
+          +uf(iff-2,jf-2,:)+uf(iff-2,jf+1,:))
+      enddo
+    enddo
 #ENDIF
 
   elseif (ldc==1) then
@@ -9436,8 +9507,38 @@ endif
 !                     +uf(iff-2,:,:))-uf(iff-3,:,:))/16.0_dp
       enddo
     endif
-#ELIF (ISR==2) 
+#ELIF (ISR==2)
+!...Counterpart of bilinear interpolation
+    if (cof==2) then
+      do ic=2,nxc-1
+       iff=2*ic
+       rstrct(ic,:,:)=.125_dp*(3.0_dp*(uf(iff,:,:)+uf(iff-1,:,:)) &
+                                    +uf(iff+1,:,:)+uf(iff-2,:,:))
+      enddo
+    else !if (cof==4) then !.0.015625=1/64
+      do ic=2,nxc-1
+       iff=4*ic
+       rstrct(ic,:,:)=.015625_dp*(12.0_dp*(uf(iff-1,:,:)+uf(iff-2,:,:)) &
+         +10.0_dp*(uf(iff,:,:)+uf(iff-3,:,:))+6.0_dp*(uf(iff+1,:,:)+uf(iff-4,:,:)) &
+         +3.0_dp*(uf(iff+2,:,:)+uf(iff-5,:,:))+uf(iff+3,:,:)+uf(iff-6,:,:))
+      enddo
+    endif
+#ELIF (ISR==3)
 !...Cubic interpolation
+    if (cof==2) then
+      do ic=2,nxc-1
+       iff=2*ic
+       rstrct(ic,:,:)=.0625_dp*(9.0_dp*(uf(iff,:,:)+uf(iff-1,:,:)) &
+                                     -uf(iff+1,:,:)-uf(iff-2,:,:))
+      enddo
+    else !if (cof==4) then !.0.00390625=1/256
+      do ic=2,nxc-1
+       iff=4*ic
+       rstrct(ic,:,:)=.00390625_dp*(72.0_dp*(uf(iff-1,:,:)+uf(iff-2,:,:)) &
+         +82.0_dp*(uf(iff,:,:)+uf(iff-3,:,:))-18.0_dp*(uf(iff+1,:,:)+uf(iff-4,:,:)) &
+         -9.0_dp*(uf(iff+2,:,:)+uf(iff-5,:,:))+uf(iff+3,:,:)+uf(iff-6,:,:))
+      enddo
+    endif
 #ENDIF
 
   else !if (ldc==2) then
@@ -9461,16 +9562,47 @@ endif
 !                     +uf(:,jf-2,:))-uf(:,jf-3,:))/16.0_dp
       enddo
     endif
-#ELIF (ISR==2) 
+#ELIF (ISR==2)
+!...Counterpart of bilinear interpolation
+    if (cof==2) then
+      do jc=2,nyc-1
+       jf=2*jc
+       rstrct(:,jc,:)=0.125_dp*(3.0_dp*(uf(:,jf,:)+uf(:,jf-1,:)) &
+                                       +uf(:,jf+1,:)+uf(:,jf-2,:))
+      enddo
+    else !if (cof==4) then !.0.015625=1/64
+      do jc=2,nyc-1
+       jf=4*jc
+       rstrct(:,jc,:)=.015625_dp*(12.0_dp*(uf(:,jf-1,:)+uf(:,jf-2,:)) &
+         +10.0_dp*(uf(:,jf,:)+uf(:,jf-3,:))+6.0_dp*(uf(:,jf+1,:)+uf(:,jf-4,:)) &
+         +3.0_dp*(uf(:,jf+2,:)+uf(:,jf-5,:))+uf(:,jf+3,:)+uf(:,jf-6,:))
+      enddo
+    endif
+#ELIF (ISR==3)
 !...Cubic interpolation
+    if (cof==2) then
+      do jc=2,nyc-1
+       jf=2*jc
+       rstrct(:,jc,:)=.0625_dp*(9.0_dp*(uf(:,jf,:)+uf(:,jf-1,:)) &
+                                       -uf(:,jf+1,:)-uf(:,jf-2,:))
+      enddo
+    else !if (cof==4) then !.0.00390625=1/256
+      do jc=2,nyc-1
+       jf=4*jc
+       rstrct(:,jc,:)=.00390625_dp*(72.0_dp*(uf(:,jf-1,:)+uf(:,jf-2,:)) &
+         +82.0_dp*(uf(:,jf,:)+uf(:,jf-3,:))-18.0_dp*(uf(:,jf+1,:)+uf(:,jf-4,:)) &
+         -9.0_dp*(uf(:,jf+2,:)+uf(:,jf-5,:))+uf(:,jf+3,:)+uf(:,jf-6,:))
+      enddo
+    endif
 #ENDIF
   endif
+!................................................................!
   
-!.Restrict points closest to x boundaries separately
+!................... Restrict boundary points ...................!
   if (ldc==0) then
 !.Restrict along both directions
 
-#IF (IRES==0)
+#IF (IR==0)
 !...4-point averaging
     do ic=2,nxc-1
       iff=2*ic
@@ -9486,7 +9618,7 @@ endif
       rst(nxc,jc,:)=0.25_dp*(uf(nxf,jf,:)+uf(nxf,jf-1,:) &
                             +uf(nxf-1,jf,:)+uf(nxf-1,jf-1,:))
     enddo
-#ELIF (IRES==1)
+#ELIF (IR==1)
 !...Kwak restriction
 #ELIF (IR==2)
 !...Bilinear averaging (1/64=.015625)
@@ -9585,6 +9717,24 @@ endif
   function prolng(ucU,ldc,xBC,COMMs,iID,jprocs,nbors,acu,urnk,nurnk,ucr)
 !.Coarse-to-fine prolongation. The coarse-grid quantity is
 !.input as uc, the fine-grid equivalent is returned as prolng.
+!.INPUTS
+!.  real(dp) dimension(:,:,:) ufcU: current solution on coarse grid
+!.  integer ldc: last dimension coarsened, =0 restrict along both dimensions,
+!.               if =1 restrict along x, if =2 restrict along y
+!.  integer(2) xBC: boundary conditions along x
+!.  integer(3) COMMs: y, x and xy communicators at current grid
+!.  integer iID: rank ID along x at this grid
+!.  integer jprocs: number of processes along y at this grid
+!.  integer(8) nbors: array of neighbor rank IDs, starting w/ N clockwise to NW
+!.  logical dimension(:,:) acu: is process active and is subdomain unification
+!.                              happening at this level?
+!.  integer dimension(:) urnk: ranks data is sent to/received from when unifying
+!.                             subdomains
+!.  integer dimension(:,:) nurnk: number of ranks data is sent to/received from
+!.                                when unifying subdomains
+!.  real(dp) dimension(:,:) ucr: u(x=Lx) is the Dirichlet value at right boundary
+!.OUTPUTS
+!. real(dp) dimension(:,:,:) prolng: prolonged solution on fine (not unified) grid
   implicit none
   include 'mpif.h'
   real(DP), intent(in) :: ucU(:,:,:)
@@ -9604,14 +9754,17 @@ endif
   real(DP) :: Lqu,Rqu,Lru,Rru
   integer(I4B) :: req(16),stat(MPI_STATUS_SIZE,16)
 
+!.Neighboring ranks to communicate with
   Nrank=nbors(1)
   Erank=nbors(3)
   Srank=nbors(5)
   Wrank=nbors(7)
+!.Diagonal neighbor rank IDs
   allocate(Drank(4))
   Drank=(/nbors(2),nbors(4),nbors(6),nbors(8)/)
 
   allocate(uc(nxc,nyc,nzL),prolng(nxf,nyf,nzL))
+!.coarsening factor, =2 or =4
   cof=maxval((/ nxf/nxc,nyf/nyc /))
 
 !.Re-distribute subdomains if the prolongated grid has
@@ -9655,192 +9808,194 @@ endif
     uc=ucU
   endif
 
-!.First choose the value of certain factors in the stencil/matrix
-!.based on the input boundary conditions
 !......... BCs of u ................................!
 !.LHS BC of u
   allocate(Lsu(nzL),loc1D(nzL))
   if (xBC(1)==0) then
 !...linear extrapolation w/o boundary value
-    Lqu=2.0_dp
-    Lru=-1.0_dp
-    Lsu=0.0_dp
+    Lqu =  2.0_dp
+    Lru = -1.0_dp
+    Lsu =  0.0_dp
   elseif (xBC(1)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
-    Lqu=-1.0_dp
-    Lru=0.0_dp
+    Lqu = -1.0_dp
+    Lru =  0.0_dp
     forall(k=1:nzL) loc1D(k)=sum(uc(1,:,k))
     call MPI_ALLreduce(loc1D,Lsu,nzL,MPI_DOUBLE_PRECISION,MPI_SUM,COMMs(1),ierr)
-    Lsu=2.0_dp*Lsu/dble(nyc*jprocs)
+    Lsu =  2.0_dp*Lsu/dble(nyc*jprocs)
   else ! if (xBC(1)==1 .OR. xBC(1)==-1) then ! symmetry
-    Lqu=dble(xBC(1))
-    Lru=0.0_dp
-    Lsu=0.0_dp
+    Lqu = dble(xBC(1))
+    Lru = 0.0_dp
+    Lsu = 0.0_dp
   endif
 !.RHS BC of u
   allocate(Rsu(nzL))
   if (xBC(2)==0) then
 !...linear extrapolation w/o boundary value
-    Rqu=2.0_dp
-    Rru=-1.0_dp
-    Rsu=0.0_dp
+    Rqu =  2.0_dp
+    Rru = -1.0_dp
+    Rsu =  0.0_dp
   elseif (xBC(2)==2) then
 !...ky=0 component has even symmetry, ky.neq.0 component is odd
-    Rqu=-1.0_dp
-    Rru=0.0_dp
+    Rqu = -1.0_dp
+    Rru =  0.0_dp
     forall(k=1:nzL) loc1D(k)=sum(uc(nxc,:,k))
     call MPI_ALLreduce(loc1D,Rsu,nzL,MPI_DOUBLE_PRECISION,MPI_SUM,COMMs(1),ierr)
-    Rsu=2.0_dp*Rsu/dble(nyc*jprocs)
+    Rsu =  2.0_dp*Rsu/dble(nyc*jprocs)
   else ! if (xBC(2)==1 .OR. xBC(2)==-1) then ! symmetry
-    Rqu=dble(xBC(2))
-    Rru=0.0_dp
-    Rsu=0.0_dp
+    Rqu = dble(xBC(2))
+    Rru = 0.0_dp
+    Rsu = 0.0_dp
   endif
 
   if (ldc==0) then
 !.Restrict along both directions
 
-!..Need to communicate with eight neighboring procs
-   allocate(rbufN(nxc,nzL),sbufN(nxc,nzL),rbufS(nxc,nzL),sbufS(nxc,nzL), &
-            rbufE(nYc,nzL),sbufE(nyc,nzL),rbufW(nyc,nzL),sbufW(nyc,nzL))
-   allocate(sNE(nzL),sSE(nzL),sSW(nzL),sNW(nzL),rNE(nzL),rSE(nzL),rSW(nzL),rNW(nzL))
-!..Send top row to North rank
-   sbufN=uc(:,nyc,:)
-   call MPI_ISEND(sbufN,nxc*nzL,MPI_DOUBLE_PRECISION,Nrank,0,COMMs(1),req(1),ierr)
-!..Receive uc row from South rank, for uc(i,j-1)
-   call MPI_IRECV(rbufS,nxc*nzL,MPI_DOUBLE_PRECISION,Srank,0,COMMs(1),req(2),ierr)
-!..Send bottom row to South rank
-   sbufS=uc(:,1,:)
-   call MPI_ISEND(sbufS,nxc*nzL,MPI_DOUBLE_PRECISION,Srank,1,COMMs(1),req(3),ierr)
-!..Receive uc row from North rank, for uc(i,j+1)
-   call MPI_IRECV(rbufN,nxc*nzL,MPI_DOUBLE_PRECISION,Nrank,1,COMMs(1),req(4),ierr)
-!..Send right column to East rank
-   sbufE=uc(nxc,:,:)
-   call MPI_ISEND(sbufE,nyc*nzL,MPI_DOUBLE_PRECISION,Erank,2,COMMs(2),req(5),ierr)
-!..Receive uc column from West rank, for uc(i-1,j)
-   call MPI_IRECV(rbufW,nyc*nzL,MPI_DOUBLE_PRECISION,Wrank,2,COMMs(2),req(6),ierr)
-!..Send top-right corner value to NE rank
-   sNE=uc(nxc,nyc,:)
-   call MPI_ISEND(sNE,nzL,MPI_DOUBLE_PRECISION,Drank(1),4,COMMs(3),req(7),ierr)
-!..Receive uc value from SW rank
-   call MPI_IRECV(rSW,nzL,MPI_DOUBLE_PRECISION,Drank(3),4,COMMs(3),req(8),ierr)
-!..Send bottom-right corner value to SE rank
-   sSE=uc(nxc,1,:)
-   call MPI_ISEND(sSE,nzL,MPI_DOUBLE_PRECISION,Drank(2),5,COMMs(3),req(9),ierr)
-!..Receive uc value from NW rank
-   call MPI_IRECV(rNW,nzL,MPI_DOUBLE_PRECISION,Drank(4),5,COMMs(3),req(10),ierr)
-!..Send left column to West rank
-   sbufW=uc(1,:,:)
-   call MPI_ISEND(sbufW,nyc*nzL,MPI_DOUBLE_PRECISION,Wrank,3,COMMs(2),req(11),ierr)
-!..Receive uc column from East rank, for uc(i+1,j)
-   call MPI_IRECV(rbufE,nyc*nzL,MPI_DOUBLE_PRECISION,Erank,3,COMMs(2),req(12),ierr)
-!..Send top-left corner value to NW rank
-   sNW=uc(1,nyc,:)
-   call MPI_ISEND(sNW,nzL,MPI_DOUBLE_PRECISION,Drank(4),7,COMMs(3),req(13),ierr)
-!..Receive uc value from SE rank
-   call MPI_IRECV(rSE,nzL,MPI_DOUBLE_PRECISION,Drank(2),7,COMMs(3),req(14),ierr)
-!..Send bottom-left corner value to SW rank
-   sSW=uc(1,1,:)
-   call MPI_ISEND(sSW,nzL,MPI_DOUBLE_PRECISION,Drank(3),6,COMMs(3),req(15),ierr)
-!..Receive uc value from SW rank
-   call MPI_IRECV(rNE,nzL,MPI_DOUBLE_PRECISION,Drank(1),6,COMMs(3),req(16),ierr)
+!...Need to communicate with eight neighboring procs
+    allocate(rbufN(nxc,nzL),sbufN(nxc,nzL),rbufS(nxc,nzL),sbufS(nxc,nzL), &
+             rbufE(nYc,nzL),sbufE(nyc,nzL),rbufW(nyc,nzL),sbufW(nyc,nzL))
+    allocate(sNE(nzL),sSE(nzL),sSW(nzL),sNW(nzL),rNE(nzL),rSE(nzL),rSW(nzL),rNW(nzL))
+!...Send top row to North rank
+    sbufN=uc(:,nyc,:)
+    call MPI_ISEND(sbufN,nxc*nzL,MPI_DOUBLE_PRECISION,Nrank,0,COMMs(1),req(1),ierr)
+!...Receive uc row from South rank, for uc(i,j-1)
+    call MPI_IRECV(rbufS,nxc*nzL,MPI_DOUBLE_PRECISION,Srank,0,COMMs(1),req(2),ierr)
+!...Send bottom row to South rank
+    sbufS=uc(:,1,:)
+    call MPI_ISEND(sbufS,nxc*nzL,MPI_DOUBLE_PRECISION,Srank,1,COMMs(1),req(3),ierr)
+!...Receive uc row from North rank, for uc(i,j+1)
+    call MPI_IRECV(rbufN,nxc*nzL,MPI_DOUBLE_PRECISION,Nrank,1,COMMs(1),req(4),ierr)
+!...Send right column to East rank
+    sbufE=uc(nxc,:,:)
+    call MPI_ISEND(sbufE,nyc*nzL,MPI_DOUBLE_PRECISION,Erank,2,COMMs(2),req(5),ierr)
+!...Receive uc column from West rank, for uc(i-1,j)
+    call MPI_IRECV(rbufW,nyc*nzL,MPI_DOUBLE_PRECISION,Wrank,2,COMMs(2),req(6),ierr)
+!...Send top-right corner value to NE rank
+    sNE=uc(nxc,nyc,:)
+    call MPI_ISEND(sNE,nzL,MPI_DOUBLE_PRECISION,Drank(1),4,COMMs(3),req(7),ierr)
+!...Receive uc value from SW rank
+    call MPI_IRECV(rSW,nzL,MPI_DOUBLE_PRECISION,Drank(3),4,COMMs(3),req(8),ierr)
+!...Send bottom-right corner value to SE rank
+    sSE=uc(nxc,1,:)
+    call MPI_ISEND(sSE,nzL,MPI_DOUBLE_PRECISION,Drank(2),5,COMMs(3),req(9),ierr)
+!...Receive uc value from NW rank
+    call MPI_IRECV(rNW,nzL,MPI_DOUBLE_PRECISION,Drank(4),5,COMMs(3),req(10),ierr)
+!...Send left column to West rank
+    sbufW=uc(1,:,:)
+    call MPI_ISEND(sbufW,nyc*nzL,MPI_DOUBLE_PRECISION,Wrank,3,COMMs(2),req(11),ierr)
+!...Receive uc column from East rank, for uc(i+1,j)
+    call MPI_IRECV(rbufE,nyc*nzL,MPI_DOUBLE_PRECISION,Erank,3,COMMs(2),req(12),ierr)
+!...Send top-left corner value to NW rank
+    sNW=uc(1,nyc,:)
+    call MPI_ISEND(sNW,nzL,MPI_DOUBLE_PRECISION,Drank(4),7,COMMs(3),req(13),ierr)
+!...Receive uc value from SE rank
+    call MPI_IRECV(rSE,nzL,MPI_DOUBLE_PRECISION,Drank(2),7,COMMs(3),req(14),ierr)
+!...Send bottom-left corner value to SW rank
+    sSW=uc(1,1,:)
+    call MPI_ISEND(sSW,nzL,MPI_DOUBLE_PRECISION,Drank(3),6,COMMs(3),req(15),ierr)
+!...Receive uc value from SW rank
+    call MPI_IRECV(rNE,nzL,MPI_DOUBLE_PRECISION,Drank(1),6,COMMs(3),req(16),ierr)
 
-!.....Bilinear interpolation..................................!
-!      do jf=2,nyf-1
-!        jc=(jf+1)/2
-!        k2=(-1)**IAND(jf,1) ! k2=1 even jf, k2=-1 odd jf
-!        do iff=2,nxf-1
-!          ic=(iff+1)/2
-!          k1=(-1)**IAND(iff,1) ! k=1 even iff, k=-1 odd iff
-!          prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
-!            +3.0_dp*(uc(ic+k1,jc,:)+uc(ic,jc+k2,:))+uc(ic+k1,jc+k2,:))
-!        enddo
+!...Bilinear interpolation..................................!
+!    do jf=2,nyf-1
+!      jc=(jf+1)/2
+!      k2=(-1)**IAND(jf,1) ! k2=1 even jf, k2=-1 odd jf
+!      do iff=2,nxf-1
+!        ic=(iff+1)/2
+!        k1=(-1)**IAND(iff,1) ! k=1 even iff, k=-1 odd iff
+!        prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
+!          +3.0_dp*(uc(ic+k1,jc,:)+uc(ic,jc+k2,:))+uc(ic+k1,jc+k2,:))
 !      enddo
-      do jf=2,nyf-2,2
-        jc=(jf+1)/2
-!.......Grid points with iff,jf=even
-        do iff=2,nxf-2,2
-          ic=(iff+1)/2
-          prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
-                           +3.0_dp*(uc(ic+1,jc,:)+uc(ic,jc+1,:))+uc(ic+1,jc+1,:))
-        enddo
-!.......Grid points with iff=odd,jf=even
-        do iff=3,nxf-1,2
-          ic=(iff+1)/2
-          prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
-                           +3.0_dp*(uc(ic-1,jc,:)+uc(ic,jc+1,:))+uc(ic-1,jc+1,:))
-        enddo
+!    enddo
+    do jf=2,nyf-2,2
+      jc=(jf+1)/2
+!.....Grid points with iff,jf=even
+      do iff=2,nxf-2,2
+        ic=(iff+1)/2
+        prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
+                         +3.0_dp*(uc(ic+1,jc,:)+uc(ic,jc+1,:))+uc(ic+1,jc+1,:))
       enddo
-      do jf=3,nyf-1,2
-        jc=(jf+1)/2
-!.......Grid points with iff=even,jf=odd
-        do iff=2,nxf-2,2
-          ic=(iff+1)/2
-          prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
-                           +3.0_dp*(uc(ic+1,jc,:)+uc(ic,jc-1,:))+uc(ic+1,jc-1,:))
-        enddo
-!.......Grid points with iff,jf=odd
-        do iff=3,nxf-1,2
-          ic=(iff+1)/2
-          prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
-                           +3.0_dp*(uc(ic-1,jc,:)+uc(ic,jc-1,:))+uc(ic-1,jc-1,:))
-        enddo
+!.....Grid points with iff=odd,jf=even
+      do iff=3,nxf-1,2
+        ic=(iff+1)/2
+        prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
+                         +3.0_dp*(uc(ic-1,jc,:)+uc(ic,jc+1,:))+uc(ic-1,jc+1,:))
       enddo
+    enddo
+    do jf=3,nyf-1,2
+      jc=(jf+1)/2
+!.....Grid points with iff=even,jf=odd
+      do iff=2,nxf-2,2
+        ic=(iff+1)/2
+        prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
+                         +3.0_dp*(uc(ic+1,jc,:)+uc(ic,jc-1,:))+uc(ic+1,jc-1,:))
+      enddo
+!.....Grid points with iff,jf=odd
+      do iff=3,nxf-1,2
+        ic=(iff+1)/2
+        prolng(iff,jf,:)=0.0625_dp*(9.0_dp*uc(ic,jc,:) &
+                         +3.0_dp*(uc(ic-1,jc,:)+uc(ic,jc-1,:))+uc(ic-1,jc-1,:))
+      enddo
+    enddo
 
     call MPI_WAIT(req(2),stat(:,2),ierr)
-!      do iff=2,nxf-1 ! Bottom row
-!        ic=(iff+1)/2
-!        k1=(-1)**IAND(iff,1) ! k=1 even iff, k=-1 odd iff
-!        prolng(iff,1,:)=0.0625_dp*(9.0_dp*uc(ic,1,:) &
-!          +3.0_dp*(uc(ic+k1,1,:)+rbufS(ic,:))+rbufS(ic+k1,:))
-!      enddo
-      do iff=2,nxf-2,2 ! Grid points with iff=even
-        ic=iff/2
-        prolng(iff,1,:)=0.0625_dp*(9.0_dp*uc(ic,1,:) &
-                        +3.0_dp*(uc(ic+1,1,:)+rbufS(ic,:))+rbufS(ic+1,:))
-      enddo
-      do iff=3,nxf-1,2 ! Grid points with iff=odd
-        ic=(iff+1)/2
-        prolng(iff,1,:)=0.0625_dp*(9.0_dp*uc(ic,1,:) &
-                        +3.0_dp*(uc(ic-1,1,:)+rbufS(ic,:))+rbufS(ic-1,:))
-      enddo
+!...Bottom row
+!    do iff=2,nxf-1
+!      ic=(iff+1)/2
+!      k1=(-1)**IAND(iff,1) ! k=1 even iff, k=-1 odd iff
+!      prolng(iff,1,:)=0.0625_dp*(9.0_dp*uc(ic,1,:) &
+!        +3.0_dp*(uc(ic+k1,1,:)+rbufS(ic,:))+rbufS(ic+k1,:))
+!    enddo
+    do iff=2,nxf-2,2 !.Grid points with iff=even
+      ic=iff/2
+      prolng(iff,1,:)=0.0625_dp*(9.0_dp*uc(ic,1,:) &
+                      +3.0_dp*(uc(ic+1,1,:)+rbufS(ic,:))+rbufS(ic+1,:))
+    enddo
+    do iff=3,nxf-1,2 !.Grid points with iff=odd
+      ic=(iff+1)/2
+      prolng(iff,1,:)=0.0625_dp*(9.0_dp*uc(ic,1,:) &
+                      +3.0_dp*(uc(ic-1,1,:)+rbufS(ic,:))+rbufS(ic-1,:))
+    enddo
+
     call MPI_WAIT(req(4),stat(:,4),ierr)
-!      do iff=2,nxf-1 ! Top row
-!        ic=(iff+1)/2
-!        k1=(-1)**IAND(iff,1) ! k=1 even iff, k=-1 odd iff
-!        prolng(iff,nyf,:)=0.0625_dp*(9.0_dp*uc(ic,nyc,:) &
-!          +3.0_dp*(uc(ic+k1,nyc,:)+rbufN(ic,:))+rbufN(ic+k1,:))
-!      enddo
-      do iff=2,nxf-2,2 ! Grid points with iff=even
-        ic=iff/2
-        prolng(iff,nyf,:)=0.0625_dp*(9.0_dp*uc(ic,nyc,:) &
-                          +3.0_dp*(uc(ic+1,nyc,:)+rbufN(ic,:))+rbufN(ic+1,:))
-      enddo
-      do iff=3,nxf-1,2 ! Grid points with iff=odd
-        ic=(iff+1)/2
-        prolng(iff,nyf,:)=0.0625_dp*(9.0_dp*uc(ic,nyc,:) &
-                          +3.0_dp*(uc(ic-1,nyc,:)+rbufN(ic,:))+rbufN(ic-1,:))
-      enddo
-!.....Left boundary
-!      call MPI_WAIT(req(6),stat(:,6),ierr)
-      call MPI_WAITALL(3,(/req(6),req(8),req(10)/), &
-        (/stat(:,6),stat(:,8),stat(:,10)/),ierr)
+!...Top row
+!    do iff=2,nxf-1
+!      ic=(iff+1)/2
+!      k1=(-1)**IAND(iff,1) ! k=1 even iff, k=-1 odd iff
+!      prolng(iff,nyf,:)=0.0625_dp*(9.0_dp*uc(ic,nyc,:) &
+!        +3.0_dp*(uc(ic+k1,nyc,:)+rbufN(ic,:))+rbufN(ic+k1,:))
+!    enddo
+    do iff=2,nxf-2,2 !.Grid points with iff=even
+      ic=iff/2
+      prolng(iff,nyf,:)=0.0625_dp*(9.0_dp*uc(ic,nyc,:) &
+                        +3.0_dp*(uc(ic+1,nyc,:)+rbufN(ic,:))+rbufN(ic+1,:))
+    enddo
+    do iff=3,nxf-1,2 !.Grid points with iff=odd
+      ic=(iff+1)/2
+      prolng(iff,nyf,:)=0.0625_dp*(9.0_dp*uc(ic,nyc,:) &
+                        +3.0_dp*(uc(ic-1,nyc,:)+rbufN(ic,:))+rbufN(ic-1,:))
+    enddo
+
+!...Left boundary
+!    call MPI_WAIT(req(6),stat(:,6),ierr)
+    call MPI_WAITALL(3,(/req(6),req(8),req(10)/), &
+      (/stat(:,6),stat(:,8),stat(:,10)/),ierr)
     if (iID==0) then
       prolng(1,1,:)=0.0625_dp*(9.0_dp*uc(1,1,:)+3.0_dp*(Lqu*uc(1,1,:) &
         +Lru*uc(2,1,:)+Lsu+rbufS(1,:))+Lqu*rbufS(1,:)+Lru*rbufS(2,:)+Lsu)
-!.For some reason this loop causes issues with -O3 on Discovery
+!.....For some reason this loop causes issues with -O3 on Discovery
 !      do jf=2,nyf-1
 !        jc=(jf+1)/2
 !        k2=(-1)**IAND(jf,1) ! k=1 even jf, k=-1 odd jf
 !        prolng(1,jf,:)=0.0625_dp*(9.0_dp*uc(1,jc,:)+3.0_dp*(Lqu*uc(1,jc,:) &
 !          +Lru*uc(2,jc,:)+Lsu+uc(1,jc+k2,:))+Lqu*uc(1,jc+k2,:)+Lru*uc(2,jc+k2,:)+Lsu)
 !      enddo
-      do jf=2,nyf-2,2 ! Grid points with jf=even
+      do jf=2,nyf-2,2 !.Grid points with jf=even
         jc=jf/2
         prolng(1,jf,:)=0.0625_dp*(9.0_dp*uc(1,jc,:)+3.0_dp*(Lqu*uc(1,jc,:) &
           +Lru*uc(2,jc,:)+Lsu+uc(1,jc+1,:))+Lqu*uc(1,jc+1,:)+Lru*uc(2,jc+1,:)+Lsu)
       enddo
-      do jf=3,nyf-1,2 ! Grid points with jf=odd
+      do jf=3,nyf-1,2 !.Grid points with jf=odd
         jc=(jf+1)/2
         prolng(1,jf,:)=0.0625_dp*(9.0_dp*uc(1,jc,:)+3.0_dp*(Lqu*uc(1,jc,:) &
           +Lru*uc(2,jc,:)+Lsu+uc(1,jc-1,:))+Lqu*uc(1,jc-1,:)+Lru*uc(2,jc-1,:)+Lsu)
@@ -9850,7 +10005,7 @@ endif
     else
       prolng(1,1,:)=0.0625_dp*(9.0_dp*uc(1,1,:) &
         +3.0_dp*(rbufW(1,:)+rbufS(1,:))+rSW)
-!.This loop my cause issues with -O3 on Discovery
+!.....This loop my cause issues with -O3 on Discovery
 !      do jf=2,nyf-1
 !        jc=(jf+1)/2
 !        k2=(-1)**IAND(jf,1) ! k2=1 even jf, k2=-1 odd jf
@@ -9872,10 +10027,11 @@ endif
       prolng(1,nyf,:)=0.0625_dp*(9.0_dp*uc(1,nyc,:) &
         +3.0_dp*(rbufW(nyc,:)+rbufN(1,:))+rNW)
     endif
-      call MPI_WAITALL(3,(/req(12),req(14),req(16)/), &
-        (/stat(:,12),stat(:,14),stat(:,16)/),ierr)
+
+!...Right boundary
+    call MPI_WAITALL(3,(/req(12),req(14),req(16)/), &
+      (/stat(:,12),stat(:,14),stat(:,16)/),ierr)
     if (iID==iprocsm1) then
-!.....Right boundary
       prolng(nxf,1,:)=0.0625_dp*(9.0_dp*uc(nxc,1,:) &
         +3.0_dp*(Rqu*uc(nxc,1,:)+Rru*uc(nxc-1,1,:)+Rsu(:) &
         +rbufS(nxc,:))+Rqu*rbufS(nxc,:)+Rru*rbufS(nxc-1,:)+Rsu(:))
@@ -9886,13 +10042,13 @@ endif
 !          +3.0_dp*(Rqu*uc(nxc,jc,:)+Rru*uc(nxc-1,jc,:)+Rsu(:) &
 !          +uc(nxc,jc+k2,:))+Rqu*uc(nxc,jc+k2,:)+Rru*uc(nxc-1,jc+k2,:)+Rsu(:))
 !      enddo
-      do jf=2,nyf-2,2 ! Grid points with jf=even
+      do jf=2,nyf-2,2 !.Grid points with jf=even
         jc=jf/2
         prolng(nxf,jf,:)=0.0625_dp*(9.0_dp*uc(nxc,jc,:) &
           +3.0_dp*(Rqu*uc(nxc,jc,:)+Rru*uc(nxc-1,jc,:)+Rsu &
           +uc(nxc,jc+1,:))+Rqu*uc(nxc,jc+1,:)+Rru*uc(nxc-1,jc+1,:)+Rsu)
       enddo
-      do jf=3,nyf-1,2 ! Grid points with jf=odd
+      do jf=3,nyf-1,2 !.Grid points with jf=odd
         jc=(jf+1)/2
         prolng(nxf,jf,:)=0.0625_dp*(9.0_dp*uc(nxc,jc,:) &
           +3.0_dp*(Rqu*uc(nxc,jc,:)+Rru*uc(nxc-1,jc,:)+Rsu+uc(nxc,jc-1,:)) &
@@ -9925,9 +10081,9 @@ endif
       prolng(nxf,nyf,:)=0.0625_dp*(9.0_dp*uc(nxc,nyc,:) &
         +3.0_dp*(rbufE(nyc,:)+rbufN(nxc,:))+rNE)
     endif
-      call MPI_WAITALL(8,(/req(1),req(3),req(5),req(7),req(9),req(11), &
-        req(13),req(15)/),(/stat(:,1),stat(:,3),stat(:,5),stat(:,7), &
-        stat(:,9),stat(:,11),stat(:,13),stat(:,15)/),ierr)
+    call MPI_WAITALL(8,(/req(1),req(3),req(5),req(7),req(9),req(11), &
+      req(13),req(15)/),(/stat(:,1),stat(:,3),stat(:,5),stat(:,7), &
+      stat(:,9),stat(:,11),stat(:,13),stat(:,15)/),ierr)
 
   elseif (ldc==1) then
 !.Restrict along x (nyc=nyf)
@@ -9945,14 +10101,16 @@ endif
 !...Receive uc column from East rank, for uc(i+1,j)
     call MPI_IRECV(rbufE,nyc*nzL,MPI_DOUBLE_PRECISION,Erank,2,COMMs(2),req(4),ierr)
 
-    if (cof==2) then
+    if (cof==2) then !.2x-coarsening
+!.....Interior points
       do iff=2,nxf-1
         ic=(iff+1)/2
-        p=(-1)**IAND(iff,1) ! p=1 for even iff, p=-1 for odd iff
+        p=(-1)**IAND(iff,1) !.p=1 for even iff, p=-1 for odd iff
         prolng(iff,:,:)=0.25_dp*(3.0_dp*uc(ic,:,:)+uc(ic+p,:,:))
       enddo
 
       call MPI_WAIT(req(2),stat(:,2),ierr)
+!.....Left boundary
       if (iID==0) then
         forall(k=1:nzL) prolng(1,:,k)=0.25_dp*(Lqu*uc(1,:,k) &
           +Lru*uc(2,:,k)+Lsu(k))+0.75_dp*uc(1,:,k)
@@ -9960,6 +10118,7 @@ endif
         prolng(1,:,:)=0.25_dp*rbufW+0.75_dp*uc(1,:,:)
       endif
       call MPI_WAIT(req(4),stat(:,4),ierr)
+!.....Right boundary
       if (iID==iprocsm1) then
         forall(k=1:nzL) prolng(nxf,:,k)=0.75_dp*uc(nxc,:,k)+0.25_dp*(Rqu*uc(nxc,:,k) &
           +Rru*uc(nxc-1,:,k)+Rsu(k))
@@ -9967,16 +10126,18 @@ endif
         prolng(nxf,:,:)=0.75_dp*uc(nxc,:,:)+0.25_dp*rbufE
       endif
 
-    else
+    else !if (cof==4) then !.4x-coarsening
+!.....Interior points
       do iff=4,nxf-4,4
         ic=(iff+1)/4
-        prolng(iff-1,:,:)=0.875_dp*uc(ic,:,:)+0.125_dp*uc(ic+1,:,:)
-        prolng(iff,:,:)=0.625_dp*uc(ic,:,:)+0.375_dp*uc(ic+1,:,:)
-        prolng(iff+1,:,:)=0.375_dp*uc(ic,:,:)+0.625_dp*uc(ic+1,:,:)
-        prolng(iff+2,:,:)=0.125_dp*uc(ic,:,:)+0.875_dp*uc(ic+1,:,:)
+        prolng(iff-1,:,:) = 0.875_dp*uc(ic,:,:)+0.125_dp*uc(ic+1,:,:)
+        prolng(iff,:,:)   = 0.625_dp*uc(ic,:,:)+0.375_dp*uc(ic+1,:,:)
+        prolng(iff+1,:,:) = 0.375_dp*uc(ic,:,:)+0.625_dp*uc(ic+1,:,:)
+        prolng(iff+2,:,:) = 0.125_dp*uc(ic,:,:)+0.875_dp*uc(ic+1,:,:)
       enddo
 
       call MPI_WAIT(req(2),stat(:,2),ierr) 
+!.....Left boundary
       if (iID==0) then
         forall(k=1:nzL) prolng(1,:,k)=0.375_dp*(Lqu*uc(1,:,k) &
           +Lru*uc(2,:,k)+Lsu(k))+0.625_dp*uc(1,:,k)
@@ -9986,7 +10147,8 @@ endif
         prolng(1,:,:)=0.375_dp*rbufW+0.625_dp*uc(1,:,:)
         prolng(2,:,:)=0.125_dp*rbufW+0.875_dp*uc(1,:,:)
       endif
-        call MPI_WAIT(req(4),stat(:,4),ierr) 
+      call MPI_WAIT(req(4),stat(:,4),ierr) 
+!.....Right boundary
       if (iID==iprocsm1) then
         forall(k=1:nzL) prolng(nxf-1,:,k)=0.875_dp*uc(nxc,:,k)+0.125_dp*(Rqu*uc(nxc,:,k) &
           +Rru*uc(nxc-1,:,k)+Rsu(k))
@@ -10017,19 +10179,21 @@ endif
 !...Receive uc row from North rank, for uc(i,j+1)
     call MPI_IRECV(rbufN,nxc*nzL,MPI_DOUBLE_PRECISION,Nrank,1,COMMs(1),req(4),ierr)
 
-    if (cof==2) then
+    if (cof==2) then !.2x-coarsening
       do jf=2,nyf-1
         jc=(jf+1)/2
-        q=(-1)**IAND(jf,1) ! q=1 for even jf, q=-1 for odd jf
+        q=(-1)**IAND(jf,1) !.q=1 for even jf, q=-1 for odd jf
         prolng(:,jf,:)=0.25_dp*(3.0_dp*uc(:,jc,:)+uc(:,jc+q,:))
       enddo
 
       call MPI_WAIT(req(2),stat(:,2),ierr)
+!.....Bottom boundary
       prolng(:,1,:)=0.25_dp*rbufS+0.75_dp*uc(:,1,:)
       call MPI_WAIT(req(4),stat(:,4),ierr)
+!.....Top boundary
       prolng(:,nyf,:)=0.75_dp*uc(:,nyc,:)+0.25_dp*rbufN
 
-    else
+    else !if (cof==4) then !.4x-coarsening
       do jf=4,nyf-4,4
         jc=(jf+1)/4
         prolng(:,jf-1,:)=0.875_dp*uc(:,jc,:)+0.125_dp*uc(:,jc+1,:)
@@ -10039,9 +10203,11 @@ endif
       enddo
 
       call MPI_WAIT(req(2),stat(:,2),ierr) 
+!.....Bottom boundary
       prolng(:,1,:)=0.375_dp*rbufS+0.625_dp*uc(:,1,:)
       prolng(:,2,:)=0.125_dp*rbufS+0.875_dp*uc(:,1,:)
       call MPI_WAIT(req(4),stat(:,4),ierr) 
+!.....Top boundary
       prolng(:,nyf-1,:)=0.875_dp*uc(:,nyc,:)+0.125_dp*rbufN
       prolng(:,nyf,:)=0.625_dp*uc(:,nyc,:)+0.375_dp*rbufN
     endif
