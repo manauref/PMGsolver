@@ -10,8 +10,6 @@
 !    from the vorticity w
 !                 div(lambda*grad(u))=rho
 !    where lambda=plasma density, u=phi and rho=w.
-!    In the routines below we use the suffix 'ph' to indicate
-!    routines to obtain phi.
 ! 2. An inhomogeneous modified Helmholtz equation to obtain the
 !    magnetic flux function psi from the variable rpsi which
 !    contains an electron inertia contribution
@@ -27,26 +25,32 @@
 !    operator is also available respectively. For more details
 !    see M. Francisquez, et. al., Multigrid treatment of implicit
 !    continuum diffusion, J. of Comp. Phys 2017)
-! 4. Simple Poisson equation
-!			L(u) = rho
-!    where u=psi the magnetic flux function and rho=current.
+! 4. A simple Poisson solver
+!                 div(grad(u))=rho
 !
-! Both simple multigrid (V or gamma cycles) solvers and
-! full multigrid (FMG) solvers are available for Poisson equations.
+! In the routines below we use the suffix 'ph' to indicate
+! routines to obtain phi, 'ps' for psi and 'hd' for hyperdiffusion.
 !
 ! Though these are 2D solvers, we allow for a 3rd dimension so that
 ! PMGsolver effetively supports solving many xy planes of
 ! independent 2D problems.
 !
-! A program with sample usages is given in the repo.
+! A program, pmg4gdb.F90, has been included to show the use of some
+! of these solvers with a test function.
 !
 ! Manaure Francisquez
 ! mana@dartmouth.edu
 ! 2017
 !
 !********************************************************************
+! IMPORTANT NOTES
+!   i) Not all solvers support the same boundary conditions
+!  ii) Modified Helmholtz relaxation has damped relaxation commented out
+! iii) Some restriction and prolongation operators have been removed
+!      for simplicity. I believe IR=0, ISR=1, IPRO=2 are the only options
+!      available in this file.
 ! ASSUMPTIONS
-!   a) Periodic along y and not periodic along x 
+!   a) Periodic along y and not periodic along x
 !   b) The length of the simulation domain is defined as 2*pi times
 !      a factor specified in the input file (fLx along x)
 !   c) The problem, the grids and the MPI decomposition are such that
@@ -59,8 +63,9 @@
 !   2. nxmin,nymin >= 4
 !   3. smallest grid has >=4 points along x
 !   4. Boundary condition on the right (along x) is Dirichlet(? check)
-!...5. The boundary conditions of lambda are assumed even
-! 
+!   5. The boundary conditions of lambda are assumed even
+!   6. Use boundary linear extrapolation when restricting lambda
+!
 ! Hyperdiffusion
 !   1. Hyperdiffusion may be applied to more than one quantity
 !      (e.g. density, temperature, etc.), and a different multigrid

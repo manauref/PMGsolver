@@ -10,8 +10,6 @@
 !    from the vorticity w
 !                 div(lambda*grad(u))=rho
 !    where lambda=plasma density, u=phi and rho=w.
-!    In the routines below we use the suffix 'ph' to indicate
-!    routines to obtain phi.
 ! 2. An inhomogeneous modified Helmholtz equation to obtain the
 !    magnetic flux function psi from the variable rpsi which
 !    contains an electron inertia contribution
@@ -27,6 +25,10 @@
 !    operator is also available respectively. For more details
 !    see M. Francisquez, et. al., Multigrid treatment of implicit
 !    continuum diffusion, J. of Comp. Phys 2017)
+! 4. A simple Poisson solver
+!                 div(grad(u))=rho
+!    In the routines below we use the suffix 'ph' to indicate
+!    routines to obtain phi, 'ps' for psi and 'hd' for hyperdiffusion.
 !
 ! Though these are 2D solvers, we allow for a 3rd dimension so that
 ! PMGsolver effetively supports solving many xy planes of
