@@ -1,0 +1,28 @@
+
+ &dom
+ nx0G=1024, ny0G=8192, nz0G=1, xprocs=4, yprocs=4, zprocs=1,
+ fLx=0.03125, fLy=1.0, fLz=1.0
+/
+
+ &comset
+ OMPthreads=1
+/
+
+ &list
+ nts=1, dt=0.0005, nframes=1, nrst=0, nfdump=1
+/
+
+ &diff
+ de2=1.04e-5,
+ diffnx=4.0, difftex=4.0, difftix=4.0, diffvx=7.0, diffwx=5.0e2, diffpsix=11.0,
+ diffny=4.0, difftey=4.0, difftiy=4.0, diffvy=7.0, diffwy=5.0e2, diffpsiy=11.0
+/
+
+ &mgin
+ LGMAXph=7, NISph=4, GAMph=1, BETph=5, NU1ph=1, NU2ph=3, omeph=1.20,
+ LGMAXps=4, NISps=4, GAMps=1, BETps=2, NU1ps=1, NU2ps=1, omeps=1.0,
+ LGMAXhd=2,2,2,2,2,2, NIShd=4,4,4,4,4,4, GAMhd=1,1,1,1,1,1, BEThd=2,2,2,2,5,2,
+ NU1hd=2,2,2,2,0,2, NU2hd=1,1,1,1,2,2, omehd=1.23,1.23,1.23,1.23,0.88,0.72,
+ nxmin=8, nymin=16
+/
+
