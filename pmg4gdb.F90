@@ -449,18 +449,17 @@ program pmgdiff
 
   do i=1,noit
 
+!.Poisson solver
   call mgphi(phi0,lam,w,(/2,-1/),phir)
 !  call fmgphi(phi0,lam,w,(/2,-1/),phir)
 
+!.Modified Helmholtz solver
 !  call mgpsi(psi0,rpsii,de2,(/-1,-1/))
 
+!.Hyperdiffusion solver
 !!  call mghd(w,wrhs,hdcos(1,:),(/2,2/),1,res)
 !  call MGhd(w,wrhs,Diffs(5,:),(/-1,-1/),5)
 !  call MGhd(wl(:,:,:,i),wrhsl(:,:,:,i),Diffs(5,:),(/-1,-1/),5,res)
-
-!  deni=dble(1)
-!  call fmgphi(psi0,deni,curi,(/-1,-1/),phir)
-!  call mgphi(psi0,deni,curi,(/-1,-1/),phir)
 
   enddo
 
